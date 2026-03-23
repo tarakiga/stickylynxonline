@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stickylynx Design System - Extended Preview</title>
+    <!-- Asap Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Asap:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Tailwind via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Asap', 'sans-serif'] },
+                    colors: {
+                        primary: { DEFAULT: 'var(--color-primary)', hover: 'var(--color-primary-hover)', light: 'var(--color-primary-light)' },
+                        secondary: 'var(--color-secondary)',
+                        background: 'var(--color-background)',
+                        surface: 'var(--color-surface)',
+                        'text-primary': 'var(--color-text-primary)',
+                        'text-secondary': 'var(--color-text-secondary)',
+                        divider: 'var(--color-divider)',
+                        success: 'var(--color-success)',
+                        warning: 'var(--color-warning)',
+                        error: 'var(--color-error)'
+                    },
+                    boxShadow: {
+                        'premium': '0 4px 24px -2px rgba(17, 24, 39, 0.05), 0 0 10px rgba(109, 40, 217, 0.05)',
+                        'premium-dark': '0 4px 24px -2px rgba(0, 0, 0, 0.3), 0 0 10px rgba(139, 92, 246, 0.1)'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --color-primary: #6D28D9;
+            --color-primary-hover: #5B21B6;
+            --color-primary-light: #EDE9FE;
+            --color-secondary: #10B981;
+            --color-background: #F9FAFB;
+            --color-surface: #FFFFFF;
+            --color-text-primary: #111827;
+            --color-text-secondary: #4B5563;
+            --color-divider: #E5E7EB;
+            --color-success: #10B981;
+            --color-warning: #F59E0B;
+            --color-error: #EF4444;
+            --shadow-custom: 0 4px 24px -2px rgba(17, 24, 39, 0.05), 0 0 10px rgba(109, 40, 217, 0.05);
+        }
+        .dark {
+            --color-primary: #8B5CF6;
+            --color-primary-hover: #A78BFA;
+            --color-primary-light: #4C1D95;
+            --color-secondary: #34D399;
+            --color-background: #0F172A;
+            --color-surface: #1E293B;
+            --color-text-primary: #F8FAFC;
+            --color-text-secondary: #94A3B8;
+            --color-divider: #334155;
+            --shadow-custom: 0 4px 24px -2px rgba(0, 0, 0, 0.3), 0 0 10px rgba(139, 92, 246, 0.1);
+            color-scheme: dark;
+        }
+
+        body {
+            background-color: var(--color-background);
+            color: var(--color-text-primary);
+            transition: background-color 0.4s ease, color 0.4s ease;
+        }
+
+        .card {
+            background-color: var(--color-surface);
+            border: 1px solid var(--color-divider);
+            box-shadow: var(--shadow-custom);
+            border-radius: 1rem;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .btn-primary {
+            background-color: var(--color-primary);
+            color: #ffffff;
+            transition: all 0.2s ease;
+        }
+        .btn-primary:hover { background-color: var(--color-primary-hover); transform: translateY(-1px); }
+        .input-base {
+            background-color: var(--color-background);
+            border: 1px solid var(--color-divider);
+            color: var(--color-text-primary);
+            border-radius: 0.75rem;
+            transition: all 0.2s;
+        }
+        .input-base:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px var(--color-primary-light); }
+        
+        /* Custom Switch */
+        .switch-peer:checked ~ .switch-bg { background-color: var(--color-primary); }
+        .switch-peer:checked ~ .switch-dot { transform: translateX(100%); }
+        .dark .switch-bg { background-color: var(--color-divider); }
+
+        /* Floating Label trick */
+        .peer:focus ~ .floating-label, .peer:not(:placeholder-shown) ~ .floating-label {
+            transform: translateY(-50%) scale(0.8);
+            top: 0; left: 12px; background: var(--color-surface); padding: 0 4px; color: var(--color-primary);
+        }
+
+        /* Checkbox internal checks */
+        .checkbox-card-peer:checked + div { border-color: var(--color-primary); background-color: var(--color-primary-light); }
+
+        /* Custom Scrollbar for Dropdowns */
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--color-divider); border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--color-text-secondary); }
+    </style>
+</head>
+<body class="min-h-screen text-text-primary antialiased pb-24">
+
+    <!-- Top nav -->
+    <nav class="sticky top-0 z-50 px-8 py-4 bg-surface border-b border-divider shadow-sm flex items-center justify-between mb-8">
+        <div class="flex items-center space-x-3">
+            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-secondary"></div>
+            <h1 class="text-xl font-bold tracking-tight">Extended Components</h1>
+        </div>
+        <button onclick="toggleDarkMode()" class="px-4 py-2 rounded-full border border-divider text-sm font-semibold flex items-center space-x-2 hover:bg-divider transition-colors">
+            <span>Dark Mode</span>
+        </button>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 items-start">
+
+        <!-- ======================= -->
+        <!-- GROUP 1: INPUTS & FORMS -->
+        <!-- ======================= -->
+        <section class="space-y-6">
+            <h2 class="text-2xl font-bold border-b border-divider pb-2 flex items-center gap-2">🕹️ Inputs & Controls</h2>
+
+            <!-- Input with labels inside input -->
+            <div class="card p-5 space-y-2">
+                <span class="text-sm font-semibold text-text-secondary">Label Inside</span>
+                <div class="relative rounded-xl border border-divider bg-background focus-within:border-primary focus-within:ring-2 focus-within:ring-primary-light transition-all">
+                    <span class="absolute left-4 top-2 text-xs font-semibold text-text-secondary pointer-events-none">Website URL</span>
+                    <input type="text" class="w-full bg-transparent px-4 pt-6 pb-2 text-sm outline-none" value="stickylynx.com">
+                </div>
+            </div>
+
+            <!-- Custom floating label -->
+            <div class="card p-5 space-y-2">
+                <span class="text-sm font-semibold text-text-secondary">Floating Label</span>
+                <div class="relative mt-2">
+                    <input type="text" id="floating" class="peer input-base w-full px-4 py-3 placeholder-transparent" placeholder="Username">
+                    <label for="floating" class="floating-label absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary text-sm transition-all pointer-events-none bg-background rounded-full px-1">Username</label>
+                </div>
+            </div>
+
+            <!-- Number input with currency -->
+            <div class="card p-5 space-y-2">
+                <span class="text-sm font-semibold text-text-secondary">Currency Input</span>
+                <div class="relative">
+                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary font-bold">$</span>
+                    <input type="number" class="w-full input-base px-4 py-3 pl-8 font-semibold" placeholder="0.00" value="99.00">
+                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-text-secondary text-sm">USD</span>
+                </div>
+            </div>
+
+            <!-- Forgot password on input label & Visibility Toggle -->
+            <div class="card p-5 space-y-2">
+                <div class="flex justify-between items-center mb-1">
+                    <span class="text-sm font-semibold text-text-secondary">Password</span>
+                    <a href="#" class="text-xs text-primary hover:underline font-medium">Forgot password?</a>
+                </div>
+                <div class="relative">
+                    <input type="password" id="pw-field" class="w-full input-base pl-4 pr-12 py-3" value="secret1234">
+                    <button type="button" onclick="const p = document.getElementById('pw-field'); p.type = p.type === 'password' ? 'text' : 'password';" class="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-primary transition-colors focus:outline-none">
+                        <!-- Eye Icon -->
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Input with Tooltip -->
+            <div class="card p-5 space-y-2">
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="text-sm font-semibold text-text-secondary">API Key</span>
+                    <div class="relative group cursor-help">
+                        <!-- Icon -->
+                        <svg class="w-4 h-4 text-text-secondary hover:text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <!-- Tooltip popup -->
+                        <div class="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-48 p-2 bg-text-primary text-background text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 text-center">
+                            Your secret API key. Do not share this with anyone.
+                        </div>
+                    </div>
+                </div>
+                <input type="text" class="w-full input-base px-4 py-3 font-mono text-sm" value="sk_test_123456789">
+            </div>
+
+            <!-- Input with custom validation styles -->
+            <div class="card p-5 space-y-4">
+                <div>
+                    <span class="text-sm font-semibold text-text-secondary mb-1 block">Valid Input</span>
+                    <div class="relative">
+                        <input type="text" class="w-full input-base px-4 py-3 border-success pr-10 focus:ring-success/20 focus:border-success bg-success/5" value="mursi@example.com">
+                        <svg class="w-5 h-5 text-success absolute right-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    </div>
+                </div>
+                <div>
+                    <span class="text-sm font-semibold text-text-secondary mb-1 block">Invalid Input</span>
+                    <div class="relative">
+                        <input type="text" class="w-full input-base px-4 py-3 border-error pr-10 focus:ring-error/20 focus:border-error bg-error/5" value="mursi@">
+                        <svg class="w-5 h-5 text-error absolute right-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </div>
+                    <p class="text-xs text-error mt-1">Please enter a valid email address.</p>
+                </div>
+            </div>
+
+            <!-- Input with contained button -->
+            <div class="card p-5 space-y-2">
+                <span class="text-sm font-semibold text-text-secondary">Subscribe</span>
+                <div class="relative">
+                    <input type="email" class="w-full input-base pl-4 pr-24 py-3" placeholder="Your email">
+                    <button class="absolute right-1 top-1 bottom-1 bg-primary hover:bg-primary-hover text-white text-sm font-semibold px-4 rounded-xl transition-colors">Join</button>
+                </div>
+            </div>
+
+            <!-- Password with strength meter -->
+            <div class="card p-5 space-y-2">
+                <span class="text-sm font-semibold text-text-secondary">Create Password</span>
+                <input type="password" class="w-full input-base px-4 py-3" value="Str0ng!P@ss">
+                <div class="flex gap-1 mt-2">
+                    <div class="h-1 flex-1 bg-success rounded-full"></div>
+                    <div class="h-1 flex-1 bg-success rounded-full"></div>
+                    <div class="h-1 flex-1 bg-success rounded-full"></div>
+                    <div class="h-1 flex-1 bg-divider rounded-full"></div>
+                </div>
+                <p class="text-xs text-success text-right mt-1">Strong</p>
+            </div>
+
+            <!-- Language picker -->
+            <div class="card p-5 space-y-2">
+                <span class="text-sm font-semibold text-text-secondary">Language</span>
+                <div class="relative">
+                    <select class="w-full input-base px-4 py-3 appearance-none cursor-pointer">
+                        <option>🇬🇧 English (UK)</option>
+                        <option>🇺🇸 English (US)</option>
+                        <option>🇪🇸 Español</option>
+                        <option>🇫🇷 Français</option>
+                    </select>
+                    <svg class="w-4 h-4 text-text-secondary absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </div>
+            </div>
+
+            <!-- Interactive multi-contact input (Emails or Phones) -->
+            <div class="card p-5 space-y-2">
+                <span class="text-sm font-semibold text-text-secondary">Invite Team (Multi-contact)</span>
+                <p class="text-xs text-text-secondary mb-2">Type email/phone and press Enter or comma.</p>
+                <div class="min-h-[3rem] w-full input-base p-1.5 flex flex-wrap gap-2 items-center cursor-text" id="multi-contact-container" onclick="document.getElementById('multi-contact-input').focus()">
+                    <!-- Chips inserted via JS -->
+                    <span class="bg-primary/10 text-primary border border-primary/20 text-xs font-semibold px-2 py-1.5 rounded-lg flex items-center gap-1">
+                        alex@example.com
+                        <button class="text-primary hover:text-error ml-1">&times;</button>
+                    </span>
+                    <input type="text" id="multi-contact-input" class="flex-1 bg-transparent min-w-[120px] outline-none text-sm p-1" placeholder="Add contact...">
+                </div>
+                <!-- Validation msg hidden by default -->
+                <p id="multi-contact-error" class="text-xs text-error hidden mt-1">Invalid email or phone number</p>
+            </div>
+
+            <!-- Interactive Date Picker (UX Friendly Dropdown Mockup) -->
+            <div class="card p-5 space-y-2 relative group cursor-pointer" tabindex="0">
+                <span class="text-sm font-semibold text-text-secondary block">Select Date</span>
+                <div class="relative">
+                    <input type="text" class="w-full input-base px-4 py-3 pl-11 pointer-events-none" value="March 24, 2026" readonly>
+                    <svg class="w-5 h-5 text-primary absolute left-4 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                </div>
+                
+                <!-- Mockup Calendar Dropdown Menu -->
+                <div class="absolute left-0 top-[105%] w-[320px] bg-surface border border-divider shadow-premium rounded-xl p-4 opacity-0 invisible group-focus:visible group-focus:opacity-100 group-focus:translate-y-1 transition-all duration-200 z-50">
+                    <div class="flex justify-between items-center mb-4 text-text-primary">
+                        <button class="w-8 h-8 rounded-lg hover:bg-divider flex items-center justify-center transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
+                        <span class="font-bold text-sm">March 2026</span>
+                        <button class="w-8 h-8 rounded-lg hover:bg-divider flex items-center justify-center transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
+                    </div>
+                    <div class="grid grid-cols-7 gap-1 text-center mb-2">
+                        <div class="text-[10px] font-bold text-text-secondary uppercase">Su</div>
+                        <div class="text-[10px] font-bold text-text-secondary uppercase">Mo</div>
+                        <div class="text-[10px] font-bold text-text-secondary uppercase">Tu</div>
+                        <div class="text-[10px] font-bold text-text-secondary uppercase">We</div>
+                        <div class="text-[10px] font-bold text-text-secondary uppercase">Th</div>
+                        <div class="text-[10px] font-bold text-text-secondary uppercase">Fr</div>
+                        <div class="text-[10px] font-bold text-text-secondary uppercase">Sa</div>
+                    </div>
+                    <div class="grid grid-cols-7 gap-1 text-center text-sm font-medium">
+                        <div class="py-2 text-text-secondary opacity-40">22</div><div class="py-2 text-text-secondary opacity-40">23</div>
+                        <div class="py-2 text-text-secondary opacity-40">24</div><div class="py-2 text-text-secondary opacity-40">25</div>
+                        <div class="py-2 text-text-secondary opacity-40">26</div><div class="py-2 text-text-secondary opacity-40">27</div>
+                        <div class="py-2 text-text-secondary opacity-40">28</div>
+                        <div class="py-2 hover:bg-primary/10 hover:text-primary rounded-lg cursor-pointer transition-colors">1</div>
+                        <div class="py-2 hover:bg-primary/10 hover:text-primary rounded-lg cursor-pointer transition-colors">2</div>
+                        <div class="py-2 hover:bg-primary/10 hover:text-primary rounded-lg cursor-pointer transition-colors">3</div>
+                        <div class="py-2 hover:bg-primary/10 hover:text-primary rounded-lg cursor-pointer transition-colors">4</div>
+                        <div class="py-2 hover:bg-primary/10 hover:text-primary rounded-lg cursor-pointer transition-colors">5</div>
+                        <div class="py-2 hover:bg-primary/10 hover:text-primary rounded-lg cursor-pointer transition-colors">6</div>
+                        <div class="py-2 hover:bg-primary/10 hover:text-primary rounded-lg cursor-pointer transition-colors">7</div>
+                        <div class="py-2 hover:bg-primary/10 hover:text-primary rounded-lg cursor-pointer transition-colors">8</div>
+                        <div class="py-2 hover:bg-primary/10 hover:text-primary rounded-lg cursor-pointer transition-colors">9</div>
+                        <div class="py-2 hover:bg-primary/10 hover:text-primary rounded-lg cursor-pointer transition-colors">10</div>
+                        <div class="py-2 hover:bg-primary/10 hover:text-primary rounded-lg cursor-pointer transition-colors">11</div>
+                        <div class="py-2 hover:bg-primary/10 hover:text-primary rounded-lg cursor-pointer transition-colors">12</div>
+                        <div class="py-2 hover:bg-primary/10 hover:text-primary rounded-lg cursor-pointer transition-colors">13</div>
+                        <div class="py-2 hover:bg-primary/10 hover:text-primary rounded-lg cursor-pointer transition-colors">14</div>
+                        <div class="py-2 hover:bg-primary/10 hover:text-primary rounded-lg cursor-pointer transition-colors">15</div>
+                        <div class="py-2 hover:bg-primary/10 hover:text-primary rounded-lg cursor-pointer transition-colors">16</div>
+                        <div class="py-2 hover:bg-primary/10 hover:text-primary rounded-lg cursor-pointer transition-colors">17</div>
+                        <div class="py-2 hover:bg-primary/10 hover:text-primary rounded-lg cursor-pointer transition-colors">18</div>
+                        <div class="py-2 hover:bg-primary/10 hover:text-primary rounded-lg cursor-pointer transition-colors">19</div>
+                        <div class="py-2 hover:bg-primary/10 hover:text-primary rounded-lg cursor-pointer transition-colors">20</div>
+                        <div class="py-2 hover:bg-primary/10 hover:text-primary rounded-lg cursor-pointer transition-colors">21</div>
+                        <div class="py-2 hover:bg-primary/10 hover:text-primary rounded-lg cursor-pointer transition-colors">22</div>
+                        <div class="py-2 hover:bg-primary/10 hover:text-primary rounded-lg cursor-pointer transition-colors">23</div>
+                        <div class="py-2 bg-primary text-white rounded-lg shadow-sm font-bold cursor-pointer">24</div>
+                        <div class="py-2 hover:bg-primary/10 hover:text-primary rounded-lg cursor-pointer transition-colors">25</div>
+                        <div class="py-2 hover:bg-primary/10 hover:text-primary rounded-lg cursor-pointer transition-colors">26</div>
+                        <div class="py-2 hover:bg-primary/10 hover:text-primary rounded-lg cursor-pointer transition-colors">27</div>
+                        <div class="py-2 hover:bg-primary/10 hover:text-primary rounded-lg cursor-pointer transition-colors">28</div>
+                        <div class="py-2 hover:bg-primary/10 hover:text-primary rounded-lg cursor-pointer transition-colors">29</div>
+                        <div class="py-2 hover:bg-primary/10 hover:text-primary rounded-lg cursor-pointer transition-colors">30</div>
+                        <div class="py-2 hover:bg-primary/10 hover:text-primary rounded-lg cursor-pointer transition-colors">31</div>
+                        <div class="py-2 text-text-secondary opacity-40">1</div><div class="py-2 text-text-secondary opacity-40">2</div>
+                        <div class="py-2 text-text-secondary opacity-40">3</div><div class="py-2 text-text-secondary opacity-40">4</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Date & Time Picker Mockup (UX Friendly Native Integration) -->
+            <div class="card p-5 space-y-2">
+                <span class="text-sm font-semibold text-text-secondary">Release Date & Time</span>
+                <div class="flex gap-3">
+                    <div class="relative flex-1">
+                        <input type="date" class="w-full input-base px-4 py-3 text-sm focus:ring-primary-light text-text-primary bg-background cursor-pointer appearance-none" value="2026-03-24">
+                    </div>
+                    <div class="relative w-1/3 min-w-[100px]">
+                        <input type="time" class="w-full input-base px-4 py-3 text-sm focus:ring-primary-light text-text-primary bg-background cursor-pointer appearance-none" value="10:00">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stylized Dropdown with Search -->
+            <div class="card p-5 space-y-2 relative group" id="search-dropdown-container">
+                <span class="text-sm font-semibold text-text-secondary">Select Category</span>
+                <div class="relative cursor-pointer" onclick="toggleSearchDropdown()">
+                    <input type="text" id="sd-display" class="w-full input-base px-4 py-3 pl-10 cursor-pointer pointer-events-none" value="Music & Audio" readonly>
+                    <svg class="w-5 h-5 text-text-secondary absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                    <svg class="w-4 h-4 text-text-secondary absolute right-4 top-1/2 -translate-y-1/2 transition-transform duration-200" id="sd-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </div>
+                <!-- Dropdown Menu -->
+                <div id="sd-menu" class="absolute left-0 top-[105%] w-full bg-surface border border-divider shadow-premium rounded-xl p-2 opacity-0 invisible transition-all duration-200 z-50 flex flex-col max-h-64">
+                    <div class="relative mb-2 shrink-0">
+                        <input type="text" id="sd-input" class="w-full bg-background border border-divider text-text-primary text-sm rounded-lg px-3 py-2 pl-8 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" placeholder="Search categories..." onkeyup="filterSearchDropdown()">
+                        <svg class="w-4 h-4 text-text-secondary absolute left-2.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    </div>
+                    <ul id="sd-list" class="overflow-y-auto space-y-1 pr-1 custom-scrollbar">
+                        <li class="px-3 py-2 text-sm hover:bg-primary/10 hover:text-primary rounded-md cursor-pointer transition-colors" onclick="selectSdItem('Art & Design')">Art & Design</li>
+                        <li class="px-3 py-2 text-sm hover:bg-primary/10 hover:text-primary rounded-md cursor-pointer transition-colors" onclick="selectSdItem('Business & Tech')">Business & Tech</li>
+                        <li class="px-3 py-2 text-sm hover:bg-primary/10 hover:text-primary rounded-md cursor-pointer transition-colors" onclick="selectSdItem('Education')">Education</li>
+                        <li class="px-3 py-2 text-sm hover:bg-primary/10 hover:text-primary rounded-md cursor-pointer transition-colors" onclick="selectSdItem('Food & Drink')">Food & Drink</li>
+                        <li class="px-3 py-2 text-sm bg-primary/10 text-primary font-semibold rounded-md cursor-pointer transition-colors" onclick="selectSdItem('Music & Audio')">Music & Audio</li>
+                        <li class="px-3 py-2 text-sm hover:bg-primary/10 hover:text-primary rounded-md cursor-pointer transition-colors" onclick="selectSdItem('Photography')">Photography</li>
+                        <li class="px-3 py-2 text-sm hover:bg-primary/10 hover:text-primary rounded-md cursor-pointer transition-colors" onclick="selectSdItem('Video & Film')">Video & Film</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Async Location Search (OpenStreetMap) -->
+            <div class="card p-5 space-y-2 relative" id="location-dropdown-container">
+                <span class="text-sm font-semibold text-text-secondary block">Location Search (Live Async)</span>
+                <div class="relative">
+                    <input type="text" id="loc-input" class="w-full input-base px-4 py-3 pl-11 focus:ring-primary-light" placeholder="Search city or address..." oninput="debounceLocationSearch(this.value)">
+                    <svg class="w-5 h-5 text-primary absolute left-4 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    <!-- Loading spinner -->
+                    <svg id="loc-spinner" class="w-5 h-5 text-text-secondary absolute right-4 top-1/2 -translate-y-1/2 animate-spin hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                </div>
+                <!-- Dropdown Menu -->
+                <div id="loc-menu" class="absolute left-0 top-[105%] w-full bg-surface border border-divider shadow-premium rounded-xl p-2 opacity-0 invisible transition-all duration-200 z-50 flex flex-col max-h-64 overflow-y-auto custom-scrollbar">
+                    <ul id="loc-list" class="space-y-1 text-sm">
+                        <li class="px-3 py-2 text-text-secondary text-xs text-center">Type to search OpenStreetMap...</li>
+                    </ul>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- ======================= -->
+        <!-- GROUP 2: CARDS & LISTS  -->
+        <!-- ======================= -->
+        <section class="space-y-6">
+            <h2 class="text-2xl font-bold border-b border-divider pb-2 flex items-center gap-2">🕹️ Cards & Modules</h2>
+
+            <!-- Card with checkbox -->
+            <label class="cursor-pointer block">
+                <input type="checkbox" class="sr-only checkbox-card-peer" checked>
+                <div class="card p-5 flex items-start gap-4 transition-colors">
+                    <div class="w-5 h-5 rounded border-2 flex-shrink-0 flex items-center justify-center mt-0.5 border-primary bg-primary text-white">
+                        <svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                    </div>
+                    <div>
+                        <h4 class="font-bold">Pro Creator Plan</h4>
+                        <p class="text-sm text-text-secondary mt-1">Unlock all templates and advanced analytics.</p>
+                    </div>
+                </div>
+            </label>
+
+            <!-- Card with Switches -->
+            <div class="card p-5 space-y-4">
+                <h4 class="font-bold text-lg">Notifications</h4>
+                
+                <!-- Custom switch 1 -->
+                <label class="flex items-center justify-between cursor-pointer">
+                    <span class="text-sm font-semibold">Email Alerts</span>
+                    <div class="relative inline-flex items-center">
+                        <input type="checkbox" class="sr-only switch-peer" checked>
+                        <div class="w-11 h-6 bg-divider rounded-full switch-bg transition-colors duration-300 relative">
+                            <div class="absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform duration-300 switch-dot shadow-sm"></div>
+                        </div>
+                    </div>
+                </label>
+                <!-- Custom switch 2 -->
+                <label class="flex items-center justify-between cursor-pointer">
+                    <span class="text-sm font-semibold">Push Notifications</span>
+                    <div class="relative inline-flex items-center">
+                        <input type="checkbox" class="sr-only switch-peer">
+                        <div class="w-11 h-6 bg-divider rounded-full switch-bg transition-colors duration-300 relative">
+                            <div class="absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform duration-300 switch-dot shadow-sm"></div>
+                        </div>
+                    </div>
+                </label>
+            </div>
+
+            <!-- Segmented Control -->
+            <div class="card p-2 flex text-sm font-semibold bg-background">
+                <label class="flex-1 text-center">
+                    <input type="radio" name="seg" class="sr-only peer" checked>
+                    <div class="py-2 rounded-lg peer-checked:bg-surface peer-checked:text-primary peer-checked:shadow-sm cursor-pointer transition-all">Monthly</div>
+                </label>
+                <label class="flex-1 text-center">
+                    <input type="radio" name="seg" class="sr-only peer">
+                    <div class="py-2 rounded-lg peer-checked:bg-surface peer-checked:text-primary peer-checked:shadow-sm cursor-pointer transition-all">Yearly <span class="text-[10px] text-white bg-error px-1.5 py-0.5 rounded-full ml-1 align-middle">-20%</span></div>
+                </label>
+            </div>
+
+            <!-- Checkbox with image -->
+            <div class="grid grid-cols-2 gap-4">
+                <label class="cursor-pointer">
+                    <input type="checkbox" name="theme" class="sr-only checkbox-card-peer" checked>
+                    <div class="card p-2 transition-colors">
+                        <img src="https://images.unsplash.com/photo-1557682224-5b8590cd9ec5?auto=format&fit=crop&w=300&q=80" alt="Theme 1" class="w-full h-24 object-cover rounded-lg mb-2">
+                        <div class="text-center font-semibold text-sm">Dark Gradient</div>
+                    </div>
+                </label>
+                <label class="cursor-pointer">
+                    <input type="checkbox" name="theme" class="sr-only checkbox-card-peer">
+                    <div class="card p-2 transition-colors opacity-70 hover:opacity-100">
+                        <img src="https://images.unsplash.com/photo-1557683316-973673baf926?auto=format&fit=crop&w=300&q=80" alt="Theme 2" class="w-full h-24 object-cover rounded-lg mb-2">
+                        <div class="text-center font-semibold text-sm">Light Gradient</div>
+                    </div>
+                </label>
+            </div>
+
+            <!-- User card with image & action -->
+            <div class="card p-4 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <img src="https://i.pravatar.cc/100?img=33" alt="Avatar" class="w-12 h-12 rounded-full ring-2 ring-divider">
+                    <div>
+                        <h4 class="font-bold text-sm">Jane Doe</h4>
+                        <p class="text-xs text-text-secondary">@janedoe</p>
+                    </div>
+                </div>
+                <button class="bg-primary/10 hover:bg-primary/20 text-primary text-xs font-bold px-4 py-2 rounded-full transition-colors">Follow</button>
+            </div>
+
+            <!-- User info with icons -->
+            <div class="card p-5 space-y-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-primary to-secondary flex items-center justify-center text-white font-bold text-xl shadow-lg">AM</div>
+                    <div>
+                        <h4 class="font-bold">Alex Murphy</h4>
+                        <p class="text-xs text-secondary font-semibold">Pro Member</p>
+                    </div>
+                </div>
+                <div class="border-t border-divider pt-4 space-y-3">
+                    <div class="flex items-center gap-3 text-sm text-text-secondary">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                        <span>alex.murphy@example.com</span>
+                    </div>
+                    <div class="flex items-center gap-3 text-sm text-text-secondary">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        <span>San Francisco, CA</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card with badges -->
+            <div class="card overflow-hidden">
+                <div class="h-32 bg-divider relative">
+                    <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=400&q=80" class="w-full h-full object-cover">
+                    <span class="absolute top-2 left-2 bg-error text-white text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wide">Sale -20%</span>
+                    <span class="absolute top-2 right-2 bg-background/80 backdrop-blur-sm text-text-primary text-[10px] font-bold px-2 py-1 rounded-full uppercase">New</span>
+                </div>
+                <div class="p-4">
+                    <h4 class="font-bold">Digital Sneaker Asset</h4>
+                    <p class="text-sm font-semibold text-text-secondary mt-1"><span class="line-through opacity-50 mr-1">$100</span> <span class="text-primary text-lg">$80</span></p>
+                </div>
+            </div>
+
+            <!-- Card with stats / Stat card with progress -->
+            <div class="grid grid-cols-2 gap-4">
+                <div class="card p-4">
+                    <h4 class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">Total Views</h4>
+                    <div class="flex items-end gap-2">
+                        <span class="text-3xl font-bold">128.4K</span>
+                        <span class="text-success text-xs font-bold w-full bg-success/10 px-1 py-0.5 rounded">+14%</span>
+                    </div>
+                </div>
+                <div class="card p-4 flex flex-col justify-between">
+                    <h4 class="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">Storage</h4>
+                    <span class="text-xl font-bold">4.2 <span class="text-xs text-text-secondary">/ 10 GB</span></span>
+                    <div class="w-full h-1.5 bg-divider rounded-full mt-2 overflow-hidden">
+                        <div class="h-full bg-primary rounded-full" style="width: 42%;"></div>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- ======================= -->
+        <!-- GROUP 3: LISTS & BANNERS-->
+        <!-- ======================= -->
+        <section class="space-y-6">
+            <h2 class="text-2xl font-bold border-b border-divider pb-2 flex items-center gap-2">🕹️ Complex & Layouts</h2>
+
+            <!-- Table / List with drag handles & actions -->
+            <div class="card p-0 overflow-hidden">
+                <div class="px-5 py-3 border-b border-divider bg-background">
+                    <h4 class="font-bold text-sm">Your Links (Drag & Drop)</h4>
+                </div>
+                <div class="divide-y divide-divider">
+                    <!-- Item 1 -->
+                    <div class="p-3 flex items-center gap-3 hover:bg-background/50 transition-colors group cursor-move">
+                        <svg class="w-5 h-5 text-divider group-hover:text-text-secondary transition-colors cursor-grab" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"></path></svg>
+                        <div class="w-10 h-10 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-red-500 font-bold shrink-0">YT</div>
+                        <div class="flex-1 min-w-0">
+                            <h5 class="font-bold text-sm truncate">My New Video</h5>
+                            <p class="text-xs text-text-secondary truncate">youtube.com/watch?v=...</p>
+                        </div>
+                        <div class="flex items-center gap-1 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button class="w-8 h-8 rounded-full hover:bg-divider flex items-center justify-center text-text-secondary hover:text-primary transition-colors" title="Edit"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg></button>
+                            <button class="w-8 h-8 rounded-full hover:bg-divider flex items-center justify-center text-text-secondary hover:text-error transition-colors" title="Delete"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+                        </div>
+                    </div>
+                    <!-- Item 2 -->
+                     <div class="p-3 flex items-center gap-3 hover:bg-background/50 transition-colors group cursor-move">
+                        <svg class="w-5 h-5 text-divider group-hover:text-text-secondary transition-colors cursor-grab" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"></path></svg>
+                        <div class="w-10 h-10 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-500 font-bold shrink-0">SP</div>
+                        <div class="flex-1 min-w-0">
+                            <h5 class="font-bold text-sm truncate">Spotify Playlist</h5>
+                            <p class="text-xs text-text-secondary truncate">spotify.com/playlist/...</p>
+                        </div>
+                        <div class="flex items-center gap-1 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button class="w-8 h-8 rounded-full hover:bg-divider flex items-center justify-center text-text-secondary hover:text-primary transition-colors" title="Edit"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg></button>
+                            <button class="w-8 h-8 rounded-full hover:bg-divider flex items-center justify-center text-text-secondary hover:text-error transition-colors" title="Delete"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card with actions grid -->
+            <div class="card p-5">
+                <h4 class="font-bold text-sm mb-4 border-b border-divider pb-2">Quick Actions</h4>
+                <div class="grid grid-cols-2 gap-3">
+                    <button class="flex flex-col items-center justify-center p-4 rounded-xl bg-background border border-divider hover:bg-primary/5 hover:border-primary/50 transition-colors group">
+                        <svg class="w-6 h-6 text-text-secondary group-hover:text-primary mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                        <span class="text-xs font-semibold">Add Link</span>
+                    </button>
+                    <button class="flex flex-col items-center justify-center p-4 rounded-xl bg-background border border-divider hover:bg-primary/5 hover:border-primary/50 transition-colors group">
+                        <svg class="w-6 h-6 text-text-secondary group-hover:text-primary mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        <span class="text-xs font-semibold">Images</span>
+                    </button>
+                    <button class="flex flex-col items-center justify-center p-4 rounded-xl bg-background border border-divider hover:bg-primary/5 hover:border-primary/50 transition-colors group">
+                        <svg class="w-6 h-6 text-text-secondary group-hover:text-primary mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                        <span class="text-xs font-semibold">Video</span>
+                    </button>
+                    <button class="flex flex-col items-center justify-center p-4 rounded-xl bg-background border border-divider hover:bg-primary/5 hover:border-primary/50 transition-colors group">
+                        <svg class="w-6 h-6 text-text-secondary group-hover:text-primary mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <span class="text-xs font-semibold">Monetize</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Image/File dropzone -->
+            <div class="card p-5">
+                <h4 class="font-bold text-sm mb-2">Upload Cover</h4>
+                <div class="border-2 border-dashed border-divider hover:border-primary rounded-xl p-8 flex flex-col items-center justify-center text-center transition-colors cursor-pointer group bg-background hover:bg-primary/5">
+                    <div class="w-12 h-12 rounded-full bg-surface shadow-sm flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                        <svg class="w-6 h-6 text-text-secondary group-hover:text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                    </div>
+                    <p class="text-sm font-semibold">Click or drag image to upload</p>
+                    <p class="text-xs text-text-secondary mt-1">SVG, PNG, JPG or GIF (max. 800x400px)</p>
+                </div>
+            </div>
+
+            <!-- Email banner & Promo banner -->
+            <div class="space-y-4">
+                <!-- Warning / Email banner -->
+                <div class="rounded-xl bg-warning/10 border border-warning text-warning p-4 flex items-start gap-3">
+                    <svg class="w-5 h-5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                    <div>
+                        <h4 class="font-bold text-sm">Verify your email address</h4>
+                        <p class="text-xs mt-0.5 opacity-90">Please check your inbox to activate your account features. <a href="#" class="underline font-bold ml-1">Resend email</a></p>
+                    </div>
+                </div>
+
+                <!-- Promo Banner -->
+                <div class="rounded-xl overflow-hidden relative shadow-md">
+                    <div class="absolute inset-0 bg-gradient-to-r from-primary to-secondary opacity-90"></div>
+                    <div class="relative z-10 p-5 text-white flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold">Upgrade to Premium</h4>
+                            <p class="text-xs opacity-90 mt-1">Get 0% fees on all sales.</p>
+                        </div>
+                        <button class="bg-white text-primary text-xs font-bold px-4 py-2 rounded-full hover:shadow-lg transition-transform hover:scale-105">Upgrade</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step Form Progress Bar -->
+            <div class="card p-6 border border-divider shadow-sm relative overflow-hidden">
+                <h4 class="font-bold text-sm mb-8 border-b border-divider pb-2">Setup Progress</h4>
+                <div class="relative flex items-center justify-between mx-4">
+                    <!-- Progress Line background -->
+                    <div class="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-divider pointer-events-none"></div>
+                    <!-- Progress Line active -->
+                    <div class="absolute left-0 top-1/2 -translate-y-1/2 w-1/2 h-1 bg-primary pointer-events-none transition-all duration-300"></div>
+                    
+                    <!-- Step 1 Done -->
+                    <div class="relative flex flex-col items-center">
+                        <div class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm shadow-sm ring-4 ring-surface z-10">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        </div>
+                        <span class="text-xs font-semibold mt-2 absolute top-full whitespace-nowrap text-text-primary">Account</span>
+                    </div>
+
+                    <!-- Step 2 Active -->
+                    <div class="relative flex flex-col items-center">
+                        <div class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm shadow-lg ring-4 ring-primary-light z-10 transition-colors">
+                            2
+                        </div>
+                        <span class="text-xs font-semibold mt-2 absolute top-full whitespace-nowrap text-text-primary">Profile Details</span>
+                    </div>
+
+                    <!-- Step 3 Inactive -->
+                    <div class="relative flex flex-col items-center">
+                        <div class="w-8 h-8 rounded-full bg-surface border-2 border-divider text-text-secondary flex items-center justify-center font-bold text-sm shadow-sm ring-4 ring-surface z-10 transition-colors">
+                            3
+                        </div>
+                        <span class="text-xs font-semibold mt-2 absolute top-full whitespace-nowrap text-text-secondary">Publish</span>
+                    </div>
+                </div>
+                <!-- Margin bottom block to accommodate absolute labels -->
+                <div class="h-6"></div>
+            </div>
+
+        </section>
+
+        <!-- ======================= -->
+        <!-- GROUP 4: MUSICIAN EPK   -->
+        <!-- ======================= -->
+        <section class="space-y-6 lg:col-span-1 md:col-span-2 xl:col-span-3">
+            <h2 class="text-2xl font-bold border-b border-divider pb-2 flex items-center gap-2 mt-8">🎧 Musician EPK Modules</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 items-start">
+            
+                <!-- Icon Library -->
+                <div class="card p-5">
+                    <h4 class="font-bold text-sm mb-4 border-b border-divider pb-2">EPK Icon Library</h4>
+                    <div class="grid grid-cols-5 gap-4">
+                        <div class="flex items-center justify-center p-2 rounded-lg bg-background hover:text-primary transition-colors cursor-pointer" title="Play"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+                        <div class="flex items-center justify-center p-2 rounded-lg bg-background hover:text-primary transition-colors cursor-pointer" title="Music"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"></path></svg></div>
+                        <div class="flex items-center justify-center p-2 rounded-lg bg-background hover:text-primary transition-colors cursor-pointer" title="Volume"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg></div>
+                        <div class="flex items-center justify-center p-2 rounded-lg bg-background hover:text-primary transition-colors cursor-pointer" title="Download"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg></div>
+                        <div class="flex items-center justify-center p-2 rounded-lg bg-background hover:text-primary transition-colors cursor-pointer" title="Ticket"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"></path></svg></div>
+                        <!-- row 2 -->
+                        <div class="flex items-center justify-center p-2 rounded-lg bg-background hover:text-primary transition-colors cursor-pointer" title="Star"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path></svg></div>
+                        <div class="flex items-center justify-center p-2 rounded-lg bg-background hover:text-primary transition-colors cursor-pointer" title="Video"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg></div>
+                        <div class="flex items-center justify-center p-2 rounded-lg bg-background hover:text-primary transition-colors cursor-pointer" title="Calendar"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg></div>
+                        <div class="flex items-center justify-center p-2 rounded-lg bg-background hover:text-primary transition-colors cursor-pointer" title="Mail"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v10a2 2 0 002 2z"></path></svg></div>
+                        <div class="flex items-center justify-center p-2 rounded-lg bg-background hover:text-primary transition-colors cursor-pointer" title="Share"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg></div>
+                    </div>
+                </div>
+
+                <!-- Media Card (Track) -->
+                <div class="card p-3 flex items-center gap-4 group">
+                    <div class="relative w-16 h-16 rounded-lg overflow-hidden shrink-0">
+                        <img src="https://images.unsplash.com/photo-1614680376593-902f74cf0d41?auto=format&fit=crop&w=200&q=80" alt="Album Cover" class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-white">
+                            <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                        </div>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h4 class="font-bold text-sm truncate">Midnight Echoes</h4>
+                        <p class="text-xs text-text-secondary truncate">Single • 2026</p>
+                    </div>
+                    <button class="w-8 h-8 rounded-full border border-divider flex items-center justify-center text-text-secondary hover:text-primary hover:border-primary transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    </button>
+                </div>
+
+                <!-- Assets / Input Groups -->
+                <div class="space-y-4">
+                    <!-- Audio Controller Mockup -->
+                    <div class="card p-4">
+                        <div class="flex items-center gap-3">
+                            <button class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center shadow-md transform hover:scale-105 transition-transform shrink-0">
+                                <svg class="w-5 h-5 ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                            </button>
+                            <div class="flex-1">
+                                <div class="flex justify-between text-[10px] font-bold text-text-secondary mb-1">
+                                    <span>1:04</span>
+                                    <span>3:42</span>
+                                </div>
+                                <div class="w-full h-1.5 bg-divider rounded-full overflow-hidden cursor-pointer relative group">
+                                    <div class="h-full bg-primary w-1/3"></div>
+                                    <div class="absolute top-1/2 left-1/3 -translate-y-1/2 -translate-x-1/2 w-3 h-3 bg-white rounded-full shadow border border-divider opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Asset Button / Input Group -->
+                    <div class="relative flex">
+                        <input type="password" class="w-full input-base px-4 py-3 rounded-r-none border-r-0 placeholder-text-secondary focus:ring-0 focus:border-divider bg-surface" placeholder="Passcode">
+                        <button class="bg-surface border border-divider border-l-0 px-4 rounded-r-xl text-sm font-bold hover:bg-divider transition-colors flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                            Access Kit
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Pull Quote Slider -->
+                <div class="card p-6 bg-primary/5 border-none relative text-center">
+                    <svg class="w-8 h-8 text-primary/20 absolute top-4 left-4" fill="currentColor" viewBox="0 0 24 24"><path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"></path></svg>
+                    <p class="text-sm font-semibold italic mt-4 mb-3">"Stickylynx’s latest album redefines the modern synthesizer soundpad. Absolute genius."</p>
+                    <span class="text-xs font-bold text-primary">— Pitchfork Review</span>
+                    <div class="flex justify-center gap-2 mt-4 mt-4">
+                        <div class="w-2 h-2 rounded-full bg-primary cursor-pointer hover:bg-primary-hover"></div>
+                        <div class="w-2 h-2 rounded-full bg-divider cursor-pointer hover:bg-text-secondary"></div>
+                        <div class="w-2 h-2 rounded-full bg-divider cursor-pointer hover:bg-text-secondary"></div>
+                    </div>
+                </div>
+
+                <!-- Technical Grid (Stage Plot/Rider) -->
+                <div class="card p-0 overflow-hidden text-left">
+                    <div class="px-5 py-3 border-b border-divider bg-background/50">
+                        <h4 class="font-bold text-sm">Tech Rider Inputs</h4>
+                    </div>
+                    <div class="grid grid-cols-2 divide-x divide-divider border-b border-divider last:border-0 text-sm">
+                        <div class="p-3 bg-surface hover:bg-primary/5 transition-colors">
+                            <span class="text-[10px] font-bold text-text-secondary uppercase">CH 1</span>
+                            <p class="font-semibold text-text-primary mt-1">Lead Vocals (Stage Center)</p>
+                        </div>
+                        <div class="p-3 bg-surface hover:bg-primary/5 transition-colors">
+                            <span class="text-[10px] font-bold text-text-secondary uppercase">Needs</span>
+                            <p class="font-medium text-text-secondary mt-1">Shure SM58 / Boom Stand</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 divide-x divide-divider text-sm">
+                        <div class="p-3 bg-surface hover:bg-primary/5 transition-colors">
+                            <span class="text-[10px] font-bold text-text-secondary uppercase">CH 2</span>
+                            <p class="font-semibold text-text-primary mt-1">Acoustic Guitar (DI)</p>
+                        </div>
+                        <div class="p-3 bg-surface hover:bg-primary/5 transition-colors">
+                            <span class="text-[10px] font-bold text-text-secondary uppercase">Needs</span>
+                            <p class="font-medium text-text-secondary mt-1">XLR + Phantom Power</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Visual Gallery -->
+                <div class="card p-4 space-y-3">
+                    <div class="flex justify-between items-center mb-1">
+                        <h4 class="font-bold text-sm">Press Photos</h4>
+                        <a href="#" class="text-xs text-primary font-bold hover:underline">Download All (.ZIP)</a>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2">
+                        <div class="aspect-square bg-divider rounded-lg overflow-hidden group relative cursor-pointer">
+                            <img src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=300&q=80" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
+                            <div class="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        </div>
+                        <div class="aspect-square bg-divider rounded-lg overflow-hidden group relative cursor-pointer">
+                            <img src="https://images.unsplash.com/photo-1493225457124-a1a2a5f5f924?auto=format&fit=crop&w=300&q=80" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
+                             <div class="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        </div>
+                        <div class="aspect-square bg-divider rounded-lg overflow-hidden group relative cursor-pointer flex items-center justify-center border-2 border-dashed hover:border-primary transition-colors hover:bg-primary/5">
+                            <span class="text-xs font-bold text-text-secondary">+3 More</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Floating Cookies Banner Example -->
+    <div id="cookies-banner" class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] md:w-auto max-w-lg card p-4 flex flex-col md:flex-row items-center gap-4 z-50 animate-bounce cursor-default shadow-2xl" style="animation: slideUp 0.5s ease-out forwards; animation-iteration-count: 1;">
+        <div class="text-sm">
+            <span class="font-bold block md:inline">We use cookies</span> 
+            <span class="text-text-secondary">to improve your experience and analyze traffic.</span>
+        </div>
+        <div class="flex gap-2 w-full md:w-auto shrink-0">
+            <button class="flex-1 md:flex-none border border-divider hover:bg-divider text-text-primary px-4 py-2 text-xs font-bold rounded-lg transition-colors" onclick="document.getElementById('cookies-banner').style.display='none'">Decline</button>
+            <button class="flex-1 md:flex-none btn-primary px-4 py-2 text-xs font-bold rounded-lg" onclick="document.getElementById('cookies-banner').style.display='none'">Accept All</button>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        // Dark Mode Logic
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+        }
+
+        // Multi-contact Logic
+        const mcInput = document.getElementById('multi-contact-input');
+        const mcContainer = document.getElementById('multi-contact-container');
+        const mcError = document.getElementById('multi-contact-error');
+
+        function validateContact(value) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            const phoneRegex = /^\+?[\d\s-]{7,15}$/;
+            return emailRegex.test(value) || phoneRegex.test(value);
+        }
+
+        function createChip(value) {
+            const span = document.createElement('span');
+            span.className = 'bg-primary/10 text-primary border border-primary/20 text-xs font-semibold px-2 py-1.5 rounded-lg flex items-center gap-1';
+            span.innerHTML = `
+                ${value}
+                <button type="button" class="text-primary hover:text-error ml-1 transition-colors" onclick="this.parentElement.remove()">&times;</button>
+            `;
+            return span;
+        }
+
+        mcInput.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter' || event.key === ',') {
+                event.preventDefault();
+                processMultiContactInput();
+            }
+        });
+
+        mcInput.addEventListener('blur', function() {
+            processMultiContactInput();
+        });
+
+        // Handle pasting lists (comma, newline, space separated)
+        mcInput.addEventListener('paste', function(event) {
+            event.preventDefault();
+            const pasteData = (event.clipboardData || window.clipboardData).getData('text');
+            const items = pasteData.split(/[\n,; ]+/);
+            
+            let hasError = false;
+            items.forEach(item => {
+                const val = item.trim();
+                if(val) {
+                    if(validateContact(val)) {
+                        mcContainer.insertBefore(createChip(val), mcInput);
+                    } else {
+                        hasError = true;
+                    }
+                }
+            });
+            mcInput.value = '';
+            mcError.classList.toggle('hidden', !hasError);
+        });
+
+        function processMultiContactInput() {
+            const val = mcInput.value.trim().replace(/,$/, '');
+            if (!val) return;
+
+            if (validateContact(val)) {
+                mcContainer.insertBefore(createChip(val), mcInput);
+                mcInput.value = '';
+                mcError.classList.add('hidden');
+            } else {
+                mcError.classList.remove('hidden');
+            }
+        }
+
+        // Stylized Search Dropdown Logic
+        function toggleSearchDropdown() {
+            const menu = document.getElementById('sd-menu');
+            const chevron = document.getElementById('sd-chevron');
+            const isVisible = menu.classList.contains('opacity-100');
+            
+            if (isVisible) {
+                menu.classList.replace('opacity-100', 'opacity-0');
+                menu.classList.replace('visible', 'invisible');
+                chevron.style.transform = '';
+            } else {
+                menu.classList.replace('opacity-0', 'opacity-100');
+                menu.classList.replace('invisible', 'visible');
+                chevron.style.transform = 'rotate(180deg)';
+                setTimeout(() => document.getElementById('sd-input').focus(), 50);
+            }
+        }
+
+        function filterSearchDropdown() {
+            const filter = document.getElementById('sd-input').value.toLowerCase();
+            const li = document.getElementById('sd-list').getElementsByTagName('li');
+            for (let i = 0; i < li.length; i++) {
+                const txt = li[i].textContent || li[i].innerText;
+                li[i].style.display = txt.toLowerCase().indexOf(filter) > -1 ? "" : "none";
+            }
+        }
+
+        function selectSdItem(val) {
+            document.getElementById('sd-display').value = val;
+            
+            // clear active styling
+            const li = document.getElementById('sd-list').getElementsByTagName('li');
+            for(let i = 0; i < li.length; i++) {
+                li[i].className = 'px-3 py-2 text-sm hover:bg-primary/10 hover:text-primary rounded-md cursor-pointer transition-colors';
+                if(li[i].innerText === val) {
+                    li[i].className = 'px-3 py-2 text-sm bg-primary/10 text-primary font-semibold rounded-md cursor-pointer transition-colors';
+                }
+            }
+            toggleSearchDropdown();
+        }
+
+        // Close dropdowns on outside click
+        document.addEventListener('click', function(e) {
+            const sdContainer = document.getElementById('search-dropdown-container');
+            if (sdContainer && !sdContainer.contains(e.target)) {
+                const menu = document.getElementById('sd-menu');
+                if (menu && menu.classList.contains('opacity-100')) toggleSearchDropdown();
+            }
+            
+            const locContainer = document.getElementById('location-dropdown-container');
+            if (locContainer && !locContainer.contains(e.target)) {
+                const locMenu = document.getElementById('loc-menu');
+                if (locMenu) {
+                    locMenu.classList.replace('opacity-100', 'opacity-0');
+                    locMenu.classList.replace('visible', 'invisible');
+                }
+            }
+        });
+
+        // Async Location Search Logic (OSM Nominatim)
+        let locTimeout = null;
+        function debounceLocationSearch(query) {
+            clearTimeout(locTimeout);
+            const menu = document.getElementById('loc-menu');
+            const list = document.getElementById('loc-list');
+            const spinner = document.getElementById('loc-spinner');
+            
+            if (query.length < 3) {
+                menu.classList.replace('opacity-100', 'opacity-0');
+                menu.classList.replace('visible', 'invisible');
+                list.innerHTML = '<li class="px-3 py-2 text-text-secondary text-xs text-center">Type at least 3 characters...</li>';
+                return;
+            }
+            
+            locTimeout = setTimeout(() => {
+                spinner.classList.remove('hidden');
+                menu.classList.replace('opacity-0', 'opacity-100');
+                menu.classList.replace('invisible', 'visible');
+                
+                fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`)
+                    .then(res => res.json())
+                    .then(data => {
+                        spinner.classList.add('hidden');
+                        list.innerHTML = '';
+                        if (data.length === 0) {
+                            list.innerHTML = '<li class="px-3 py-2 text-text-secondary text-xs text-center">No results found</li>';
+                            return;
+                        }
+                        data.forEach(item => {
+                            const li = document.createElement('li');
+                            li.className = 'px-3 py-2 hover:bg-primary/10 hover:text-primary rounded-md cursor-pointer transition-colors text-sm border-b border-divider last:border-0 truncate';
+                            li.innerText = item.display_name;
+                            li.title = item.display_name;
+                            li.onclick = () => {
+                                document.getElementById('loc-input').value = item.display_name;
+                                menu.classList.replace('opacity-100', 'opacity-0');
+                                menu.classList.replace('visible', 'invisible');
+                            };
+                            list.appendChild(li);
+                        });
+                    })
+                    .catch(() => {
+                        spinner.classList.add('hidden');
+                        list.innerHTML = '<li class="px-3 py-2 text-error text-xs text-center">Error fetching results</li>';
+                    });
+            }, 600);
+        }
+    </script>
+    <style>
+        @keyframes slideUp {
+            from { transform: translate(-50%, 100%); opacity: 0; }
+            to { transform: translate(-50%, 0); opacity: 1; }
+        }
+    </style>
+</body>
+</html>

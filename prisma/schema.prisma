@@ -1,0 +1,97 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  passwordHash  String?
+  role          UserRole  @default(USER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  pages         Page[]
+  subscription  Subscription?
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+model Subscription {
+  id            String             @id @default(cuid())
+  userId        String             @unique
+  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan          SubscriptionPlan   @default(FREE)
+  status        SubscriptionStatus @default(ACTIVE)
+  paystackId    String?            @unique
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+}
+
+enum SubscriptionPlan {
+  FREE
+  PRO
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAST_DUE
+  CANCELED
+}
+
+model Page {
+  id          String       @id @default(cuid())
+  userId      String
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  handle      String       @unique
+  title       String?
+  description String?
+  isPublic    Boolean      @default(false)
+  category    PageCategory @default(GENERIC)
+  theme       Json?        // Stores CSS Variables/Tokens for this page
+  
+  blocks      Block[]
+  
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+enum PageCategory {
+  FOOD_MENU
+  RESUME
+  EPK
+  GENERIC
+}
+
+model Block {
+  id        String    @id @default(cuid())
+  pageId    String
+  page      Page      @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  type      BlockType
+  content   Json      // The actual data/configuration for the block
+  order     Int       @default(0)
+  
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  
+  @@index([pageId])
+}
+
+enum BlockType {
+  TEXT
+  LINK
+  IMAGE
+  AUDIO
+  VIDEO
+  GRID
+  CONTACT
+  PRODUCT
+}
