@@ -63,3 +63,19 @@ Implement Auth: Secure login/register flows.
 Build Core Components: Atoms (Buttons, Inputs) → Molecules (Form Fields) → Organisms (Page Editor).
 Integrate Paystack: Setup subscription webhook handlers.
 Deploy & Push: Ensure initial commit is pushed to the target GitHub repository.
+
+##Auth
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_cmljaC1kaW5nby0xMi5jbGVyay5hY2NvdW50cy5kZXYk
+CLERK_SECRET_KEY=sk_test_GSvmvojRojCMB7FoFisqOJncdCh8NLPpcKJxb2EEKR
+
+##neon.tech
+postgresql://neondb_owner:npg_AjXtNOQ3R8Fe@ep-blue-tooth-an9rtuhu-pooler.c-6.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+
+##Email
+Email address : notifications@stickylynx.online
+Password : Galvatron101!
+Incoming Server : imap0101.titan.email  
+                 Encryption: SSL/TLS (Port: 993)
+
+Outgoing Server : smtp0101.titan.email
+                 Encryption: SSL/TLS (Port: 465)

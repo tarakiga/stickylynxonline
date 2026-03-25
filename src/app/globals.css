@@ -13,6 +13,8 @@
   --color-success: var(--color-success);
   --color-warning: var(--color-warning);
   --color-error: var(--color-error);
+  --color-accent: var(--color-accent);
+  --color-info: var(--color-info);
 
   --shadow-custom: var(--shadow-custom);
   --shadow-premium: var(--shadow-custom);
@@ -25,6 +27,8 @@
   --color-primary-hover: #5B21B6;
   --color-primary-light: #EDE9FE;
   --color-secondary: #10B981;
+  --color-accent: #FF3366;
+  --color-info: #00E5FF;
   --color-background: #F9FAFB;
   --color-surface: #FFFFFF;
   --color-text-primary: #111827;
@@ -41,6 +45,8 @@
   --color-primary-hover: #A78BFA;
   --color-primary-light: #4C1D95;
   --color-secondary: #34D399;
+  --color-accent: #FF6690;
+  --color-info: #67EFFF;
   --color-background: #0F172A;
   --color-surface: #1E293B;
   --color-text-primary: #F8FAFC;

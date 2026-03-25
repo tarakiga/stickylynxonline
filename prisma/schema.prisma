@@ -4,7 +4,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -57,6 +56,7 @@ model Page {
   isPublic    Boolean      @default(false)
   category    PageCategory @default(GENERIC)
   theme       Json?        // Stores CSS Variables/Tokens for this page
+  clientEmail String?      // For notifications
   
   blocks      Block[]
   
@@ -69,6 +69,7 @@ enum PageCategory {
   RESUME
   EPK
   GENERIC
+  PROJECT_PORTAL
 }
 
 model Block {
@@ -94,4 +95,13 @@ enum BlockType {
   GRID
   CONTACT
   PRODUCT
+  PROJECT_HEADER
+  STATUS_SUMMARY
+  TIMELINE
+  TASK_BOARD
+  FEEDBACK_LIST
+  FEEDBACK_FORM
+  COMMENT_THREAD
+  DELIVERABLES
+  BILLING_OVERVIEW
 }

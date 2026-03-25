@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Asap } from "next/font/google";
+import { ClerkProvider } from '@clerk/nextjs'
 import "./globals.css";
 
 const asap = Asap({
@@ -18,10 +19,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${asap.variable} antialiased`}>
-      <body className="min-h-screen flex flex-col">
-        {children}
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="en" className={`${asap.variable} antialiased`}>
+        <body className="min-h-screen flex flex-col">
+          {children}
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

@@ -1,0 +1,77 @@
+import prisma from "@/lib/prisma";
+import { sendEmail } from "@/lib/email";
+
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ pageId: string }> }
+) {
+  const { pageId } = await params;
+
+  const page = await prisma.page.findUnique({
+    where: { handle: pageId },
+    include: { 
+      user: true,
+      blocks: { orderBy: { order: "asc" } } 
+    },
+  });
+  if (!page) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  const body = await request.json();
+  const { taskId, stageId, action } = body;
+
+  if (!taskId || !stageId || action !== "approve") {
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+  }
+
+  const timelineBlock = page.blocks.find((b) => b.type === "TIMELINE");
+  if (!timelineBlock) {
+    return NextResponse.json({ error: "No timeline" }, { status: 404 });
+  }
+
+  const content = timelineBlock.content as Record<string, unknown>;
+  const milestones = (content.milestones || []) as Array<{
+    id: string;
+    tasks: Array<{ id: string; status: string }>;
+  }>;
+
+  let found = false;
+  for (const milestone of milestones) {
+    if (milestone.id !== stageId) continue;
+    for (const task of milestone.tasks || []) {
+      if (task.id !== taskId) continue;
+      task.status = "done";
+      found = true;
+      break;
+    }
+    if (found) break;
+  }
+
+  if (!found) {
+    return NextResponse.json({ error: "Task not found" }, { status: 404 });
+  }
+
+  await prisma.block.update({
+    where: { id: timelineBlock.id },
+    data: { content: { ...content, milestones } as never },
+  });
+
+  // Notify Freelancer
+  if (page.user?.email) {
+    const task = milestones.flatMap(m => m.tasks).find(t => t.id === taskId);
+    await sendEmail({
+      to: page.user.email,
+      subject: `Task Approved: ${task?.title || 'Project Update'}`,
+      html: `
+        <div style="font-family: sans-serif; padding: 20px;">
+          <h2 style="color: #7c3aed;">Great news!</h2>
+          <p>The client has approved your task: <strong>${task?.title}</strong> on the project <strong>${page.title}</strong>.</p>
+          <p>Visit your dashboard to view the next steps.</p>
+        </div>
+      `
+    });
+  }
+
+  return NextResponse.json({ success: true });
+}
