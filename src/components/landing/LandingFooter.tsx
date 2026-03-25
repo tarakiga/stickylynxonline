@@ -55,7 +55,7 @@ export function LandingFooter() {
         </div>
         
         <div className="border-t border-divider pt-12 flex flex-col md:flex-row items-center justify-between gap-6">
-           <p className="text-xs font-bold text-text-secondary tracking-wide">© {years} Stickylynx. A product of Tarakiga. Made with passion for the creator economy.</p>
+           <p className="text-xs font-bold text-text-secondary tracking-wide">© {years} Stickylynx. A product of Artamenix. Made with passion for the creator economy.</p>
            <div className="flex gap-4">
               <div className="w-10 h-10 bg-background border border-divider rounded-xl hover:bg-primary hover:text-white transition-all flex items-center justify-center cursor-pointer shadow-sm">
                  <span className="text-[10px] font-black uppercase">En</span>

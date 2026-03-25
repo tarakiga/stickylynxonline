@@ -17,12 +17,12 @@ export function LandingHero() {
           </div>
           
           <h1 className="text-4xl sm:text-6xl font-black text-text-primary tracking-tight leading-[1.1]">
-            Your Professional Universe, <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-purple-500 to-accent">Simplified into One Lynx.</span>
+            Launch a powerful single page <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-purple-500 to-accent">in minutes!</span>
           </h1>
           
-          <p className="text-lg sm:text-xl text-text-secondary max-w-lg leading-relaxed font-medium">
-            Create stunning EPKs, digital menus, portfolios, and project portals in minutes. Designed for the modern professional who demands speed and precision.
+          <p className="text-lg sm:text-xl text-text-secondary max-w-xl leading-relaxed font-medium">
+            Create shareable pages for menus, resumes, press kits, EPKs and client portals with one design-system-driven builder, no code, no clutter, just clear links and polished layouts.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4">
