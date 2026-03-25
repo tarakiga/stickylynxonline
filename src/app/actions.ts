@@ -1,7 +1,7 @@
 "use server";
 import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
-import { PageCategory, BlockType } from "@prisma/client";
+import { PageCategory, BlockType, Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
 export async function createLynxPage(data: {
@@ -9,10 +9,15 @@ export async function createLynxPage(data: {
   handle: string;
   category: string;
   clientEmail?: string;
-  config?: any;
+  config?: Prisma.InputJsonValue;
 }) {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
+
+  const isValidHandle = /^[a-z0-9-]+$/.test(data.handle);
+  if (!isValidHandle) {
+    return { error: "Handle must contain only lowercase letters, numbers, and hyphens (no spaces)." };
+  }
 
   const existing = await prisma.page.findUnique({
     where: { handle: data.handle }
@@ -33,13 +38,14 @@ export async function createLynxPage(data: {
         handle: data.handle,
         category,
         clientEmail: data.clientEmail,
-        theme: data.config ? data.config : undefined
+        theme: data.config ? (data.config as Prisma.InputJsonValue) : undefined
       }
     });
 
     // Seed default blocks if category is PROJECT_PORTAL
     if (category === "PROJECT_PORTAL") {
-      const clientName = data.config?.clientName || "Your Client";
+      const cfg = data.config as Record<string, unknown> | undefined;
+      const clientName = typeof cfg?.clientName === "string" ? (cfg!.clientName as string) : "Your Client";
       
       const defaultBlocks = [
         { type: "PROJECT_HEADER", content: { title: data.title, clientName }, order: 0 },
@@ -56,7 +62,7 @@ export async function createLynxPage(data: {
         { type: "COMMENT_THREAD", content: { messages: [] }, order: 5 }
       ];
 
-      await Promise.all(defaultBlocks.map((b, i) => 
+      await Promise.all(defaultBlocks.map((b) => 
         tx.block.create({
           data: {
             pageId: page.id,
@@ -70,8 +76,9 @@ export async function createLynxPage(data: {
 
     // Seed default blocks for EPK
     if (category === "EPK") {
-      const artistName = data.config?.artistName || data.title;
-      const genre = data.config?.genre || "";
+      const cfg = data.config as Record<string, unknown> | undefined;
+      const artistName = typeof cfg?.artistName === "string" ? (cfg!.artistName as string) : data.title;
+      const genre = typeof cfg?.genre === "string" ? (cfg!.genre as string) : "";
 
       const epkBlocks = [
         { type: "TEXT", content: { section: "hero", artistName, tagline: "", genre, profileImage: "", coverImage: "" }, order: 0 },

@@ -58,7 +58,7 @@ export function CreateLynxDrawer() {
       }
       
       router.push(`/dashboard/editor/${result.pageId}`);
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error(e);
       alert("Something went wrong while communicating with the database.");
       setIsLoading(false);
@@ -112,9 +112,9 @@ export function CreateLynxDrawer() {
            {/* Step 1: Core details */}
            {step === 1 && (
              <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-               <div>
+              <div>
                  <h3 className="font-bold text-2xl text-text-primary tracking-tight mb-2">Basic Information</h3>
-                 <p className="text-sm text-text-secondary">Let's give your new Lynx a name and a recognizable URL so people can visit you.</p>
+                <p className="text-sm text-text-secondary">Let&apos;s give your new Lynx a name and a recognizable URL so people can visit you.</p>
                </div>
                
                <Input 
@@ -125,20 +125,37 @@ export function CreateLynxDrawer() {
                  autoFocus
                />
                
-               <div className="flex flex-col">
+              <div className="flex flex-col">
                   <span className="text-sm font-semibold text-text-secondary mb-1 block">URL Handle</span>
-                  <div className="flex items-stretch bg-background border border-divider rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-primary focus-within:border-primary transition-all shadow-sm">
+                  {(() => {
+                    const isValidHandle = /^[a-z0-9-]+$/.test(handle) && handle.length > 0;
+                    return (
+                  <div className={`flex items-stretch bg-background rounded-xl overflow-hidden transition-all shadow-sm border ${isValidHandle ? "border-divider focus-within:ring-2 focus-within:ring-primary focus-within:border-primary" : "border-error focus-within:ring-2 focus-within:ring-error/30 focus-within:border-error bg-error/5"}`}>
                     <span className="px-4 flex items-center bg-surface border-r border-divider text-text-secondary font-semibold text-sm">
-                      lynx.com/
+                      stickylynx.online/
                     </span>
                     <input 
                       type="text"
                       className="flex-1 px-4 py-3 placeholder:text-text-secondary/50 outline-none border-none bg-transparent w-full text-text-primary"
                       placeholder="your-unique-handle"
                       value={handle}
-                      onChange={(e) => setHandle(e.target.value)}
+                      onChange={(e) => {
+                        const raw = e.target.value;
+                        const sanitized = raw
+                          .toLowerCase()
+                          .replace(/\s+/g, "-")
+                          .replace(/[^a-z0-9-]/g, "-")
+                          .replace(/-+/g, "-")
+                          .replace(/^-|-$/g, "");
+                        setHandle(sanitized);
+                      }}
                     />
                   </div>
+                    )
+                  })()}
+                  {!/^[a-z0-9-]+$/.test(handle || "") && handle.length > 0 && (
+                    <p className="text-xs text-error mt-2">Handle can only contain lowercase letters, numbers, and hyphens (no spaces).</p>
+                  )}
                </div>
              </div>
            )}
@@ -201,8 +218,8 @@ export function CreateLynxDrawer() {
               </Button>
            )}
            
-           {step === 1 && (
-             <Button variant="primary" onClick={handleNext} className="flex-1 py-3.5 text-base cursor-pointer flex items-center justify-center gap-2 shadow-premium" disabled={!title || !handle}>
+          {step === 1 && (
+            <Button variant="primary" onClick={handleNext} className="flex-1 py-3.5 text-base cursor-pointer flex items-center justify-center gap-2 shadow-premium" disabled={!title || !/^[a-z0-9-]+$/.test(handle)}>
                 Continue
                 <ChevronRight size={20} />
              </Button>
