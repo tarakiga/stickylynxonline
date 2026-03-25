@@ -1,11 +1,7 @@
 import 'dotenv/config'
 import { PrismaClient, PageCategory, BlockType } from '@prisma/client'
 
-const prisma = new PrismaClient({
-  datasources: {
-    db: { url: process.env.DATABASE_URL }
-  }
-})
+const prisma = new PrismaClient()
 
 async function main() {
   // 1. Get or Create User

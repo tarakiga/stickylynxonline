@@ -1,5 +1,8 @@
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { sendEmail } from "@/lib/email";
+
+export const dynamic = "force-dynamic";
 
 export async function PUT(
   request: NextRequest,
@@ -33,7 +36,7 @@ export async function PUT(
   const content = timelineBlock.content as Record<string, unknown>;
   const milestones = (content.milestones || []) as Array<{
     id: string;
-    tasks: Array<{ id: string; status: string }>;
+    tasks: Array<{ id: string; status: string; title?: string }>;
   }>;
 
   let found = false;
