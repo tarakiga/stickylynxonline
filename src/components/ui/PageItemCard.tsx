@@ -25,6 +25,16 @@ export function PageItemCard({ id, title, handle, category, imageUrl }: PageItem
   const publicUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/${handle}`;
   const qrUrl = QR_API_BASE ? `${QR_API_BASE}/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(publicUrl)}` : "";
 
+  const catLabel = (category || "").replace(/_/g, " ");
+  const catVariant: "success" | "warning" | "error" | "info" | "primary" | "neutral" =
+    category === "PROJECT_PORTAL"
+      ? "primary"
+      : category === "EPK"
+      ? "info"
+      : /MENU|FOOD/i.test(category || "")
+      ? "success"
+      : "neutral";
+
   function handlePreview() {
     window.open(`/${handle}`, "_blank");
   }
@@ -65,7 +75,10 @@ export function PageItemCard({ id, title, handle, category, imageUrl }: PageItem
             )}
           </div>
           <div className="min-w-0">
-            <h3 className="font-bold text-text-primary text-sm sm:text-base truncate">{title}</h3>
+            <div className="flex items-center gap-2">
+              <h3 className="font-bold text-text-primary text-sm sm:text-base truncate">{title}</h3>
+              <Badge variant={catVariant} className="text-[9px] px-1.5 py-0 uppercase">{catLabel}</Badge>
+            </div>
             <p className="text-[10px] text-text-secondary truncate">/{handle}</p>
           </div>
         </div>

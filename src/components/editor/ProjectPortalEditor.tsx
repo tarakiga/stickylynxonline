@@ -9,7 +9,6 @@ import { Modal } from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
-import { StageReviewDrawer } from "@/components/editor/StageReviewDrawer";
 import { TaskCard } from "@/components/editor/TaskCard";
 import { DeliverableCard } from "@/components/editor/DeliverableCard";
 import type { MilestoneWithReviews, Task, TaskStatus, Deliverable, DeliverableType } from "@/types/editor";
@@ -60,7 +59,6 @@ export function ProjectPortalEditor({ page }: { page: any }) {
   const [currentStep, setCurrentStep] = React.useState<number>(timelineContent.currentStep || 1);
   const [showMilestoneModal, setShowMilestoneModal] = React.useState(false);
   const [newMilestoneLabel, setNewMilestoneLabel] = React.useState("");
-  const [selectedStageIndex, setSelectedStageIndex] = React.useState<number | null>(null);
 
   /* ── Status note ─────────────────────────────────────────── */
   const [statusOverride, setStatusOverride] = React.useState<string | null>(statusContent.manualText || null);
@@ -92,6 +90,7 @@ export function ProjectPortalEditor({ page }: { page: any }) {
   const [newDelTitle, setNewDelTitle] = React.useState("");
   const [newDelDesc, setNewDelDesc] = React.useState("");
   const [newDelValue, setNewDelValue] = React.useState("");
+  const SHOW_INVOICING = process.env.NEXT_PUBLIC_SHOW_INVOICING === "true";
 
   /* ── Edit Task modal state ────────────────────────────────── */
   const [editingTask, setEditingTask] = React.useState<Task | null>(null);
@@ -102,14 +101,10 @@ export function ProjectPortalEditor({ page }: { page: any }) {
   /* ── Delete confirm state (milestones) ────────────────────── */
   const [milestoneToDelete, setMilestoneToDelete] = React.useState<string | null>(null);
 
-  /* ── Announcement state ──────────────────────────────────── */
-  const [announcement, setAnnouncement] = React.useState("");
-  const [announcementSent, setAnnouncementSent] = React.useState(false);
+  
 
 
-  /* ═══════════════════════════════════════════════════════════ */
-  /*  SAVE: Persist all editor state to API                     */
-  /* ═══════════════════════════════════════════════════════════ */
+  /* SAVE */
   const handleSave = async () => {
     setSaving(true);
     try {
@@ -250,25 +245,6 @@ export function ProjectPortalEditor({ page }: { page: any }) {
   };
   const handleDeleteDeliverable = (id: string) => { setDeliverables((prev) => prev.filter((d) => d.id !== id)); markDirty(); };
 
-  /* ── Handlers: Announcement ─────────────────────────────── */
-  const handlePostAnnouncement = () => {
-    if (!announcement.trim()) return;
-    // Add announcement as a comment on the current stage
-    const currentMilestone = milestones[currentStep - 1];
-    if (currentMilestone) {
-      handleStageUpdate({
-        ...currentMilestone,
-        comments: [...currentMilestone.comments, {
-          id: uid(), stageId: currentMilestone.id, author: "You",
-          text: announcement.trim(), timestamp: new Date().toLocaleString(), resolved: false,
-        }],
-      });
-    }
-    setAnnouncementSent(true);
-    setTimeout(() => setAnnouncementSent(false), 3000);
-    setAnnouncement("");
-  };
-
   /* ── Derived ────────────────────────────────────────────── */
   const allComments = milestones.flatMap((m) =>
     m.comments.map((c) => ({ ...c, stageLabel: m.label }))
@@ -309,9 +285,6 @@ export function ProjectPortalEditor({ page }: { page: any }) {
   }, [milestones, currentStep, totalTaskCount]);
 
   const statusNote = statusOverride ?? autoStatusNote;
-
-  // Selected stage for drawer
-  const selectedMilestone = selectedStageIndex !== null ? milestones[selectedStageIndex] : null;
 
   return (
     <div className="w-full max-w-5xl mx-auto space-y-8 animate-in fade-in duration-500 pb-16">
@@ -409,7 +382,7 @@ export function ProjectPortalEditor({ page }: { page: any }) {
                     <StepProgress
                       steps={stepsWithBadges}
                       currentStep={currentStep}
-                      onStepClick={(index) => setSelectedStageIndex(index)}
+                      onStepClick={(index) => setViewedStageIndex(index)}
                     />
                 </div>
              </div>
@@ -481,17 +454,18 @@ export function ProjectPortalEditor({ page }: { page: any }) {
            </div>
          )}
 
-         {/* Billing snippet */}
-         <div className="bg-surface border border-divider rounded-xl p-5 shadow-sm flex items-center justify-between group hover:border-primary/30 transition-colors">
-            <div className="flex items-center gap-4">
-               <div className="w-12 h-12 rounded-full bg-info/10 text-info flex items-center justify-center shrink-0"><FileText size={20} /></div>
-               <div>
-                  <h4 className="font-bold text-sm text-text-primary mb-0.5">Deposit Invoice</h4>
-                  <Badge variant="success" className="text-[10px] px-2 py-0.5 rounded-md">PAID</Badge>
-               </div>
-            </div>
-            <Button variant="secondary" onClick={() => window.alert("Invoice management coming soon.")} className="text-xs py-2 px-4 rounded-xl shadow-sm cursor-pointer outline-none">Manage</Button>
-         </div>
+        {SHOW_INVOICING && (
+          <div className="bg-surface border border-divider rounded-xl p-5 shadow-sm flex items-center justify-between group hover:border-primary/30 transition-colors">
+             <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-info/10 text-info flex items-center justify-center shrink-0"><FileText size={20} /></div>
+                <div>
+                   <h4 className="font-bold text-sm text-text-primary mb-0.5">Deposit Invoice</h4>
+                   <Badge variant="success" className="text-[10px] px-2 py-0.5 rounded-md">PAID</Badge>
+                </div>
+             </div>
+             <Button variant="secondary" onClick={() => window.alert("Invoice management coming soon.")} className="text-xs py-2 px-4 rounded-xl shadow-sm cursor-pointer outline-none">Manage</Button>
+          </div>
+        )}
        </div>
 
        {/* ── Activity Timeline (stage-linked feedback) ───────── */}
@@ -507,11 +481,11 @@ export function ProjectPortalEditor({ page }: { page: any }) {
              <div className="mt-8 hidden md:block space-y-3">
                  <div className="bg-surface border border-divider p-4 rounded-xl text-center shadow-sm">
                      <p className="text-3xl font-bold text-text-primary">{pendingCommentCount}</p>
-                     <p className="text-xs font-bold tracking-widest text-text-secondary uppercase mt-1">Pending {pendingCommentCount === 1 ? "Item" : "Items"}</p>
+                    <p className="text-xs font-bold tracking-widest text-text-secondary uppercase mt-1">Pending {pendingCommentCount === 1 ? "Item" : "Items"}</p>
                  </div>
                  <div className="bg-surface border border-divider p-4 rounded-xl text-center shadow-sm">
                      <p className="text-3xl font-bold text-primary">{totalReviewCount}</p>
-                     <p className="text-xs font-bold tracking-widest text-text-secondary uppercase mt-1">Reviews</p>
+                    <p className="text-xs font-bold tracking-widest text-text-secondary uppercase mt-1">{totalReviewCount === 1 ? "Review" : "Reviews"}</p>
                  </div>
              </div>
           </div>
@@ -548,10 +522,10 @@ export function ProjectPortalEditor({ page }: { page: any }) {
                          }} className="text-[10px] py-1 px-2 rounded-md h-auto cursor-pointer hover:bg-success/10 hover:text-success">
                            <CheckCircle2 size={10} className="mr-1" /> Resolve
                          </Button>
-                         <Button variant="ghost" onClick={() => {
-                           const idx = milestones.findIndex((m) => m.id === c.stageId);
-                           if (idx !== -1) setSelectedStageIndex(idx);
-                         }} className="text-[10px] py-1 px-2 rounded-md h-auto cursor-pointer hover:bg-primary/10 hover:text-primary">
+                        <Button variant="ghost" onClick={() => {
+                          const idx = milestones.findIndex((m) => m.id === c.stageId);
+                          if (idx !== -1) setViewedStageIndex(idx);
+                        }} className="text-[10px] py-1 px-2 rounded-md h-auto cursor-pointer hover:bg-primary/10 hover:text-primary">
                            View Stage
                          </Button>
                        </div>
@@ -559,37 +533,8 @@ export function ProjectPortalEditor({ page }: { page: any }) {
                    </div>
                  ))}
              </div>
-
-             {/* Post update linked to current stage */}
-             <div className="border-t border-divider pt-6">
-                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-3 gap-2">
-                    <div>
-                      <h4 className="font-bold text-sm tracking-wide text-text-primary">Post Update</h4>
-                      <p className="text-[10px] text-text-secondary">Linked to <strong>{milestones[currentStep - 1]?.label || "current stage"}</strong></p>
-                    </div>
-                    <span className="text-xs text-text-secondary font-semibold">Notifies {clientName} via Email</span>
-                 </div>
-                 <Textarea className="px-5 py-4 min-h-[100px] bg-background shadow-inner mb-4" placeholder="Write an update for the current stage..." value={announcement} onChange={(e) => setAnnouncement(e.target.value)} />
-                 <div className="flex items-center justify-end gap-3">
-                   {announcementSent && <span className="text-xs text-success font-bold animate-in fade-in">Posted!</span>}
-                   <Button variant="primary" onClick={handlePostAnnouncement} disabled={!announcement.trim()} className="py-2.5 px-6 rounded-xl shadow-sm text-sm font-bold cursor-pointer">Post Update</Button>
-                 </div>
-             </div>
           </div>
        </Card>
-
-       {/* ─── Stage Review Drawer ─────────────────────────────── */}
-       <StageReviewDrawer
-         isOpen={selectedStageIndex !== null}
-         onClose={() => setSelectedStageIndex(null)}
-         milestone={selectedMilestone}
-         stageIndex={selectedStageIndex ?? 0}
-         isDone={selectedStageIndex !== null ? selectedStageIndex < currentStep - 1 : false}
-         isActive={selectedStageIndex !== null ? selectedStageIndex === currentStep - 1 : false}
-         clientName={clientName}
-         pageHandle={page.handle}
-         onUpdate={handleStageUpdate}
-       />
 
        {/* ─── Modals ─────────────────────────────────────────── */}
 

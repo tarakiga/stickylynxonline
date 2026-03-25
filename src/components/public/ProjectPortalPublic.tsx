@@ -185,6 +185,9 @@ export function ProjectPortalPublic({ page }: { page: any }) {
     m.tasks.map((t) => ({ ...t, stageLabel: m.label }))
   );
 
+  const SHOW_WAITLIST = process.env.NEXT_PUBLIC_SHOW_WAITLIST === "true";
+  const SHOW_INVOICING = process.env.NEXT_PUBLIC_SHOW_INVOICING === "true";
+
   return (
     <div className="max-w-screen-md mx-auto min-h-screen bg-background text-text-primary px-4 py-8 pb-32 flex flex-col gap-6 animate-in fade-in duration-700">
       
@@ -278,61 +281,42 @@ export function ProjectPortalPublic({ page }: { page: any }) {
         </section>
       )}
 
-      {/* Commercials Tip / Secure Area */}
-      <div className="bg-secondary/5 border border-secondary/10 rounded-3xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4 group">
-          <div className="flex items-center gap-4 text-center sm:text-left">
-             <div className="w-12 h-12 rounded-full bg-secondary/10 text-secondary flex items-center justify-center shrink-0">
-                <CheckCircle2 size={24} />
-             </div>
-             <div>
-                <h4 className="font-bold text-sm text-text-primary mb-0.5">Commercials & Billing</h4>
-                <p className="text-xs text-text-secondary">Project deposit has been securely cleared via Paystack.</p>
-             </div>
-          </div>
-          <Button variant="outline" className="text-xs py-2 px-6 rounded-xl font-bold h-auto shadow-sm cursor-pointer hover:bg-secondary hover:text-white transition-all">View Invoices</Button>
-      </div>
+      {SHOW_INVOICING && (
+        <div className="bg-secondary/5 border border-secondary/10 rounded-3xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4 group">
+            <div className="flex items-center gap-4 text-center sm:text-left">
+               <div className="w-12 h-12 rounded-full bg-secondary/10 text-secondary flex items-center justify-center shrink-0">
+                  <CheckCircle2 size={24} />
+               </div>
+               <div>
+                  <h4 className="font-bold text-sm text-text-primary mb-0.5">Commercials & Billing</h4>
+                  <p className="text-xs text-text-secondary">Project deposit has been securely cleared via Paystack.</p>
+               </div>
+            </div>
+            <Button variant="outline" className="text-xs py-2 px-6 rounded-xl font-bold h-auto shadow-sm cursor-pointer hover:bg-secondary hover:text-white transition-all">View Invoices</Button>
+        </div>
+      )}
 
-      {/* 4. Feedback Fly-in (Section 5.2 in PRD) */}
-      <section className="mt-4">
-          <div className="bg-surface border border-divider p-8 rounded-[2.5rem] shadow-premium space-y-6">
-              <div className="space-y-1">
-                 <h3 className="font-bold text-xl text-text-primary">Share Feedback</h3>
-                 <p className="text-sm text-text-secondary font-medium leading-relaxed">Leave comments, request changes, or simply say hi. All feedback is logged immediately.</p>
-              </div>
-
-              <div className="space-y-4">
-                 <textarea 
-                   className="w-full bg-background border border-divider rounded-3xl p-6 min-h-[140px] resize-none outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/5 transition-all text-text-primary text-base placeholder:opacity-50"
-                   placeholder="Your feedback or questions..."
-                 />
-                 <div className="flex justify-end">
-                    <Button variant="primary" className="py-3 px-8 rounded-2xl flex items-center gap-2 font-bold shadow-premium bg-primary text-white hover:opacity-90 active:scale-95 transition-all cursor-pointer border-none">
-                       <Send size={18} />
-                       Submit Feedback
-                    </Button>
-                 </div>
-              </div>
-          </div>
-      </section>
+      
 
       {/* Public Footer */}
       <footer className="text-center pt-8 pb-4">
          <p className="text-xs text-text-secondary font-bold tracking-[0.2em] uppercase opacity-50">Powered by Stickylynx</p>
       </footer>
 
-      {/* Sticky Bottom Action Bar (Section 5.3 in PRD) */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-sm z-50 animate-in slide-in-from-bottom-8 duration-500 delay-300">
-         <div className="bg-surface/90 backdrop-blur-xl border border-white/20 rounded-3xl p-3 flex items-center justify-between shadow-premium ring-1 ring-black/5">
+      {SHOW_WAITLIST && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-sm z-50 animate-in slide-in-from-bottom-8 duration-500 delay-300">
+          <div className="bg-surface/90 backdrop-blur-xl border border-white/20 rounded-3xl p-3 flex items-center justify-between shadow-premium ring-1 ring-black/5">
             <div className="flex items-center gap-3 pl-2">
-               <div className="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center font-bold text-lg shadow-sm">L</div>
-               <div>
-                  <h4 className="font-bold text-xs text-text-primary leading-tight">Stickylynx</h4>
-                  <p className="text-[10px] text-text-secondary font-bold uppercase tracking-widest leading-none">Create yours free</p>
-               </div>
+              <div className="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center font-bold text-lg shadow-sm">L</div>
+              <div>
+                <h4 className="font-bold text-xs text-text-primary leading-tight">Stickylynx</h4>
+                <p className="text-[10px] text-text-secondary font-bold uppercase tracking-widest leading-none">Create yours free</p>
+              </div>
             </div>
             <Button variant="primary" className="py-2 px-5 rounded-2xl text-xs font-bold shadow-sm cursor-pointer border-none text-white whitespace-nowrap">Join Waitlist</Button>
-         </div>
-      </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
