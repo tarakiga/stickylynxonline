@@ -1,7 +1,7 @@
 "use client";
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, FileText, BarChart, Settings, LogOut } from 'lucide-react';
+import { Home, FileText, BarChart, Settings, LogOut, Palette } from 'lucide-react';
 import { SignOutButton } from '@clerk/nextjs';
 
 export function Sidebar() {
@@ -9,6 +9,7 @@ export function Sidebar() {
 
   const links = [
     { name: 'Lynx', href: '/dashboard', icon: FileText },
+    { name: 'Branding', href: '/dashboard/branding', icon: Palette },
     { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart },
     { name: 'Settings', href: '/dashboard/settings', icon: Settings },
   ];

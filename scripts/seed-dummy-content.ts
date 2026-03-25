@@ -1,7 +1,15 @@
 import 'dotenv/config'
 import { PrismaClient, PageCategory, BlockType } from '@prisma/client'
+import pg from 'pg'
+import { PrismaPg } from '@prisma/adapter-pg'
 
-const prisma = new PrismaClient()
+const connectionString = process.env.DATABASE_URL
+if (!connectionString) {
+  throw new Error('Missing DATABASE_URL for Prisma seed script')
+}
+const pool = new pg.Pool({ connectionString })
+const adapter = new PrismaPg(pool)
+const prisma = new PrismaClient({ adapter })
 
 async function main() {
   // 1. Get or Create User

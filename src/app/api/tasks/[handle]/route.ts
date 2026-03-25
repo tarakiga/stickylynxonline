@@ -6,15 +6,15 @@ export const dynamic = "force-dynamic";
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ pageId: string }> }
+  { params }: { params: Promise<{ handle: string }> }
 ) {
-  const { pageId } = await params;
+  const { handle } = await params;
 
   const page = await prisma.page.findUnique({
-    where: { handle: pageId },
-    include: { 
+    where: { handle },
+    include: {
       user: true,
-      blocks: { orderBy: { order: "asc" } } 
+      blocks: { orderBy: { order: "asc" } },
     },
   });
   if (!page) {
@@ -60,19 +60,18 @@ export async function PUT(
     data: { content: { ...content, milestones } as never },
   });
 
-  // Notify Freelancer
   if (page.user?.email) {
-    const task = milestones.flatMap(m => m.tasks).find(t => t.id === taskId);
+    const task = milestones.flatMap((m) => m.tasks).find((t) => t.id === taskId);
     await sendEmail({
       to: page.user.email,
-      subject: `Task Approved: ${task?.title || 'Project Update'}`,
+      subject: `Task Approved: ${task?.title || "Project Update"}`,
       html: `
         <div style="font-family: sans-serif; padding: 20px;">
           <h2 style="color: #7c3aed;">Great news!</h2>
           <p>The client has approved your task: <strong>${task?.title}</strong> on the project <strong>${page.title}</strong>.</p>
           <p>Visit your dashboard to view the next steps.</p>
         </div>
-      `
+      `,
     });
   }
 

@@ -25,6 +25,7 @@ import { PageItemCard } from "@/components/ui/PageItemCard"
 import { ModalShowcase } from "./ModalShowcase"
 import { CategoryCard } from "@/components/ui/CategoryCard"
 import { PriceRepeater } from "@/components/ui/PriceRepeater"
+import { DEMO_ASSETS_ALLOWED } from "@/config/services"
 
 export default function DesignSystemPage() {
   return (
@@ -43,7 +44,7 @@ export default function DesignSystemPage() {
             title="the restaurant"
             handle="the-restaurant"
             category="FOOD_MENU"
-            imageUrl="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=150&q=80" 
+            imageUrl={DEMO_ASSETS_ALLOWED ? "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=150&q=80" : undefined} 
           />
           <PageItemCard 
             id="demo-2"
@@ -63,12 +64,12 @@ export default function DesignSystemPage() {
                  <CategoryCard 
                     title="Food & Drink" 
                     description="Curated templates for restaurants, cafes, and pop-up dining experiences with built-in menus." 
-                    imageUrl="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=400&q=80" 
+                    imageUrl={DEMO_ASSETS_ALLOWED ? "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=400&q=80" : undefined} 
                  />
                  <CategoryCard 
                     title="Music & Audio" 
                     description="Electronic Press Kits (EPKs), release radar, and tour dates for audio professionals." 
-                    imageUrl="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=400&q=80" 
+                    imageUrl={DEMO_ASSETS_ALLOWED ? "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=400&q=80" : undefined} 
                  />
               </div>
            </div>
@@ -79,13 +80,13 @@ export default function DesignSystemPage() {
                     layout="list"
                     title="Photography Portfolios" 
                     description="Showcase your visual work with high-resolution galleries and booking forms specifically designed for creatives." 
-                    imageUrl="https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=400&q=80" 
+                    imageUrl={DEMO_ASSETS_ALLOWED ? "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=400&q=80" : undefined} 
                  />
                  <CategoryCard 
                     layout="list"
                     title="Link in Bio Basic" 
                     description="The classic multi-link setup perfect for quick social media routing and basic analytics tracking." 
-                    imageUrl="https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&w=400&q=80" 
+                    imageUrl={DEMO_ASSETS_ALLOWED ? "https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&w=400&q=80" : undefined} 
                  />
               </div>
            </div>
@@ -183,8 +184,8 @@ export default function DesignSystemPage() {
                  <StatCard title="Storage" mainValue="4.2" subValue="/ 10 GB" progress={4.2} maxProgress={10} />
               </div>
               <SelectableCard title="Pro Creator Plan" desc="Unlock all templates and advanced analytics." name="plan" value="pro" defaultChecked />
-              <AssetCard title="Digital Sneaker Asset" imageUrl="https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=400&q=80" currPrice="$80" origPrice="$100" saleBadge="Sale -20%" newBadge />
-              <UserCard name="Jane Doe" handle="@janedoe" avatarUrl="https://i.pravatar.cc/100?img=33" />
+              <AssetCard title="Digital Sneaker Asset" imageUrl={DEMO_ASSETS_ALLOWED ? "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=400&q=80" : ""} currPrice="$80" origPrice="$100" saleBadge="Sale -20%" newBadge />
+              <UserCard name="Jane Doe" handle="@janedoe" avatarUrl={DEMO_ASSETS_ALLOWED ? "https://i.pravatar.cc/100?img=33" : undefined} />
               <UserCard name="Alex Murphy" isPro email="alex.murphy@example.com" location="San Francisco, CA" />
               <Banner title="Verify your email address" desc={<>Please check your inbox to activate your account features. <a href="#" className="underline font-bold ml-1">Resend email</a></>} />
               <Banner title="Upgrade to Premium" desc="Get 0% fees on all sales." actionLabel="Upgrade" variant="promo" />
@@ -211,7 +212,7 @@ export default function DesignSystemPage() {
               <MediaCard 
                 title="Midnight Echoes" 
                 subtitle="Single • 2026" 
-                imageUrl="https://images.unsplash.com/photo-1614680376593-902f74cf0d41?auto=format&fit=crop&w=200&q=80" 
+                imageUrl={DEMO_ASSETS_ALLOWED ? "https://images.unsplash.com/photo-1614680376593-902f74cf0d41?auto=format&fit=crop&w=200&q=80" : ""} 
               />
               <AudioController />
               <AssetButton label="Access Kit" />
@@ -226,11 +227,11 @@ export default function DesignSystemPage() {
                 ]}
               />
               <VisualGallery 
-                images={[
+                images={DEMO_ASSETS_ALLOWED ? [
                   "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=300&q=80",
                   "https://images.unsplash.com/photo-1493225457124-a1a2a5f5f924?auto=format&fit=crop&w=300&q=80",
                   "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&w=300&q=80"
-                ]}
+                ] : []}
               />
             </div>
           </section>

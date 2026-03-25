@@ -5,6 +5,7 @@ import { Eye, Edit2, Trash2, QrCode, Link2, Check, Download, X } from "lucide-re
 import { cn } from "@/lib/utils"
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog"
 import { Badge } from "@/components/ui/Badge"
+import { QR_API_BASE } from "@/config/services"
 
 export interface PageItemCardProps {
   id: string;
@@ -22,7 +23,7 @@ export function PageItemCard({ id, title, handle, category, imageUrl }: PageItem
   const [deleting, setDeleting] = React.useState(false);
 
   const publicUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/${handle}`;
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(publicUrl)}`;
+  const qrUrl = QR_API_BASE ? `${QR_API_BASE}/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(publicUrl)}` : "";
 
   function handlePreview() {
     window.open(`/${handle}`, "_blank");
@@ -83,9 +84,11 @@ export function PageItemCard({ id, title, handle, category, imageUrl }: PageItem
               <Trash2 size={17} />
             </button>
             <div className="w-px h-5 bg-divider mx-1" />
-            <button onClick={() => setShowQrModal(true)} className="p-2 rounded-lg text-text-secondary hover:text-primary hover:bg-primary/10 transition-colors cursor-pointer border-none bg-transparent" title="QR Code">
-              <QrCode size={17} />
-            </button>
+            {QR_API_BASE && (
+              <button onClick={() => setShowQrModal(true)} className="p-2 rounded-lg text-text-secondary hover:text-primary hover:bg-primary/10 transition-colors cursor-pointer border-none bg-transparent" title="QR Code">
+                <QrCode size={17} />
+              </button>
+            )}
             <button onClick={handleCopyLink} className="p-2 rounded-lg text-text-secondary hover:text-primary hover:bg-primary/10 transition-colors cursor-pointer border-none bg-transparent" title="Copy Link">
               {linkCopied ? <Check size={17} className="text-success" /> : <Link2 size={17} />}
             </button>

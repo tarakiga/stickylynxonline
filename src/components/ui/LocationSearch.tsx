@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { cn } from "@/lib/utils"
+import { NOMINATIM_BASE } from "@/config/services"
 
 export interface LocationSearchProps {
   onSelect?: (location: string) => void;
@@ -38,7 +39,13 @@ export function LocationSearch({ onSelect, label }: LocationSearchProps) {
     setIsLoading(true);
     setError(false);
     
-    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=5`)
+    if (!NOMINATIM_BASE) {
+      setError(true);
+      setIsLoading(false);
+      return;
+    }
+    const url = `${NOMINATIM_BASE}/search?format=json&q=${encodeURIComponent(q)}&limit=5`;
+    fetch(url)
       .then(res => res.json())
       .then(data => {
         setResults(data);

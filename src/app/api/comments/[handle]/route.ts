@@ -7,12 +7,12 @@ export const dynamic = "force-dynamic";
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ pageId: string }> }
+  { params }: { params: Promise<{ handle: string }> }
 ) {
-  const { pageId } = await params;
+  const { handle } = await params;
 
   const page = await prisma.page.findUnique({
-    where: { handle: pageId },
+    where: { handle },
     include: { user: true, blocks: { orderBy: { order: "asc" } } },
   });
   if (!page) {
@@ -26,7 +26,6 @@ export async function POST(
     return NextResponse.json({ error: "Missing fields" }, { status: 400 });
   }
 
-  // Find the TIMELINE block
   const timelineBlock = page.blocks.find((b) => b.type === "TIMELINE");
   if (!timelineBlock) {
     return NextResponse.json({ error: "No timeline" }, { status: 404 });
@@ -41,7 +40,6 @@ export async function POST(
     }>;
   }>;
 
-  // Find the stage and task, then add the comment
   let found = false;
   for (const milestone of milestones) {
     if (milestone.id !== stageId) continue;
@@ -65,27 +63,25 @@ export async function POST(
     return NextResponse.json({ error: "Task not found" }, { status: 404 });
   }
 
-  // Save back
   await prisma.block.update({
     where: { id: timelineBlock.id },
     data: { content: { ...content, milestones } as never },
   });
 
-  // Notify Freelancer
   if (page.user?.email) {
     await sendEmail({
       to: page.user.email,
-      subject: `New Feedback on ${page.title || 'Project'}`,
+      subject: `New Feedback on ${page.title || "Project"}`,
       html: `
         <div style="font-family: sans-serif; padding: 20px;">
           <h2 style="color: #7c3aed;">New Client Feedback</h2>
-          <p><strong>${author || 'The Client'}</strong> left a comment on your project: <strong>${page.title}</strong>.</p>
+          <p><strong>${author || "The Client"}</strong> left a comment on your project: <strong>${page.title}</strong>.</p>
           <div style="background: #f3f4f6; padding: 15px; border-radius: 8px; margin: 15px 0;">
             "${text}"
           </div>
           <p>Login to your <a href="${getBaseUrl()}/dashboard">dashboard</a> to reply.</p>
         </div>
-      `
+      `,
     });
   }
 

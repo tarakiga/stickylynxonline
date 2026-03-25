@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import type { EpkHero, StreamingLink, EpkTrack, EpkVideo, EpkGalleryImage, EpkBio, EpkContact, PressFeature, Highlight, TourEvent } from "@/types/epk";
 import { STREAMING_PLATFORMS, SOCIAL_PLATFORMS, TOUR_STATUS_META } from "@/types/epk";
+import { YOUTUBE_EMBED_BASE, VIMEO_EMBED_BASE } from "@/config/services";
 import {
   Music, Play, ExternalLink, Video, Download, Mail, Phone, Globe, X,
   Newspaper, Award, Calendar, MapPin, Ticket,
@@ -18,12 +19,12 @@ function ensureProtocol(url: string): string {
 
 function getYouTubeEmbedUrl(url: string): string | null {
   const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/);
-  return match ? `https://www.youtube.com/embed/${match[1]}` : null;
+  return match ? `${YOUTUBE_EMBED_BASE}/${match[1]}` : null;
 }
 
 function getVimeoEmbedUrl(url: string): string | null {
   const match = url.match(/vimeo\.com\/(\d+)/);
-  return match ? `https://player.vimeo.com/video/${match[1]}` : null;
+  return match ? `${VIMEO_EMBED_BASE}/${match[1]}` : null;
 }
 
 export function EpkPublic({ page }: { page: any }) {
