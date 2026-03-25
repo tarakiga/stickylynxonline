@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { sendEmail } from "@/lib/email";
+import { getBaseUrl } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -82,7 +83,7 @@ export async function POST(
           <div style="background: #f3f4f6; padding: 15px; border-radius: 8px; margin: 15px 0;">
             "${text}"
           </div>
-          <p>Login to your <a href="https://stickylynx.online/dashboard">dashboard</a> to reply.</p>
+          <p>Login to your <a href="${getBaseUrl()}/dashboard">dashboard</a> to reply.</p>
         </div>
       `
     });

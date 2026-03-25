@@ -2,6 +2,7 @@ import prisma from "@/lib/prisma";
 import { sendEmail } from "@/lib/email";
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
+import { getBaseUrl } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -63,7 +64,7 @@ export async function POST(
              <p><strong>Submission Type:</strong> ${submission.type}</p>
              <p><strong>Message:</strong> Check the project portal for details.</p>
           </div>
-          <p><a href="https://stickylynx.online/${page.handle}" style="background: #7c3aed; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold;">Launch Project Portal</a></p>
+          <p><a href="${getBaseUrl()}/${page.handle}" style="background: #7c3aed; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold;">Launch Project Portal</a></p>
         </div>
       `
     });
