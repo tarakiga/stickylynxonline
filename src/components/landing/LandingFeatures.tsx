@@ -6,25 +6,25 @@ export function LandingFeatures() {
     {
        title: "Musicians (EPK)",
        icon: Music,
-       iconBg: "bg-purple-100 text-purple-600",
+       iconBg: "bg-primary/10 text-primary",
        description: "Launch your career with a high-end Digital Press Kit. Audio, Video, and Press info in one sleek Lynx."
     },
     {
        title: "Restaurants (Menus)",
        icon: Utensils,
-       iconBg: "bg-emerald-100 text-emerald-600",
+       iconBg: "bg-success/10 text-success",
        description: "Digitize your menu with beautiful imagery, dynamic categories, and instant updates for your diners."
     },
     {
        title: "Freelancers (Portals)",
        icon: Clock,
-       iconBg: "bg-amber-100 text-amber-600",
+       iconBg: "bg-warning/10 text-warning",
        description: "Give your clients a premium project dashboard. Track milestones, approvals, and feedback in real-time."
     },
     {
        title: "Digital Resumes",
        icon: FileText,
-       iconBg: "bg-blue-100 text-blue-600",
+       iconBg: "bg-info/10 text-info",
        description: "Standard PDFs are dead. Impress recruiters with a live, multimedia professional profile."
     }
   ];
@@ -93,7 +93,7 @@ export function LandingFeatures() {
               <div className="relative group">
                  <div className="w-64 h-[450px] sm:w-72 sm:h-[500px] bg-surface border-[8px] border-text-primary rounded-[48px] shadow-2xl overflow-hidden relative">
                     <div className="absolute top-0 inset-x-0 h-6 bg-text-primary rounded-b-2xl flex justify-center">
-                       <div className="w-20 h-4 bg-black rounded-b-xl" />
+                       <div className="w-20 h-4 bg-text-primary rounded-b-xl" />
                     </div>
                     <div className="w-full h-full p-6 flex flex-col items-center justify-center gap-4 text-center">
                        <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-2 animate-pulse"><Smartphone size={40} /></div>

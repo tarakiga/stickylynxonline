@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { sendEmail } from "@/lib/email";
+import { EMAIL_COLORS } from "@/config/theme";
 
 export const dynamic = "force-dynamic";
 
@@ -67,7 +68,7 @@ export async function PUT(
       subject: `Task Approved: ${task?.title || "Project Update"}`,
       html: `
         <div style="font-family: sans-serif; padding: 20px;">
-          <h2 style="color: #7c3aed;">Great news!</h2>
+          <h2 style="color: ${EMAIL_COLORS.primary};">Great news!</h2>
           <p>The client has approved your task: <strong>${task?.title}</strong> on the project <strong>${page.title}</strong>.</p>
           <p>Visit your dashboard to view the next steps.</p>
         </div>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { sendEmail } from "@/lib/email";
+import { EMAIL_COLORS } from "@/config/theme";
 import { getBaseUrl } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -74,9 +75,9 @@ export async function POST(
       subject: `New Feedback on ${page.title || "Project"}`,
       html: `
         <div style="font-family: sans-serif; padding: 20px;">
-          <h2 style="color: #7c3aed;">New Client Feedback</h2>
+          <h2 style="color: ${EMAIL_COLORS.primary};">New Client Feedback</h2>
           <p><strong>${author || "The Client"}</strong> left a comment on your project: <strong>${page.title}</strong>.</p>
-          <div style="background: #f3f4f6; padding: 15px; border-radius: 8px; margin: 15px 0;">
+          <div style="background: ${EMAIL_COLORS.surfaceMuted}; padding: 15px; border-radius: 8px; margin: 15px 0;">
             "${text}"
           </div>
           <p>Login to your <a href="${getBaseUrl()}/dashboard">dashboard</a> to reply.</p>

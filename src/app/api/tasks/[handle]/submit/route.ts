@@ -3,6 +3,7 @@ import { sendEmail } from "@/lib/email";
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 import { getBaseUrl } from "@/lib/utils";
+import { EMAIL_COLORS } from "@/config/theme";
 
 export const dynamic = "force-dynamic";
 
@@ -28,10 +29,13 @@ export async function POST(
   const timelineBlock = page.blocks.find((b) => b.type === "TIMELINE");
   if (!timelineBlock) return NextResponse.json({ error: "No timeline" }, { status: 404 });
 
-  const content = timelineBlock.content as Record<string, any>;
-  const milestones = (content.milestones || []) as any[];
+  type Submission = { type: string; value?: string };
+  type TaskShape = { id: string; status: string; title?: string; submission?: Submission };
+  type MilestoneShape = { id: string; tasks: TaskShape[] };
+  const content = timelineBlock.content as { milestones: MilestoneShape[] };
+  const milestones = (content.milestones || []) as MilestoneShape[];
 
-  let taskToNotify: any = null;
+  let taskToNotify: TaskShape | null = null;
   for (const m of milestones) {
     if (m.id !== stageId) continue;
     for (const t of m.tasks || []) {
@@ -58,13 +62,13 @@ export async function POST(
       subject: `Draft Ready for Review: ${taskToNotify.title}`,
       html: `
         <div style="font-family: sans-serif; padding: 20px;">
-          <h2 style="color: #7c3aed;">Hello from ${page.title}!</h2>
+          <h2 style="color: ${EMAIL_COLORS.primary};">Hello from ${page.title}!</h2>
           <p>The latest updates for <strong>${taskToNotify.title}</strong> are ready for your review.</p>
-          <div style="background: #f3f4f6; padding: 15px; border-radius: 8px; margin: 15px 0;">
+          <div style="background: ${EMAIL_COLORS.surfaceMuted}; padding: 15px; border-radius: 8px; margin: 15px 0;">
              <p><strong>Submission Type:</strong> ${submission.type}</p>
              <p><strong>Message:</strong> Check the project portal for details.</p>
           </div>
-          <p><a href="${getBaseUrl()}/${page.handle}" style="background: #7c3aed; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold;">Launch Project Portal</a></p>
+          <p><a href="${getBaseUrl()}/${page.handle}" style="background: ${EMAIL_COLORS.primary}; color: ${EMAIL_COLORS.onPrimary}; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold;">Launch Project Portal</a></p>
         </div>
       `
     });

@@ -35,7 +35,7 @@ export function ModalShowcase() {
         description="This action is irreversible. All data, internal links, and associated assets for this page will be permanently removed from our servers."
       >
          <button onClick={close} className="px-5 py-2.5 bg-surface border border-divider font-bold text-sm text-text-primary rounded-xl hover:bg-divider transition-colors cursor-pointer">Cancel</button>
-         <button onClick={close} className="px-5 py-2.5 bg-error font-bold text-sm text-white rounded-xl hover:bg-red-600 transition-colors border-none cursor-pointer shadow-sm shadow-error/30">Yes, delete page</button>
+         <button onClick={close} className="px-5 py-2.5 bg-error font-bold text-sm text-on-primary rounded-xl hover:bg-error/90 transition-colors border-none cursor-pointer shadow-sm shadow-error/30">Yes, delete page</button>
       </Modal>
 
       {/* Success Confirmation */}
@@ -46,7 +46,7 @@ export function ModalShowcase() {
         title="Menu successfully updated"
         description="The changes to your menu have been saved and are now live on your public profile. It may take a few minutes to reflect on all edge networks."
       >
-         <button onClick={close} className="px-5 py-2.5 bg-primary font-bold text-sm text-white rounded-xl hover:bg-primary-hover transition-colors border-none cursor-pointer shadow-sm">Got it</button>
+         <button onClick={close} className="px-5 py-2.5 bg-primary font-bold text-sm text-on-primary rounded-xl hover:bg-primary-hover transition-colors border-none cursor-pointer shadow-sm">Got it</button>
       </Modal>
 
       {/* Error Confirmation */}

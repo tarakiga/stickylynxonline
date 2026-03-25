@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { HeaderAvatar } from "@/components/dashboard/HeaderAvatar";
+import { DarkModeToggle } from "@/components/dashboard/DarkModeToggle";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -10,6 +11,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <header className="h-20 bg-surface border-b border-divider flex items-center justify-between px-6 sm:px-10 sticky top-0 z-30">
            <h1 className="text-xl font-bold text-text-primary md:hidden">Stickylynx</h1>
            <div className="ml-auto flex items-center gap-4">
+             <DarkModeToggle />
              <HeaderAvatar />
            </div>
         </header>

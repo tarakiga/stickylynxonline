@@ -18,7 +18,7 @@ export function LandingHero() {
           
           <h1 className="text-4xl sm:text-6xl font-black text-text-primary tracking-tight leading-[1.1]">
             Launch a powerful single page <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-purple-500 to-accent">in minutes!</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-accent to-accent">in minutes!</span>
           </h1>
           
           <p className="text-lg sm:text-xl text-text-secondary max-w-xl leading-relaxed font-medium">
@@ -58,7 +58,7 @@ export function LandingHero() {
                   className="w-full h-auto rounded-[32px] shadow-sm transform hover:scale-[1.01] transition-transform duration-500"
                 />
                 {/* Official Logo Overlay */}
-                <div className="absolute top-4 left-4 bg-surface/90 backdrop-blur-md p-2 rounded-xl shadow-premium border border-white/20 animate-in fade-in zoom-in duration-700 delay-500">
+                <div className="absolute top-4 left-4 bg-surface/90 backdrop-blur-md p-2 rounded-xl shadow-premium border border-divider animate-in fade-in zoom-in duration-700 delay-500">
                   <img src="/logo.png" alt="Stickylynx Official" className="w-8 h-8 sm:w-10 sm:h-10 object-contain" />
                 </div>
               </div>

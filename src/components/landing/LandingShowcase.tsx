@@ -3,10 +3,10 @@ import { ArrowRight, Star } from 'lucide-react';
 
 export function LandingShowcase() {
   const templates = [
-    { title: "Indie Musician", category: "EPK", color: "bg-purple-600" },
-    { title: "Modern Cafe", category: "Digital Menu", color: "bg-emerald-600" },
-    { title: "Senior Designer", category: "Portfolio", color: "bg-blue-600" },
-    { title: "Streetwear Brand", category: "Sales Portal", color: "bg-rose-600" }
+    { title: "Indie Musician", category: "EPK", color: "bg-primary" },
+    { title: "Modern Cafe", category: "Digital Menu", color: "bg-success" },
+    { title: "Senior Designer", category: "Portfolio", color: "bg-info" },
+    { title: "Streetwear Brand", category: "Sales Portal", color: "bg-accent" }
   ];
 
   return (
@@ -16,7 +16,7 @@ export function LandingShowcase() {
            <div className="max-w-2xl space-y-4">
               <h2 className="text-sm font-black text-secondary uppercase tracking-[0.2em] leading-none mb-1">Explore our Library</h2>
               <h3 className="text-3xl sm:text-5xl font-black text-text-primary tracking-tight">Premium Template Gallery.</h3>
-              <p className="text-lg text-text-secondary leading-relaxed font-medium transition-colors">Pick a template and customize it to match your brand's unique identity. From high-end dark modes to minimalist light themes.</p>
+              <p className="text-lg text-text-secondary leading-relaxed font-medium transition-colors">Pick a template and customize it to match your brand&apos;s unique identity. From high-end dark modes to minimalist light themes.</p>
            </div>
            <button className="hidden md:flex items-center gap-2.5 text-text-primary font-bold hover:text-primary transition-colors bg-transparent border-none cursor-pointer">
               View All Templates <ArrowRight size={20} />
@@ -33,7 +33,7 @@ export function LandingShowcase() {
                   className="w-full h-auto transform hover:scale-[1.01] transition-transform duration-500" 
                 />
                 {/* Official Logo Badge */}
-                <div className="absolute top-6 right-6 p-1.5 bg-background/80 backdrop-blur-md rounded-2xl border border-white/20 shadow-premium">
+                <div className="absolute top-6 right-6 p-1.5 bg-background/80 backdrop-blur-md rounded-2xl border border-divider shadow-premium">
                   <img src="/logo.png" alt="Official" className="w-8 h-8 object-contain" />
                 </div>
               </div>

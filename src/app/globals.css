@@ -5,6 +5,7 @@
   --color-primary-hover: var(--color-primary-hover);
   --color-primary-light: var(--color-primary-light);
   --color-secondary: var(--color-secondary);
+  --color-on-primary: var(--color-on-primary);
   --color-background: var(--color-background);
   --color-surface: var(--color-surface);
   --color-text-primary: var(--color-text-primary);
@@ -27,6 +28,7 @@
   --color-primary-hover: #5B21B6;
   --color-primary-light: #EDE9FE;
   --color-secondary: #10B981;
+  --color-on-primary: #FFFFFF;
   --color-accent: #FF3366;
   --color-info: #00E5FF;
   --color-background: #F9FAFB;
@@ -45,6 +47,7 @@
   --color-primary-hover: #A78BFA;
   --color-primary-light: #4C1D95;
   --color-secondary: #34D399;
+  --color-on-primary: #FFFFFF;
   --color-accent: #FF6690;
   --color-info: #67EFFF;
   --color-background: #0F172A;
@@ -81,7 +84,7 @@ body {
     }
     .btn-primary {
         background-color: var(--color-primary);
-        color: #ffffff;
+        color: var(--color-on-primary);
         transition: all 0.2s ease;
     }
     .btn-primary:hover { 

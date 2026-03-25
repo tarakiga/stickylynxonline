@@ -200,8 +200,8 @@ export default function DesignSystemPage() {
                <DraggableList 
                   title="Your Links (Drag & Drop)" 
                   items={[
-                    {id: "1", title: "My New Video", subtitle: "youtube.com/watch...", iconText: "YT", colorClass: "bg-red-100 text-red-500"},
-                    {id: "2", title: "Spotify Playlist", subtitle: "spotify.com/playlist...", iconText: "SP", colorClass: "bg-green-100 text-green-500"}
+                    {id: "1", title: "My New Video", subtitle: "youtube.com/watch...", iconText: "YT", colorClass: "bg-error/10 text-error"},
+                    {id: "2", title: "Spotify Playlist", subtitle: "spotify.com/playlist...", iconText: "SP", colorClass: "bg-success/10 text-success"}
                   ]} 
                />
             </div>

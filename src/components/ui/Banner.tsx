@@ -7,12 +7,12 @@ export function Banner({ title, desc, actionLabel, variant = "warning" }: { titl
       return (
         <div className="rounded-xl overflow-hidden relative shadow-md">
             <div className="absolute inset-0 bg-gradient-to-r from-primary to-secondary opacity-90"></div>
-            <div className="relative z-10 p-5 text-white flex justify-between items-center gap-4">
+            <div className="relative z-10 p-5 text-on-primary flex justify-between items-center gap-4">
                 <div>
                     <h4 className="font-bold">{title}</h4>
                     <p className="text-xs opacity-90 mt-1">{desc}</p>
                 </div>
-                {actionLabel && <button className="bg-white text-primary text-xs font-bold px-4 py-2 rounded-full hover:shadow-lg border-none transition-transform hover:scale-105 shrink-0 cursor-pointer">{actionLabel}</button>}
+                {actionLabel && <button className="bg-surface text-primary text-xs font-bold px-4 py-2 rounded-full hover:shadow-lg border-none transition-transform hover:scale-105 shrink-0 cursor-pointer">{actionLabel}</button>}
             </div>
         </div>
       )

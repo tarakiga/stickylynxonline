@@ -8,7 +8,7 @@ export function LandingCTA() {
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[300px] bg-primary/20 rounded-full blur-[120px] -z-10" />
       
       <div className="max-w-5xl mx-auto px-6 text-center">
-        <div className="bg-gradient-to-br from-primary via-purple-600 to-accent p-1 rounded-[40px] shadow-premium">
+        <div className="bg-gradient-to-br from-primary via-accent to-accent p-1 rounded-[40px] shadow-premium">
            <div className="bg-surface rounded-[38px] p-12 sm:p-20 relative overflow-hidden text-center flex flex-col items-center">
               <div className="w-20 h-20 bg-primary/10 text-primary rounded-3xl flex items-center justify-center mb-10 shadow-sm animate-bounce duration-[3s]">
                  <Sparkles size={40} />

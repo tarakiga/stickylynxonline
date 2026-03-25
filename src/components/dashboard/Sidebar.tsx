@@ -17,7 +17,7 @@ export function Sidebar() {
   return (
     <aside className="w-64 bg-surface border-r border-divider hidden md:flex flex-col min-h-screen sticky top-0">
       <div className="p-6">
-        <div className="w-12 h-12 bg-primary text-white flex items-center justify-center font-bold text-2xl rounded-xl shadow-premium mb-8 uppercase">
+        <div className="w-12 h-12 bg-primary text-on-primary flex items-center justify-center font-bold text-2xl rounded-xl shadow-premium mb-8 uppercase">
           SL
         </div>
         <nav className="space-y-2 flex-1">
@@ -25,7 +25,7 @@ export function Sidebar() {
             const Icon = link.icon;
             const isActive = pathname === link.href;
             return (
-              <Link key={link.name} href={link.href} className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors font-bold ${isActive ? 'bg-primary text-white shadow-sm shadow-primary/20' : 'text-text-secondary hover:bg-background hover:text-text-primary'}`}>
+              <Link key={link.name} href={link.href} className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors font-bold ${isActive ? 'bg-primary text-on-primary shadow-sm shadow-primary/20' : 'text-text-secondary hover:bg-background hover:text-text-primary'}`}>
                 <Icon size={20} />
                 {link.name}
               </Link>
