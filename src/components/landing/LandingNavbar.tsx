@@ -36,7 +36,7 @@ export function LandingNavbar() {
           {isSignedIn ? (
             <div className="flex items-center gap-6">
               <Link href="/dashboard" className="text-sm font-bold text-primary hover:opacity-85 transition-opacity">Go to Dashboard</Link>
-              <UserButton afterSignOutUrl="/" />
+              <UserButton />
             </div>
           ) : (
             <div className="flex items-center gap-4">
