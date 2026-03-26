@@ -18,7 +18,7 @@ export async function POST(
   const enabled = !!body.enabled;
   await prisma.page.update({
     where: { id: page.id },
-    data: { clientPinEnabled: enabled }
+    data: { clientPinEnabled: enabled } as any
   });
   return NextResponse.json({ success: true });
 }

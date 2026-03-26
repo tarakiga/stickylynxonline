@@ -10,9 +10,9 @@ function sha256Hex(input: string) {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ handle: string }> }
+  { params }: { params: { handle: string } }
 ) {
-  const { handle } = await params;
+  const { handle } = params;
   const url = new URL(request.url);
   const access = url.searchParams.get("access") || "";
   const pin = url.searchParams.get("pin") || "";
@@ -28,19 +28,20 @@ export async function GET(
     return NextResponse.json({ error: "Not applicable" }, { status: 400 });
   }
 
+  const p: any = page as any;
   const now = new Date();
-  const revoked = !!page.clientAccessRevoked;
-  const expired = !!page.clientAccessExpiresAt && now > page.clientAccessExpiresAt;
+  const revoked = !!p.clientAccessRevoked;
+  const expired = !!p.clientAccessExpiresAt && now > p.clientAccessExpiresAt;
 
   let ok = false;
   let val = "";
-  if (access && !revoked && !expired && page.clientAccessTokenHash) {
+  if (access && !revoked && !expired && p.clientAccessTokenHash) {
     const hash = sha256Hex(access);
-    ok = hash === page.clientAccessTokenHash;
+    ok = hash === p.clientAccessTokenHash;
     val = hash;
-  } else if (pin && page.clientPinEnabled && page.clientPinHash) {
+  } else if (pin && p.clientPinEnabled && p.clientPinHash) {
     const hash = sha256Hex(pin);
-    ok = hash === page.clientPinHash;
+    ok = hash === p.clientPinHash;
     val = hash;
   }
 
@@ -50,7 +51,7 @@ export async function GET(
 
   await prisma.page.update({
     where: { id: page.id },
-    data: { lastClientAccessAt: now },
+    data: { lastClientAccessAt: now } as any,
   });
 
   const res = NextResponse.redirect(new URL(`/${handle}`, request.url));

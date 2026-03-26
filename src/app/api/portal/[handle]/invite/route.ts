@@ -42,7 +42,7 @@ export async function POST(
   });
 
   const base = getBaseUrl();
-  await sendEmail({
+  const result = await sendEmail({
     to: page.clientEmail,
     subject: `Project Portal Access: ${page.title || page.handle}`,
     html: `
@@ -64,5 +64,8 @@ export async function POST(
     `
   });
 
-  return NextResponse.json({ success: true });
+  if (!result.ok) {
+    return NextResponse.json({ error: "Email failed", detail: result.error || result.response }, { status: 500 });
+  }
+  return NextResponse.json({ success: true, accepted: result.accepted });
 }

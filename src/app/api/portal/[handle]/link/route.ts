@@ -27,7 +27,7 @@ export async function POST(
       clientAccessTokenHash: tokenHash,
       clientAccessCreatedAt: now,
       clientAccessRevoked: false,
-    }
+    } as any
   });
 
   const base = getBaseUrl();

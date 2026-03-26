@@ -153,11 +153,11 @@ export async function createLynxPage(data: {
           clientPinHash: pinHash,
           clientPinEnabled: true,
           clientPinCreatedAt: now,
-        }
+        } as any
       });
       const base = getBaseUrl();
       const owner = await tx.user.findUnique({ where: { id: userId } });
-      await sendEmail({
+      const result = await sendEmail({
         to: page.clientEmail,
         subject: `Project Portal Access: ${page.title || page.handle}`,
         html: `
@@ -178,11 +178,13 @@ export async function createLynxPage(data: {
           </div>
         `
       });
+      const emailSent = !!result.ok;
+      return page;
     }
 
     return page;
   });
 
   revalidatePath("/dashboard");
-  return { pageId: newPage.id };
+  return { pageId: newPage.id, emailSent: !!newPage.clientEmail };
 }

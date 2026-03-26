@@ -14,8 +14,9 @@ import { DeliverableCard } from "@/components/editor/DeliverableCard";
 import type { MilestoneWithReviews, Task, TaskStatus, Deliverable, DeliverableType } from "@/types/editor";
 import { DELIVERABLE_TYPE_OPTIONS } from "@/types/editor";
 import { Dropzone } from "@/components/ui/Dropzone";
-import { CheckCircle2, Clock, FileText, MessageSquare, AlertCircle, Plus, Save, Loader2, Eye, UploadCloud, Link as LinkIcon, AlignLeft } from "lucide-react";
+import { CheckCircle2, Clock, FileText, MessageSquare, AlertCircle, Plus, Save, Loader2, Eye, UploadCloud, Link as LinkIcon, AlignLeft, Mail, ShieldCheck, ShieldOff, Clipboard } from "lucide-react";
 import { getBaseUrl } from "@/lib/utils";
+import { Toaster, showToast } from "@/components/ui/Toast";
 
 /* ─── ID helper ──────────────────────────────────────────────── */
 let _seq = 0;
@@ -36,7 +37,9 @@ export function ProjectPortalEditor({ page }: { page: any }) {
   const [clientEmail, setClientEmail] = React.useState<string>(page.clientEmail || "");
   const [linkCopied, setLinkCopied] = React.useState(false);
   const [pinModal, setPinModal] = React.useState<{ open: boolean; pin?: string }>({ open: false });
-  const accessEnabled = true;
+  const [pinEnabled, setPinEnabled] = React.useState<boolean>(!!page.clientPinEnabled);
+  const inviteSentAt = page.clientAccessCreatedAt ? new Date(page.clientAccessCreatedAt).toLocaleString() : null;
+  const lastClientAccessAt = page.lastClientAccessAt ? new Date(page.lastClientAccessAt).toLocaleString() : null;
 
   /* ── Save state ────────────────────────────────────────────── */
   const [saving, setSaving] = React.useState(false);
@@ -142,26 +145,42 @@ export function ProjectPortalEditor({ page }: { page: any }) {
       await navigator.clipboard.writeText(String(data.link));
       setLinkCopied(true);
       setTimeout(() => setLinkCopied(false), 2000);
+      showToast("Invitation link copied", "success");
     } else {
-      alert("Failed to generate link.");
+      showToast("Failed to generate link", "error");
     }
   };
   const togglePin = async (enabled: boolean) => {
-    const res = await fetch(`/api/portal/${page.handle}/pin/toggle`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ enabled }) });
-    if (!res.ok) alert("Failed to toggle PIN.");
+    const res = await fetch(`/api/portal/${page.handle}/pin-toggle`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ enabled }) });
+    if (res.ok) {
+      setPinEnabled(enabled);
+      showToast(enabled ? "PIN required" : "PIN disabled", "success");
+    } else {
+      showToast("Failed to toggle PIN", "error");
+    }
   };
   const resetPin = async () => {
-    const res = await fetch(`/api/portal/${page.handle}/pin/reset`, { method: "POST" });
+    const res = await fetch(`/api/portal/${page.handle}/pin-reset`, { method: "POST" });
     if (res.ok) {
       const data = await res.json();
       setPinModal({ open: true, pin: data.pin });
+      showToast("PIN reset", "success");
     } else {
-      alert("Failed to reset PIN.");
+      showToast("Failed to reset PIN", "error");
     }
   };
   const resendInvite = async () => {
-    const res = await fetch(`/api/portal/${page.handle}/invite`, { method: "POST" });
-    if (!res.ok) alert("Failed to resend invitation.");
+    try {
+      const res = await fetch(`/api/portal/${page.handle}/invite`, { method: "POST" });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        showToast("Invitation email sent", "success");
+      } else {
+        showToast(String(data.error || data.detail || "Failed to send invitation"), "error");
+      }
+    } catch (e: any) {
+      showToast("Failed to send invitation", "error");
+    }
   };
 
   /* ── Handlers: Milestones ────────────────────────────────── */
@@ -248,8 +267,9 @@ export function ProjectPortalEditor({ page }: { page: any }) {
         ));
         setLastSaved(new Date().toLocaleTimeString());
         setDirty(false);
+        showToast("Client notified", "success");
       } else {
-        alert("Failed to notify client and save submission.");
+        showToast("Failed to notify client", "error");
       }
     } finally {
       setSubmitTaskId(null); setSubmitValue(""); setSubmitFile(null); setSubmitType("url");
@@ -345,7 +365,8 @@ export function ProjectPortalEditor({ page }: { page: any }) {
        </div>
 
        {/* 1. Project Header & Status */}
-       <Card className="rounded-3xl border border-divider shadow-premium bg-surface p-0 overflow-hidden relative">
+      <Toaster />
+      <Card className="rounded-3xl border border-divider shadow-premium bg-surface p-0 overflow-hidden relative">
          <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-primary via-secondary to-accent"></div>
          <div className="p-6 sm:p-8">
              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8 pt-2">
@@ -448,30 +469,63 @@ export function ProjectPortalEditor({ page }: { page: any }) {
        </Card>
 
       {/* 1b. Client Link & Access */}
-      <Card className="rounded-3xl border border-divider shadow-sm bg-surface p-6">
-        <div className="flex items-center justify-between mb-4">
+      <Card className="rounded-3xl border border-divider shadow-sm bg-surface p-6 space-y-4">
+        <div className="flex items-center justify-between">
           <div>
             <h3 className="font-bold text-xl text-text-primary tracking-tight">Client Link & Access</h3>
-            <p className="text-xs text-text-secondary">Share the portal with your client and manage access.</p>
+            <p className="text-xs text-text-secondary">Invitation email is sent automatically on portal creation. Use these tools only if the client didn’t receive it.</p>
           </div>
-          {linkCopied && <Badge variant="success" className="text-[10px]">Link copied</Badge>}
+          {linkCopied && <Badge variant="success" className="text-[10px] px-2 py-0.5">Copied</Badge>}
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <Button variant="secondary" onClick={copyInvitationLink} className="text-xs py-2 px-3 rounded-lg h-auto cursor-pointer">
-            Generate & Copy Link
-          </Button>
-          <Button variant="ghost" onClick={() => resendInvite()} className="text-xs py-2 px-3 rounded-lg h-auto cursor-pointer">
-            Resend Invitation
-          </Button>
-          <Button variant="ghost" onClick={() => togglePin(true)} className="text-xs py-2 px-3 rounded-lg h-auto cursor-pointer">
-            Require PIN
-          </Button>
-          <Button variant="ghost" onClick={() => togglePin(false)} className="text-xs py-2 px-3 rounded-lg h-auto cursor-pointer">
-            Disable PIN
-          </Button>
-          <Button variant="ghost" onClick={resetPin} className="text-xs py-2 px-3 rounded-lg h-auto cursor-pointer">
-            Reset PIN
-          </Button>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="bg-background border border-divider rounded-xl p-4 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-text-secondary uppercase tracking-widest">Invitation Status</span>
+              {inviteSentAt ? <Badge variant="neutral" className="text-[10px] px-2 py-0.5">Sent</Badge> : <Badge variant="warning" className="text-[10px] px-2 py-0.5">Not sent</Badge>}
+            </div>
+            <p className="text-sm text-text-secondary">Recipient: <span className="text-text-primary font-semibold">{clientEmail || "—"}</span></p>
+            {inviteSentAt && <p className="text-xs text-text-secondary">Sent on {inviteSentAt}</p>}
+            {lastClientAccessAt && <p className="text-xs text-text-secondary">Last client access: {lastClientAccessAt}</p>}
+            <div className="flex items-center gap-2 pt-2">
+              <Button variant="primary" onClick={copyInvitationLink} className="text-xs py-2 px-3 rounded-lg h-auto cursor-pointer">
+                <Clipboard size={14} className="mr-1" /> Copy Invitation Link
+              </Button>
+              <Button variant="outline" onClick={resendInvite} className="text-xs py-2 px-3 rounded-lg h-auto cursor-pointer">
+                <Mail size={14} className="mr-1" /> Resend Email
+              </Button>
+            <Button variant="ghost" onClick={async () => {
+              const res = await fetch(`/api/email/verify`, { method: "GET" });
+              const data = await res.json().catch(() => ({}));
+              if (res.ok) showToast("SMTP verified", "success");
+              else showToast(`SMTP error: ${String(data.error || "Unknown")}`, "error");
+            }} className="text-xs py-2 px-3 rounded-lg h-auto cursor-pointer">
+              Verify SMTP
+            </Button>
+            </div>
+            <p className="text-[10px] text-text-secondary mt-1">Resend only if the client didn’t receive the first email.</p>
+          </div>
+          <div className="bg-background border border-divider rounded-xl p-4 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-text-secondary uppercase tracking-widest">PIN Protection</span>
+              {pinEnabled ? <Badge variant="success" className="text-[10px] px-2 py-0.5">Required</Badge> : <Badge variant="neutral" className="text-[10px] px-2 py-0.5">Disabled</Badge>}
+            </div>
+            <p className="text-sm text-text-secondary">When enabled, clients may be asked for a 6‑digit PIN if they don’t use the invitation link.</p>
+            <div className="flex items-center gap-2 pt-2">
+              {pinEnabled ? (
+                <Button variant="ghost" onClick={() => togglePin(false)} className="text-xs py-2 px-3 rounded-lg h-auto cursor-pointer">
+                  <ShieldOff size={14} className="mr-1" /> Disable PIN
+                </Button>
+              ) : (
+                <Button variant="secondary" onClick={() => togglePin(true)} className="text-xs py-2 px-3 rounded-lg h-auto cursor-pointer">
+                  <ShieldCheck size={14} className="mr-1" /> Require PIN
+                </Button>
+              )}
+              <Button variant="ghost" onClick={resetPin} className="text-xs py-2 px-3 rounded-lg h-auto cursor-pointer">
+                Reset PIN
+              </Button>
+            </div>
+            {page.clientPinCreatedAt && <p className="text-[10px] text-text-secondary mt-1">Last reset: {new Date(page.clientPinCreatedAt).toLocaleString()}</p>}
+          </div>
         </div>
       </Card>
 
@@ -713,9 +767,20 @@ export function ProjectPortalEditor({ page }: { page: any }) {
       {/* Show PIN Modal after reset */}
       <Modal isOpen={pinModal.open} onClose={() => setPinModal({ open: false })} title="New PIN Generated" description="Share this PIN with your client if needed." icon="info">
         <div className="w-full space-y-3 !mt-4">
-          <div className="bg-background border border-divider rounded-xl p-4 text-center">
-            <p className="text-2xl font-bold text-text-primary tracking-widest">{pinModal.pin}</p>
-          </div>
+          <Input
+            labelInside="PIN"
+            value={pinModal.pin || ""}
+            onChange={() => {}}
+            readOnly
+            actionButton={
+              <button
+                onClick={async () => { if (pinModal.pin) { await navigator.clipboard.writeText(pinModal.pin); showToast("PIN copied", "success"); } }}
+                className="h-full px-3 rounded-md bg-background border border-divider text-xs font-bold cursor-pointer"
+              >
+                Copy
+              </button>
+            }
+          />
           <div className="flex gap-2 justify-end">
             <Button variant="secondary" onClick={() => setPinModal({ open: false })}>Done</Button>
           </div>

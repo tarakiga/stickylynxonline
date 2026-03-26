@@ -20,7 +20,7 @@ export async function POST(
   const now = new Date();
   await prisma.page.update({
     where: { id: page.id },
-    data: { clientPinHash: pinHash, clientPinEnabled: true, clientPinCreatedAt: now }
+    data: { clientPinHash: pinHash, clientPinEnabled: true, clientPinCreatedAt: now } as any
   });
   return NextResponse.json({ pin });
 }

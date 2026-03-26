@@ -5,6 +5,7 @@ import { X, ChevronRight, Loader2, ArrowLeft, Layers } from "lucide-react";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { StepProgress } from "@/components/ui/Progress";
+import { showToast } from "@/components/ui/Toast";
 
 import { createLynxPage } from "@/app/actions";
 
@@ -54,15 +55,21 @@ export function CreateLynxDrawer() {
       });
 
       if (result.error) {
-        alert(result.error);
+        showToast(String(result.error), "error");
         setIsLoading(false);
         return;
       }
       
+      if (isProjectPortal) {
+        if (result.emailSent && clientEmail) {
+          showToast(`Invitation email sent to ${clientEmail}`, "success");
+        } else {
+          showToast("Portal created; email not sent (check SMTP config)", "warning");
+        }
+      }
       router.push(`/dashboard/editor/${result.pageId}`);
     } catch (e: unknown) {
-      console.error(e);
-      alert("Something went wrong while communicating with the database.");
+      showToast("Failed to create Lynx", "error");
       setIsLoading(false);
     }
   };
