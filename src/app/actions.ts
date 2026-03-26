@@ -3,6 +3,10 @@ import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
 import { PageCategory, BlockType, Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
+import crypto from "crypto";
+import { sendEmail } from "@/lib/email";
+import { EMAIL_COLORS } from "@/config/theme";
+import { getBaseUrl } from "@/lib/utils";
 
 export async function createLynxPage(data: {
   title: string;
@@ -131,6 +135,49 @@ export async function createLynxPage(data: {
           data: { pageId: page.id, type: b.type as BlockType, content: b.content, order: b.order }
         })
       ));
+    }
+
+    // Project Portal: generate client access + PIN and send invitation
+    if (category === "PROJECT_PORTAL" && page.clientEmail) {
+      const token = crypto.randomBytes(24).toString("hex");
+      const pin = String(Math.floor(100000 + Math.random() * 900000)); // 6 digits
+      const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+      const pinHash = crypto.createHash("sha256").update(pin).digest("hex");
+      const now = new Date();
+      await tx.page.update({
+        where: { id: page.id },
+        data: {
+          clientAccessTokenHash: tokenHash,
+          clientAccessCreatedAt: now,
+          clientAccessRevoked: false,
+          clientPinHash: pinHash,
+          clientPinEnabled: true,
+          clientPinCreatedAt: now,
+        }
+      });
+      const base = getBaseUrl();
+      const owner = await tx.user.findUnique({ where: { id: userId } });
+      await sendEmail({
+        to: page.clientEmail,
+        subject: `Project Portal Access: ${page.title || page.handle}`,
+        html: `
+          <div style="font-family: sans-serif; padding: 20px;">
+            <h2 style="color: ${EMAIL_COLORS.primary}; margin: 0 0 8px;">Your Project Portal Invitation</h2>
+            <p style="margin: 0 0 12px;">Hello${(data.config as any)?.clientName ? " " + (data.config as any)?.clientName : ""},</p>
+            <p style="margin: 0 0 12px;">${owner?.name || owner?.email || "Your freelancer"} has invited you to track progress for <strong>${page.title || page.handle}</strong>.</p>
+            <p style="margin: 16px 0;">
+              <a href="${base}/api/portal/${page.handle}/auth?access=${token}" style="background: ${EMAIL_COLORS.primary}; color: ${EMAIL_COLORS.onPrimary}; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+                Open Project Portal
+              </a>
+            </p>
+            <div style="background: ${EMAIL_COLORS.surfaceMuted}; padding: 12px; border-radius: 8px; margin: 12px 0;">
+              <p style="margin: 0;"><strong>PIN:</strong> ${pin}</p>
+              <p style="margin: 0; color:#64748b; font-size:12px;">You may be asked for this PIN if you access without the invitation link.</p>
+            </div>
+            <p style="color:#64748b; font-size:12px;">If you didn't expect this email, you can safely ignore it.</p>
+          </div>
+        `
+      });
     }
 
     return page;

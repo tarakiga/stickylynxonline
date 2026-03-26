@@ -57,6 +57,15 @@ model Page {
   category    PageCategory @default(GENERIC)
   theme       Json?        // Stores CSS Variables/Tokens for this page
   clientEmail String?      // For notifications
+  clientName  String?
+  clientAccessTokenHash String?
+  clientAccessCreatedAt DateTime?
+  clientAccessRevoked Boolean @default(false)
+  clientAccessExpiresAt DateTime?
+  clientPinHash String?
+  clientPinEnabled Boolean @default(false)
+  clientPinCreatedAt DateTime?
+  lastClientAccessAt DateTime?
   
   blocks      Block[]
   

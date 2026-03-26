@@ -4,22 +4,36 @@ import { ProjectPortalPublic } from "@/components/public/ProjectPortalPublic";
 import { EpkPublic } from "@/components/public/EpkPublic";
 import { MediaKitPublic } from "@/components/public/MediaKitPublic";
 import { FoodMenuPublic } from "@/components/public/FoodMenuPublic";
+import { PortalDeny } from "@/components/public/PortalDeny";
+import { cookies } from "next/headers";
+import { auth } from "@clerk/nextjs/server";
 
 export default async function PublicPage({ params }: { params: Promise<{ handle: string }> }) {
   const { handle } = await params;
 
   const page = await prisma.page.findUnique({
     where: { handle },
-    include: { blocks: { orderBy: { order: "asc" } } }
+    include: { user: true, blocks: { orderBy: { order: "asc" } } }
   });
 
   if (!page) {
     notFound();
   }
 
-  // Handle privacy (optional for now, but good to have)
-  if (!page.isPublic) {
-    // For now we allow viewing if you have the link, or we could redirect to a splash
+  const isPortal = (page.category as string) === "PROJECT_PORTAL";
+  if (isPortal) {
+    const { userId } = await auth();
+    const isOwner = !!userId && userId === page.userId;
+    const c = await cookies();
+    const cookieVal = c.get(`portal_access_${page.id}`)?.value || "";
+    const hasClientCookie =
+      !!cookieVal &&
+      (cookieVal === page.clientAccessTokenHash || cookieVal === page.clientPinHash);
+    if (!isOwner && !hasClientCookie) {
+      return (
+        <PortalDeny handle={page.handle} pinEnabled={!!page.clientPinEnabled} ownerEmail={page.user?.email || undefined} />
+      );
+    }
   }
 
   return (

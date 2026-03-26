@@ -3,6 +3,8 @@ import prisma from "@/lib/prisma";
 import { sendEmail } from "@/lib/email";
 import { EMAIL_COLORS } from "@/config/theme";
 import { getBaseUrl } from "@/lib/utils";
+import { auth } from "@clerk/nextjs/server";
+import { cookies } from "next/headers";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +20,17 @@ export async function POST(
   });
   if (!page) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  if ((page.category as any) === "PROJECT_PORTAL") {
+    const { userId } = await auth();
+    const isOwner = !!userId && userId === page.userId;
+    const c = await cookies();
+    const cookieVal = c.get(`portal_access_${page.id}`)?.value || "";
+    const hasClientCookie = !!cookieVal && (cookieVal === page.clientAccessTokenHash || cookieVal === page.clientPinHash);
+    if (!isOwner && !hasClientCookie) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
   }
 
   const body = await request.json();
