@@ -11,10 +11,7 @@ export function LandingHero() {
       <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-12 items-center">
         {/* Left column */}
         <div className="space-y-8 animate-in fade-in slide-in-from-left-4 duration-700">
-          <div className="inline-flex items-center gap-2.5 bg-primary-light text-primary px-4 py-2 rounded-full font-bold text-xs sm:text-sm shadow-sm">
-            <Sparkles size={16} />
-            <span>Join 10,000+ professionals using Stickylynx</span>
-          </div>
+          
           
           <h1 className="text-4xl sm:text-6xl font-black text-text-primary tracking-tight leading-[1.1]">
             Launch a powerful single page <br />
@@ -29,9 +26,7 @@ export function LandingHero() {
             <Link href="/register" className="btn-primary px-8 py-4 rounded-2xl flex items-center justify-center gap-2.5 font-bold shadow-premium text-base">
               Get Started for Free <ArrowRight size={20} />
             </Link>
-            <button className="bg-surface border border-divider hover:bg-divider px-8 py-4 rounded-2xl flex items-center justify-center gap-2.5 font-bold transition-all text-sm sm:text-base cursor-pointer">
-              <Play size={18} fill="currentColor" /> Watch Demo
-            </button>
+            
           </div>
           
           <div className="grid grid-cols-2 gap-6 pt-6">
@@ -57,10 +52,7 @@ export function LandingHero() {
                   alt="Stickylynx Visual Mockup" 
                   className="w-full h-auto rounded-[32px] shadow-sm transform hover:scale-[1.01] transition-transform duration-500"
                 />
-                {/* Official Logo Overlay */}
-                <div className="absolute top-4 left-4 bg-surface/90 backdrop-blur-md p-2 rounded-xl shadow-premium border border-divider animate-in fade-in zoom-in duration-700 delay-500">
-                  <img src="/logo.png" alt="Stickylynx Official" className="w-8 h-8 sm:w-10 sm:h-10 object-contain" />
-                </div>
+                
               </div>
            </div>
            

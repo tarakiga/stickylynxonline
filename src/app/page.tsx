@@ -3,6 +3,7 @@ import { LandingHero } from "@/components/landing/LandingHero";
 import { LandingStats } from "@/components/landing/LandingStats";
 import { LandingFeatures } from "@/components/landing/LandingFeatures";
 import { LandingShowcase } from "@/components/landing/LandingShowcase";
+import { LandingPricing } from "@/components/landing/LandingPricing";
 import { LandingCTA } from "@/components/landing/LandingCTA";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 import { auth } from "@clerk/nextjs/server";
@@ -21,6 +22,8 @@ export default async function Home() {
 
         <LandingFeatures />
         
+        <LandingPricing />
+
         <LandingShowcase />
         
         <LandingCTA />

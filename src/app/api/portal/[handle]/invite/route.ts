@@ -51,7 +51,7 @@ export async function POST(
         <p style="margin: 0 0 12px;">Hello${page.clientName ? " " + page.clientName : ""},</p>
         <p style="margin: 0 0 12px;">${page.user?.name || page.user?.email || "Your freelancer"} has invited you to track progress for <strong>${page.title || page.handle}</strong>.</p>
         <p style="margin: 16px 0;">
-          <a href="${base}/api/portal/${page.handle}/auth?access=${token}" style="background: ${EMAIL_COLORS.primary}; color: ${EMAIL_COLORS.onPrimary}; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+          <a href="${base}/${page.handle}?access=${token}" style="background: ${EMAIL_COLORS.primary}; color: ${EMAIL_COLORS.onPrimary}; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold;">
             Open Project Portal
           </a>
         </p>

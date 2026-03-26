@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { User, Mail, CreditCard, AlertTriangle, Image as ImageIcon } from "lucide-react";
 import prisma from "@/lib/prisma";
+import { CurrencySettings } from "@/components/dashboard/CurrencySettings";
 
 export default async function SettingsPage() {
   const { userId } = await auth();
@@ -96,6 +97,8 @@ export default async function SettingsPage() {
             </div>
           </div>
         </Card>
+
+        <CurrencySettings defaultCode={dbUser?.currencyCode || "USD"} />
 
         {/* Billing Card */}
         <Card className="bg-surface rounded-3xl overflow-hidden shadow-sm border border-divider p-0">

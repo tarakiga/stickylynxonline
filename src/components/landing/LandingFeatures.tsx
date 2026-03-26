@@ -22,10 +22,10 @@ export function LandingFeatures() {
        description: "Give your clients a premium project dashboard. Track milestones, approvals, and feedback in real-time."
     },
     {
-       title: "Digital Resumes",
+       title: "Influencers (Media Kit)",
        icon: FileText,
        iconBg: "bg-info/10 text-info",
-       description: "Standard PDFs are dead. Impress recruiters with a live, multimedia professional profile."
+       description: "Pitch brands with audience metrics, rate cards, and campaign services in a polished media kit."
     }
   ];
 
@@ -58,58 +58,7 @@ export function LandingFeatures() {
            })}
         </div>
         
-        {/* Why Stickylynx */}
-        <div className="mt-24 bg-background border border-divider rounded-[40px] p-8 sm:p-12 lg:p-16 flex flex-col lg:flex-row items-center gap-12 overflow-hidden relative">
-           <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-[60px] translate-x-1/2 -translate-y-1/2 -z-10" />
-           
-           <div className="lg:flex-1 space-y-8">
-              <h3 className="text-3xl sm:text-4xl font-black text-text-primary tracking-tight">Designed for Fortune 500 Aesthetics, built for you.</h3>
-              <div className="space-y-6">
-                 <div className="flex gap-4 items-start">
-                    <div className="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center shrink-0 shadow-sm"><Layout size={20} /></div>
-                    <div>
-                       <p className="font-bold text-text-primary">Atomic Design Components</p>
-                       <p className="text-sm text-text-secondary leading-normal">Every block is a meticulously crafted UI component that looks premium on any device.</p>
-                    </div>
-                 </div>
-                 <div className="flex gap-4 items-start">
-                    <div className="w-10 h-10 rounded-xl bg-accent text-white flex items-center justify-center shrink-0 shadow-sm"><Monitor size={20} /></div>
-                    <div>
-                       <p className="font-bold text-text-primary">Device Agnostic Rendering</p>
-                       <p className="text-sm text-text-secondary leading-normal">Your Lynx pages adapt perfectly to smartphones, tablets, and massive desktops.</p>
-                    </div>
-                 </div>
-                 <div className="flex gap-4 items-start">
-                    <div className="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center shrink-0 shadow-sm"><Globe size={20} /></div>
-                    <div>
-                       <p className="font-bold text-text-primary">SEO Optimized by Default</p>
-                       <p className="text-sm text-text-secondary leading-normal">Ranking matters. High Lighthouse scores and perfect meta-tags are baked in.</p>
-                    </div>
-                 </div>
-              </div>
-           </div>
-           
-           <div className="lg:flex-1 flex justify-center lg:justify-end">
-              <div className="relative group">
-                 <div className="w-64 h-[450px] sm:w-72 sm:h-[500px] bg-surface border-[8px] border-text-primary rounded-[48px] shadow-2xl overflow-hidden relative">
-                    <div className="absolute top-0 inset-x-0 h-6 bg-text-primary rounded-b-2xl flex justify-center">
-                       <div className="w-20 h-4 bg-text-primary rounded-b-xl" />
-                    </div>
-                    <div className="w-full h-full p-6 flex flex-col items-center justify-center gap-4 text-center">
-                       <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-2 animate-pulse"><Smartphone size={40} /></div>
-                       <p className="text-lg font-black text-text-primary leading-tight">Your Digital Page</p>
-                       <div className="w-full space-y-2">
-                          <div className="h-2 w-3/4 bg-divider rounded mx-auto" />
-                          <div className="h-2 w-1/2 bg-divider rounded mx-auto" />
-                       </div>
-                       <div className="w-3/4 h-10 bg-primary rounded-xl" />
-                    </div>
-                 </div>
-                 {/* Decorative background element */}
-                 <div className="absolute -inset-4 border-2 border-primary/20 rounded-[56px] -z-10 animate-pulse" />
-              </div>
-           </div>
-        </div>
+        
       </div>
     </section>
   );

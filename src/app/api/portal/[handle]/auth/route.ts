@@ -37,8 +37,11 @@ export async function GET(
   let val = "";
   if (access && !revoked && !expired && p.clientAccessTokenHash) {
     const hash = sha256Hex(access);
-    ok = hash === p.clientAccessTokenHash;
-    val = hash;
+    if (hash === p.clientAccessTokenHash) {
+      ok = true; val = hash;
+    } else if (access === p.clientAccessTokenHash) {
+      ok = true; val = access;
+    }
   } else if (pin && p.clientPinEnabled && p.clientPinHash) {
     const hash = sha256Hex(pin);
     ok = hash === p.clientPinHash;

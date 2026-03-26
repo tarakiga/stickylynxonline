@@ -9,6 +9,7 @@ import { Select } from "@/components/ui/Select";
 import { Dropzone } from "@/components/ui/Dropzone";
 import { MultiContactInput } from "@/components/ui/MultiContactInput";
 import { PriceRepeater, type PriceOption } from "@/components/ui/PriceRepeater";
+import { currencySymbol } from "@/lib/utils";
 import { LocationSearch } from "@/components/ui/LocationSearch";
 
 type Variation = { id: string; name: string; size?: string; price: string; currency: string; description?: string };
@@ -17,7 +18,7 @@ type MenuSection = { id: string; name: string; description?: string; highlighted
 
 function uid(p = "x") { return `${p}-${Date.now()}-${Math.random().toString(36).slice(2,7)}` }
 
-export function FoodMenuEditor({ page }: { page: any }) {
+export function FoodMenuEditor({ page, defaultCurrency = "USD" }: { page: any; defaultCurrency?: string }) {
   const blocks = page.blocks || [];
   const brand = blocks.find((b: any) => b.type === "TEXT" && b.content?.section === "brand_header")?.content || {};
   const service = blocks.find((b: any) => b.type === "GRID" && b.content?.section === "service_info")?.content || {};
@@ -63,7 +64,7 @@ export function FoodMenuEditor({ page }: { page: any }) {
           name: v.name || "",
           size: v.size || "",
           price: String(v.price ?? ""),
-          currency: v.currency || "USD",
+          currency: v.currency || defaultCurrency,
           description: v.description || "",
         })),
       })),
@@ -94,7 +95,7 @@ export function FoodMenuEditor({ page }: { page: any }) {
     setSections(prev => prev.filter(s => s.id !== id)); markDirty();
   }
   function addItem(secId: string) {
-    setSections(prev => prev.map(s => s.id === secId ? { ...s, items: [...s.items, { id: uid("mi"), name: "New Item", baseDescription: "", tags: "", notes: "", photo: "", variations: [{ id: uid("var"), name: "Default", price: "", currency: "USD" }] }] } : s)); markDirty();
+    setSections(prev => prev.map(s => s.id === secId ? { ...s, items: [...s.items, { id: uid("mi"), name: "New Item", baseDescription: "", tags: "", notes: "", photo: "", variations: [{ id: uid("var"), name: "Default", price: "", currency: defaultCurrency }] }] } : s)); markDirty();
   }
   function removeItem(secId: string, itemId: string) {
     setSections(prev => prev.map(s => s.id === secId ? { ...s, items: s.items.filter(i => i.id !== itemId) } : s)); markDirty();
@@ -267,7 +268,6 @@ export function FoodMenuEditor({ page }: { page: any }) {
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <Input labelInside="Item Name" value={it.name} onChange={(e) => { setSections(prev => prev.map(x => x.id === s.id ? { ...x, items: x.items.map(y => y.id === it.id ? { ...y, name: e.target.value } : y) } : x)); markDirty(); }} />
                       <Input labelInside="Tags (comma separated)" value={it.tags} onChange={(e) => { setSections(prev => prev.map(x => x.id === s.id ? { ...x, items: x.items.map(y => y.id === it.id ? { ...y, tags: e.target.value } : y) } : x)); markDirty(); }} />
-                      <Input labelInside="Currency (e.g. USD, NGN)" value={(it.variations[0]?.currency) || "USD"} onChange={(e) => { const currency = e.target.value; setSections(prev => prev.map(x => x.id === s.id ? { ...x, items: x.items.map(y => y.id === it.id ? { ...y, variations: y.variations.map(v => ({ ...v, currency })) } : y) } : x)); markDirty(); }} />
                       <Button variant="ghost" onClick={() => removeItem(s.id, it.id)} className="text-xs py-1.5 px-3 rounded-lg h-auto cursor-pointer hover:text-error hover:bg-error/10 justify-self-start">Remove Item</Button>
                     </div>
                     <Textarea rows={2} placeholder="Base description" value={it.baseDescription || ""} onChange={(e) => { setSections(prev => prev.map(x => x.id === s.id ? { ...x, items: x.items.map(y => y.id === it.id ? { ...y, baseDescription: e.target.value } : y) } : x)); markDirty(); }} className="mt-2" />
@@ -284,9 +284,10 @@ export function FoodMenuEditor({ page }: { page: any }) {
                       <PriceRepeater
                         value={it.variations.map(v => ({ id: v.id, name: v.name, price: v.price }))}
                         onChange={(opts) => {
-                          const currency = it.variations[0]?.currency || "USD"
+                          const currency = defaultCurrency
                           updateVariationsFromPriceRepeater(s.id, it.id, opts, currency)
                         }}
+                        currencySymbol={currencySymbol(defaultCurrency)}
                       />
                     </div>
                     <Input labelInside="Notes" value={it.notes || ""} onChange={(e) => { setSections(prev => prev.map(x => x.id === s.id ? { ...x, items: x.items.map(y => y.id === it.id ? { ...y, notes: e.target.value } : y) } : x)); markDirty(); }} className="mt-2" />

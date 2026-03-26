@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, FileText, BarChart, Settings, LogOut, Palette } from 'lucide-react';
 import { SignOutButton } from '@clerk/nextjs';
+import Image from "next/image";
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -17,8 +18,8 @@ export function Sidebar() {
   return (
     <aside className="w-64 bg-surface border-r border-divider hidden md:flex flex-col min-h-screen sticky top-0">
       <div className="p-6">
-        <div className="w-12 h-12 bg-primary text-on-primary flex items-center justify-center font-bold text-2xl rounded-xl shadow-premium mb-8 uppercase">
-          SL
+        <div className="w-12 h-12 rounded-xl shadow-premium mb-8 overflow-hidden border border-divider bg-background">
+          <Image src="/logo.png" alt="Stickylynx" width={48} height={48} className="w-full h-full object-contain" priority />
         </div>
         <nav className="space-y-2 flex-1">
           {links.map((link) => {

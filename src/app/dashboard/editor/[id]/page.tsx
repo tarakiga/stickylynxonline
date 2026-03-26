@@ -22,6 +22,8 @@ export default async function EditorPage({ params }: { params: Promise<{ id: str
   if (!page || page.userId !== userId) {
     redirect("/dashboard");
   }
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  const defaultCurrency = user?.currencyCode || "USD";
 
   return (
     <div className="flex flex-col animate-in fade-in duration-500 pb-12 w-full h-full min-h-screen relative">
@@ -45,7 +47,7 @@ export default async function EditorPage({ params }: { params: Promise<{ id: str
          ) : (page.category as string) === "INFLUENCER_MEDIA_KIT" ? (
              <MediaKitEditor page={page} />
          ) : (page.category as string) === "FOOD_MENU" ? (
-             <FoodMenuEditor page={page} />
+             <FoodMenuEditor page={page} defaultCurrency={defaultCurrency} />
          ) : (
              <div className="w-full max-w-5xl mx-auto bg-surface border border-divider p-8 rounded-3xl flex items-center justify-center text-text-secondary shadow-sm min-h-[400px]">
                 <div className="text-center">

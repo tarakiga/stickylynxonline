@@ -179,7 +179,7 @@ export async function createLynxPage(data: {
           <p style="margin: 0 0 12px;">Hello${(data.config as any)?.clientName ? " " + (data.config as any)?.clientName : ""},</p>
           <p style="margin: 0 0 12px;">${owner?.name || owner?.email || "Your freelancer"} has invited you to track progress for <strong>${newPage.title || newPage.handle}</strong>.</p>
           <p style="margin: 16px 0;">
-            <a href="${base}/api/portal/${newPage.handle}/auth?access=${inviteToken}" style="background: ${EMAIL_COLORS.primary}; color: ${EMAIL_COLORS.onPrimary}; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+            <a href="${base}/${newPage.handle}?access=${inviteToken}" style="background: ${EMAIL_COLORS.primary}; color: ${EMAIL_COLORS.onPrimary}; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold;">
               Open Project Portal
             </a>
           </p>

@@ -30,17 +30,17 @@ export function LandingFooter() {
           <div>
             <h5 className="text-sm font-black text-text-primary uppercase tracking-[0.15em] mb-6">Support</h5>
             <ul className="space-y-4">
-              <li><Link href="#" className="text-sm text-text-secondary font-bold hover:text-primary transition-colors">Help Center</Link></li>
-              <li><Link href="#" className="text-sm text-text-secondary font-bold hover:text-primary transition-colors">Documentation</Link></li>
-              <li><Link href="#" className="text-sm text-text-secondary font-bold hover:text-primary transition-colors">Contact Us</Link></li>
+              <li><Link href="/help-center" className="text-sm text-text-secondary font-bold hover:text-primary transition-colors">Help Center</Link></li>
+              <li><Link href="/docs" className="text-sm text-text-secondary font-bold hover:text-primary transition-colors">Documentation</Link></li>
+              <li><Link href="/contact" className="text-sm text-text-secondary font-bold hover:text-primary transition-colors">Contact Us</Link></li>
             </ul>
           </div>
           
           <div>
             <h5 className="text-sm font-black text-text-primary uppercase tracking-[0.15em] mb-6">Legal</h5>
             <ul className="space-y-4">
-              <li><Link href="#" className="text-sm text-text-secondary font-bold hover:text-primary transition-colors">Privacy Policy</Link></li>
-              <li><Link href="#" className="text-sm text-text-secondary font-bold hover:text-primary transition-colors">Terms of Service</Link></li>
+              <li><Link href="/privacy" className="text-sm text-text-secondary font-bold hover:text-primary transition-colors">Privacy Policy</Link></li>
+              <li><Link href="/terms" className="text-sm text-text-secondary font-bold hover:text-primary transition-colors">Terms of Service</Link></li>
             </ul>
           </div>
           

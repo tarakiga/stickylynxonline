@@ -13,9 +13,10 @@ export interface PriceRepeaterProps {
   value?: PriceOption[];
   onChange?: (options: PriceOption[]) => void;
   error?: string;
+  currencySymbol?: string;
 }
 
-export function PriceRepeater({ label, value, onChange, error }: PriceRepeaterProps) {
+export function PriceRepeater({ label, value, onChange, error, currencySymbol = "$" }: PriceRepeaterProps) {
   const [internalOptions, setInternalOptions] = React.useState<PriceOption[]>([
     { id: "1", name: "", price: "" }
   ])
@@ -55,7 +56,7 @@ export function PriceRepeater({ label, value, onChange, error }: PriceRepeaterPr
               <div className="w-px bg-divider hidden sm:block self-stretch"></div>
               <div className="h-px bg-divider sm:hidden w-full"></div>
               <div className="w-full sm:w-32 relative flex items-center">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary font-bold text-sm">$</span>
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary font-bold text-sm">{currencySymbol}</span>
                 <input 
                   type="number" 
                   step="0.01"

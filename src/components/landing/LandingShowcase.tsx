@@ -32,10 +32,7 @@ export function LandingShowcase() {
                   alt="Stickylynx Template Showcase" 
                   className="w-full h-auto transform hover:scale-[1.01] transition-transform duration-500" 
                 />
-                {/* Official Logo Badge */}
-                <div className="absolute top-6 right-6 p-1.5 bg-background/80 backdrop-blur-md rounded-2xl border border-divider shadow-premium">
-                  <img src="/logo.png" alt="Official" className="w-8 h-8 object-contain" />
-                </div>
+                
               </div>
            </div>
            

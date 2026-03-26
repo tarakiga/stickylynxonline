@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { Phone, AtSign, Globe } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
+import { currencySymbol } from "@/lib/utils";
 
 function ensureProtocol(url?: string) {
   if (!url) return "";
@@ -23,6 +24,8 @@ export function FoodMenuPublic({ page }: { page: any }) {
 
   const allSections = (menu.sections || []) as Array<any>;
   const [q, setQ] = React.useState("");
+  const userCurrency = (page.user?.currencyCode) || "USD";
+  const sym = currencySymbol(userCurrency);
 
   const filteredSections = allSections.map((s) => {
     const items = (s.items || []).filter((it: any) => {
@@ -57,7 +60,7 @@ export function FoodMenuPublic({ page }: { page: any }) {
                   <div className="flex items-center flex-wrap gap-2 mt-2">
                     {(it.variations || []).map((v: any, i: number) => (
                       <span key={i} className="inline-flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-lg bg-surface border border-divider">
-                        {v.name}{v.size ? ` • ${v.size}` : ""} — {v.currency} {v.price}
+                        {v.name}{v.size ? ` • ${v.size}` : ""} — {sym} {v.price}
                       </span>
                     ))}
                   </div>
@@ -230,7 +233,7 @@ export function FoodMenuPublic({ page }: { page: any }) {
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
                   {(it.variations || []).map((v: any, j: number) => (
-                    <Badge key={j} variant="neutral" className="text-[10px] px-1.5 py-0">{v.currency} {v.price}</Badge>
+                    <Badge key={j} variant="neutral" className="text-[10px] px-1.5 py-0">{sym} {v.price}</Badge>
                   ))}
                 </div>
               </div>

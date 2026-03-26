@@ -10,6 +10,26 @@ export function PortalDeny({ handle, pinEnabled, ownerEmail }: { handle: string;
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
+  React.useEffect(() => {
+    const url = new URL(window.location.href);
+    const access = url.searchParams.get("access");
+    if (access) {
+      (async () => {
+        try {
+          const u = `/api/portal/${handle}/auth?access=${encodeURIComponent(access)}`;
+          const res = await fetch(u, { method: "GET" });
+          if (res.ok) {
+            window.location.href = `/${handle}`;
+          } else {
+            setError("Access link invalid or expired. Try PIN or contact owner.");
+          }
+        } catch {
+          setError("Network error verifying access link.");
+        }
+      })();
+    }
+  }, [handle]);
+
   async function submitPin() {
     setLoading(true);
     setError(null);

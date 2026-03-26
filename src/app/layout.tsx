@@ -11,6 +11,11 @@ const asap = Asap({
 export const metadata: Metadata = {
   title: "Stickylynx Online",
   description: "The premium public page builder.",
+  icons: {
+    icon: "/logo.png",
+    shortcut: "/logo.png",
+    apple: "/logo.png",
+  },
 };
 
 export default function RootLayout({

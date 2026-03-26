@@ -20,3 +20,15 @@ export function getBaseUrl() {
   if (process.env.NODE_ENV !== "production") return "http://localhost:3000";
   return "";
 }
+
+export function currencySymbol(code?: string) {
+  const c = (code || "USD").toUpperCase();
+  const map: Record<string, string> = {
+    USD: "$", EUR: "€", GBP: "£", JPY: "¥", CNY: "¥", INR: "₹", NGN: "₦", GHS: "₵", ZAR: "R",
+    KES: "KSh", UGX: "USh", TZS: "TSh", CAD: "$", AUD: "$", NZD: "$", CHF: "CHF", SEK: "kr",
+    NOK: "kr", DKK: "kr", PLN: "zł", CZK: "Kč", HUF: "Ft", RUB: "₽", TRY: "₺", AED: "د.إ",
+    SAR: "﷼", QAR: "﷼", BHD: ".د.ب", OMR: "﷼", PKR: "₨", LKR: "Rs", THB: "฿", SGD: "$",
+    HKD: "$", MYR: "RM", IDR: "Rp", PHP: "₱", BRL: "R$", MXN: "$", ARS: "$", CLP: "$", COP: "$",
+  };
+  return map[c] || c;
+}

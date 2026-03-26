@@ -1,5 +1,6 @@
 import * as React from "react"
 import { cn } from "@/lib/utils"
+import Image from "next/image"
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -15,8 +16,8 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <div className="absolute bottom-[-20%] right-[-10%] w-[70%] h-[70%] bg-secondary/20 rounded-full blur-[120px] mix-blend-multiply"></div>
         
         <div className="relative z-10 p-16 max-w-2xl">
-          <div className="w-16 h-16 bg-primary text-white flex items-center justify-center font-bold text-3xl rounded-2xl shadow-premium mb-8 uppercase">
-             SL
+          <div className="w-16 h-16 rounded-2xl shadow-premium mb-8 overflow-hidden border border-divider bg-background">
+            <Image src="/logo.png" alt="Stickylynx" width={64} height={64} className="w-full h-full object-contain" priority />
           </div>
           <h2 className="text-5xl font-bold text-text-primary tracking-tight leading-tight">
              The simplest way to build, monetize, and share your world.
