@@ -18,7 +18,7 @@ export function PortalDeny({ handle, pinEnabled, ownerEmail }: { handle: string;
     setLoading(true);
     setError(null);
     try {
-      const u = `/api/portal/${handle}/auth?pin=${encodeURIComponent(pin)}`;
+      const u = `/api/portal/auth?handle=${encodeURIComponent(handle)}&pin=${encodeURIComponent(pin)}`;
       const res = await fetch(u, { method: "GET" });
       if (res.ok) {
         window.location.href = `/${handle}`;
