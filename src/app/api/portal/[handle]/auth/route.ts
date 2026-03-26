@@ -14,7 +14,6 @@ export async function GET(
 ) {
   const { handle } = await params;
   const url = new URL(request.url);
-  const access = url.searchParams.get("access") || "";
   const pin = url.searchParams.get("pin") || "";
 
   const page = await prisma.page.findUnique({
@@ -35,14 +34,7 @@ export async function GET(
 
   let ok = false;
   let val = "";
-  if (access && !revoked && !expired && p.clientAccessTokenHash) {
-    const hash = sha256Hex(access);
-    if (hash === p.clientAccessTokenHash) {
-      ok = true; val = hash;
-    } else if (access === p.clientAccessTokenHash) {
-      ok = true; val = access;
-    }
-  } else if (pin && p.clientPinEnabled && p.clientPinHash) {
+  if (pin && p.clientPinEnabled && p.clientPinHash) {
     const hash = sha256Hex(pin);
     ok = hash === p.clientPinHash;
     val = hash;

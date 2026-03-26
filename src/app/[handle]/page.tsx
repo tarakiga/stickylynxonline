@@ -27,8 +27,7 @@ export default async function PublicPage({ params }: { params: Promise<{ handle:
     const c = await cookies();
     const cookieVal = c.get(`portal_access_${page.id}`)?.value || "";
     const hasClientCookie =
-      !!cookieVal &&
-      (cookieVal === page.clientAccessTokenHash || cookieVal === page.clientPinHash);
+      !!cookieVal && (cookieVal === page.clientPinHash);
     if (!isOwner && !hasClientCookie) {
       return (
         <PortalDeny handle={page.handle} pinEnabled={!!page.clientPinEnabled} ownerEmail={page.user?.email || undefined} />
