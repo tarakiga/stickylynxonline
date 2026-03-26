@@ -34,6 +34,8 @@ export async function createLynxPage(data: {
   const category = data.category as PageCategory;
 
   // Use a transaction to ensure page and blocks are created together
+  let inviteToken: string | null = null;
+  let invitePin: string | null = null;
   const newPage = await prisma.$transaction(async (tx) => {
     const page = await tx.page.create({
       data: {
@@ -137,7 +139,7 @@ export async function createLynxPage(data: {
       ));
     }
 
-    // Project Portal: generate client access + PIN and send invitation
+    // Project Portal: generate client access + PIN (email sent after transaction)
     if (category === "PROJECT_PORTAL" && page.clientEmail) {
       const token = crypto.randomBytes(24).toString("hex");
       const pin = String(Math.floor(100000 + Math.random() * 900000)); // 6 digits
@@ -155,30 +157,8 @@ export async function createLynxPage(data: {
           clientPinCreatedAt: now,
         } as any
       });
-      const base = getBaseUrl();
-      const owner = await tx.user.findUnique({ where: { id: userId } });
-      const result = await sendEmail({
-        to: page.clientEmail,
-        subject: `Project Portal Access: ${page.title || page.handle}`,
-        html: `
-          <div style="font-family: sans-serif; padding: 20px;">
-            <h2 style="color: ${EMAIL_COLORS.primary}; margin: 0 0 8px;">Your Project Portal Invitation</h2>
-            <p style="margin: 0 0 12px;">Hello${(data.config as any)?.clientName ? " " + (data.config as any)?.clientName : ""},</p>
-            <p style="margin: 0 0 12px;">${owner?.name || owner?.email || "Your freelancer"} has invited you to track progress for <strong>${page.title || page.handle}</strong>.</p>
-            <p style="margin: 16px 0;">
-              <a href="${base}/api/portal/${page.handle}/auth?access=${token}" style="background: ${EMAIL_COLORS.primary}; color: ${EMAIL_COLORS.onPrimary}; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold;">
-                Open Project Portal
-              </a>
-            </p>
-            <div style="background: ${EMAIL_COLORS.surfaceMuted}; padding: 12px; border-radius: 8px; margin: 12px 0;">
-              <p style="margin: 0;"><strong>PIN:</strong> ${pin}</p>
-              <p style="margin: 0; color:#64748b; font-size:12px;">You may be asked for this PIN if you access without the invitation link.</p>
-            </div>
-            <p style="color:#64748b; font-size:12px;">If you didn't expect this email, you can safely ignore it.</p>
-          </div>
-        `
-      });
-      const emailSent = !!result.ok;
+      inviteToken = token;
+      invitePin = pin;
       return page;
     }
 
@@ -186,5 +166,32 @@ export async function createLynxPage(data: {
   });
 
   revalidatePath("/dashboard");
-  return { pageId: newPage.id, emailSent: !!newPage.clientEmail };
+  let emailSent = false;
+  if ((newPage.category as string) === "PROJECT_PORTAL" && newPage.clientEmail && inviteToken && invitePin) {
+    const base = getBaseUrl();
+    const owner = await prisma.user.findUnique({ where: { id: newPage.userId } });
+    const result = await sendEmail({
+      to: newPage.clientEmail,
+      subject: `Project Portal Access: ${newPage.title || newPage.handle}`,
+      html: `
+        <div style="font-family: sans-serif; padding: 20px;">
+          <h2 style="color: ${EMAIL_COLORS.primary}; margin: 0 0 8px;">Your Project Portal Invitation</h2>
+          <p style="margin: 0 0 12px;">Hello${(data.config as any)?.clientName ? " " + (data.config as any)?.clientName : ""},</p>
+          <p style="margin: 0 0 12px;">${owner?.name || owner?.email || "Your freelancer"} has invited you to track progress for <strong>${newPage.title || newPage.handle}</strong>.</p>
+          <p style="margin: 16px 0;">
+            <a href="${base}/api/portal/${newPage.handle}/auth?access=${inviteToken}" style="background: ${EMAIL_COLORS.primary}; color: ${EMAIL_COLORS.onPrimary}; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+              Open Project Portal
+            </a>
+          </p>
+          <div style="background: ${EMAIL_COLORS.surfaceMuted}; padding: 12px; border-radius: 8px; margin: 12px 0;">
+            <p style="margin: 0;"><strong>PIN:</strong> ${invitePin}</p>
+            <p style="margin: 0; color:#64748b; font-size:12px;">You may be asked for this PIN if you access without the invitation link.</p>
+          </div>
+          <p style="color:#64748b; font-size:12px;">If you didn't expect this email, you can safely ignore it.</p>
+        </div>
+      `
+    });
+    emailSent = !!result.ok;
+  }
+  return { pageId: newPage.id, emailSent };
 }

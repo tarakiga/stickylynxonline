@@ -10,9 +10,9 @@ function sha256Hex(input: string) {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { handle: string } }
+  { params }: { params: Promise<{ handle: string }> }
 ) {
-  const { handle } = params;
+  const { handle } = await params;
   const url = new URL(request.url);
   const access = url.searchParams.get("access") || "";
   const pin = url.searchParams.get("pin") || "";
