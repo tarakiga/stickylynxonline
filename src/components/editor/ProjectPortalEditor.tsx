@@ -493,14 +493,6 @@ export function ProjectPortalEditor({ page }: { page: any }) {
               <Button variant="outline" onClick={resendInvite} className="text-xs py-2 px-3 rounded-lg h-auto cursor-pointer">
                 <Mail size={14} className="mr-1" /> Resend Email
               </Button>
-            <Button variant="ghost" onClick={async () => {
-              const res = await fetch(`/api/email/verify`, { method: "GET" });
-              const data = await res.json().catch(() => ({}));
-              if (res.ok) showToast("SMTP verified", "success");
-              else showToast(`SMTP error: ${String(data.error || "Unknown")}`, "error");
-            }} className="text-xs py-2 px-3 rounded-lg h-auto cursor-pointer">
-              Verify SMTP
-            </Button>
             </div>
             <p className="text-[10px] text-text-secondary mt-1">Resend only if the client didn’t receive the first email.</p>
           </div>
