@@ -15,6 +15,7 @@ import type { MilestoneWithReviews, Task, TaskStatus, Deliverable, DeliverableTy
 import { DELIVERABLE_TYPE_OPTIONS } from "@/types/editor";
 import { Dropzone } from "@/components/ui/Dropzone";
 import { CheckCircle2, Clock, FileText, MessageSquare, AlertCircle, Plus, Save, Loader2, Eye, UploadCloud, Link as LinkIcon, AlignLeft } from "lucide-react";
+import { getBaseUrl } from "@/lib/utils";
 
 /* ─── ID helper ──────────────────────────────────────────────── */
 let _seq = 0;
@@ -33,6 +34,9 @@ export function ProjectPortalEditor({ page }: { page: any }) {
 
   const [clientName, setClientName] = React.useState<string>(headerContent.clientName || "Your Client");
   const [clientEmail, setClientEmail] = React.useState<string>(page.clientEmail || "");
+  const [linkCopied, setLinkCopied] = React.useState(false);
+  const [pinModal, setPinModal] = React.useState<{ open: boolean; pin?: string }>({ open: false });
+  const accessEnabled = true;
 
   /* ── Save state ────────────────────────────────────────────── */
   const [saving, setSaving] = React.useState(false);
@@ -131,6 +135,34 @@ export function ProjectPortalEditor({ page }: { page: any }) {
 
   /* ── Handlers: View Public ───────────────────────────────── */
   const handleViewPublic = () => window.open(`/${page.handle}`, "_blank");
+  const copyInvitationLink = async () => {
+    const res = await fetch(`/api/portal/${page.handle}/link`, { method: "POST" });
+    if (res.ok) {
+      const data = await res.json();
+      await navigator.clipboard.writeText(String(data.link));
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    } else {
+      alert("Failed to generate link.");
+    }
+  };
+  const togglePin = async (enabled: boolean) => {
+    const res = await fetch(`/api/portal/${page.handle}/pin/toggle`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ enabled }) });
+    if (!res.ok) alert("Failed to toggle PIN.");
+  };
+  const resetPin = async () => {
+    const res = await fetch(`/api/portal/${page.handle}/pin/reset`, { method: "POST" });
+    if (res.ok) {
+      const data = await res.json();
+      setPinModal({ open: true, pin: data.pin });
+    } else {
+      alert("Failed to reset PIN.");
+    }
+  };
+  const resendInvite = async () => {
+    const res = await fetch(`/api/portal/${page.handle}/invite`, { method: "POST" });
+    if (!res.ok) alert("Failed to resend invitation.");
+  };
 
   /* ── Handlers: Milestones ────────────────────────────────── */
   const handleAddMilestone = () => {
@@ -415,6 +447,34 @@ export function ProjectPortalEditor({ page }: { page: any }) {
          </div>
        </Card>
 
+      {/* 1b. Client Link & Access */}
+      <Card className="rounded-3xl border border-divider shadow-sm bg-surface p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="font-bold text-xl text-text-primary tracking-tight">Client Link & Access</h3>
+            <p className="text-xs text-text-secondary">Share the portal with your client and manage access.</p>
+          </div>
+          {linkCopied && <Badge variant="success" className="text-[10px]">Link copied</Badge>}
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <Button variant="secondary" onClick={copyInvitationLink} className="text-xs py-2 px-3 rounded-lg h-auto cursor-pointer">
+            Generate & Copy Link
+          </Button>
+          <Button variant="ghost" onClick={() => resendInvite()} className="text-xs py-2 px-3 rounded-lg h-auto cursor-pointer">
+            Resend Invitation
+          </Button>
+          <Button variant="ghost" onClick={() => togglePin(true)} className="text-xs py-2 px-3 rounded-lg h-auto cursor-pointer">
+            Require PIN
+          </Button>
+          <Button variant="ghost" onClick={() => togglePin(false)} className="text-xs py-2 px-3 rounded-lg h-auto cursor-pointer">
+            Disable PIN
+          </Button>
+          <Button variant="ghost" onClick={resetPin} className="text-xs py-2 px-3 rounded-lg h-auto cursor-pointer">
+            Reset PIN
+          </Button>
+        </div>
+      </Card>
+
        {/* ── Stage-scoped Tasks ── */}
        <div className="space-y-4">
          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-surface border border-divider p-4 rounded-2xl shadow-sm gap-3">
@@ -649,6 +709,18 @@ export function ProjectPortalEditor({ page }: { page: any }) {
          title="Delete Stage"
          description="Deleting this stage will also remove all its tasks, reviews, and comments. This cannot be undone."
        />
+
+      {/* Show PIN Modal after reset */}
+      <Modal isOpen={pinModal.open} onClose={() => setPinModal({ open: false })} title="New PIN Generated" description="Share this PIN with your client if needed." icon="info">
+        <div className="w-full space-y-3 !mt-4">
+          <div className="bg-background border border-divider rounded-xl p-4 text-center">
+            <p className="text-2xl font-bold text-text-primary tracking-widest">{pinModal.pin}</p>
+          </div>
+          <div className="flex gap-2 justify-end">
+            <Button variant="secondary" onClick={() => setPinModal({ open: false })}>Done</Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
