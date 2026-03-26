@@ -21,6 +21,10 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
     const isPassword = type === "password"
     const inputType = isPassword ? (showPassword ? "text" : "password") : type
     const inputId = id || React.useId()
+    const hasIcon = !!icon
+    const hasPrefix = typeof prefix === "string" && prefix.length > 0
+    const leftPadClass =
+      hasIcon ? "pl-11" : hasPrefix ? (prefix!.length > 1 ? "pl-16" : "pl-11") : ""
 
     return (
       <div className="w-full">
@@ -41,7 +45,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             type={inputType}
             className={cn(
               "w-full input-base px-4 py-3 placeholder:text-text-secondary/50 transition-all",
-              icon || prefix ? "pl-11" : "",
+              leftPadClass,
               suffix || endIcon || isPassword ? "pr-12" : "",
               actionButton ? "pr-24" : "",
               error ? "border-error focus:ring-error/20 focus:border-error bg-error/5" : "",

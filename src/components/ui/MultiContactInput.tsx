@@ -2,10 +2,19 @@
 import * as React from "react"
 import { X } from "lucide-react"
 
-export function MultiContactInput({ label, error }: { label: string, error?: string }) {
-  const [contacts, setContacts] = React.useState<string[]>(["alex@example.com"])
+export function MultiContactInput({ label, error, value, onChange }: { label: string, error?: string, value?: string[], onChange?: (v: string[]) => void }) {
+  const [contacts, setContacts] = React.useState<string[]>(value ?? ["alex@example.com"])
   const [inputVal, setInputVal] = React.useState("")
   const [localError, setLocalError] = React.useState(false)
+
+  React.useEffect(() => {
+    if (value) setContacts(value)
+  }, [value?.join(",")])
+
+  const setAndEmit = (vals: string[]) => {
+    if (onChange) onChange(vals)
+    else setContacts(vals)
+  }
 
   const validate = (val: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val) || /^\+?[\d\s-]{7,15}$/.test(val)
 
@@ -20,7 +29,7 @@ export function MultiContactInput({ label, error }: { label: string, error?: str
     const val = inputVal.trim().replace(/,$/, '')
     if (!val) return
     if (validate(val) && !contacts.includes(val)) {
-      setContacts([...contacts, val])
+      setAndEmit([...contacts, val])
       setInputVal("")
       setLocalError(false)
     } else {
@@ -28,7 +37,7 @@ export function MultiContactInput({ label, error }: { label: string, error?: str
     }
   }
 
-  const removeContact = (c: string) => setContacts(contacts.filter(x => x !== c))
+  const removeContact = (c: string) => setAndEmit(contacts.filter(x => x !== c))
 
   return (
     <div className="space-y-2 w-full">

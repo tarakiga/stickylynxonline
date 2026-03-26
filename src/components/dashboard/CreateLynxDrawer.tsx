@@ -36,6 +36,8 @@ export function CreateLynxDrawer() {
 
   const isProjectPortal = categoryStr === "PROJECT_PORTAL";
   const isEpk = categoryStr === "EPK";
+  const isFoodMenu = categoryStr === "FOOD_MENU";
+  const isMediaKit = categoryStr === "INFLUENCER_MEDIA_KIT";
 
   const handleNext = () => setStep(2);
   const handleBack = () => setStep(1);
@@ -168,7 +170,7 @@ export function CreateLynxDrawer() {
                  <p className="text-sm text-text-secondary">Set up the initial variables for your selected layout so we can auto-generate sections.</p>
                </div>
                
-               {isProjectPortal ? (
+              {isProjectPortal ? (
                  <>
                    <Input 
                      labelInside="Client or Company Name" 
@@ -195,6 +197,20 @@ export function CreateLynxDrawer() {
                    <div className="bg-primary/5 border border-primary/20 rounded-2xl p-5 text-text-primary text-sm flex gap-3 shadow-sm">
                      <Layers className="text-primary mt-1 shrink-0" size={18} />
                      <p>Your EPK will be pre-configured with sections for <strong>music, videos, press photos, bio, and contact info</strong>. You can customize everything in the editor.</p>
+                   </div>
+                 </>
+              ) : isMediaKit ? (
+                 <>
+                   <div className="bg-primary/5 border border-primary/20 rounded-2xl p-5 text-text-primary text-sm flex gap-3 shadow-sm">
+                     <Layers className="text-primary mt-1 shrink-0" size={18} />
+                     <p>Your Media Kit will include <strong>creator identity</strong>, <strong>bio</strong>, <strong>audience & demographics</strong>, <strong>platform metrics</strong>, <strong>best work</strong>, <strong>services</strong>, <strong>testimonials</strong>, and <strong>contact</strong> blocks. You can refine everything in the editor.</p>
+                   </div>
+                 </>
+               ) : isFoodMenu ? (
+                 <>
+                   <div className="bg-primary/5 border border-primary/20 rounded-2xl p-5 text-text-primary text-sm flex gap-3 shadow-sm">
+                     <Layers className="text-primary mt-1 shrink-0" size={18} />
+                     <p>Your Food Menu will include <strong>brand header</strong>, <strong>service info</strong>, <strong>menu sections</strong>, and <strong>extras</strong>. You can add sections and items with size/option-based pricing in the editor.</p>
                    </div>
                  </>
                ) : (

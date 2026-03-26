@@ -1,18 +1,24 @@
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
-
-const isPublicRoute = createRouteMatcher(['/login(.*)', '/register(.*)', '/', '/design-system(.*)', '/:handle'])
+import { clerkMiddleware } from '@clerk/nextjs/server'
 
 export default clerkMiddleware(async (auth, request) => {
-  if (!isPublicRoute(request)) {
+  const { pathname } = request.nextUrl
+  const isExplicitPublic =
+    pathname === '/' ||
+    pathname.startsWith('/login') ||
+    pathname.startsWith('/register') ||
+    pathname.startsWith('/design-system')
+  const singleSegment = /^\/[^/]+$/.test(pathname)
+  const reserved = new Set(['dashboard', 'api', '_next', 'design-system', 'login', 'register', 'email-templates'])
+  const slug = pathname.slice(1)
+  const isPublicHandle = singleSegment && !reserved.has(slug)
+  if (!isExplicitPublic && !isPublicHandle) {
     await auth.protect()
   }
 })
 
 export const config = {
   matcher: [
-    // Skip Next.js internals and all static files, unless found in search params
     '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
-    // Always run for API routes
     '/(api|trpc)(.*)',
   ],
 }

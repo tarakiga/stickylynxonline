@@ -1,3 +1,4 @@
+ "use client"
 import { Button } from "@/components/ui/Button"
 import { Card } from "@/components/ui/Card"
 import { Input } from "@/components/ui/Input"
@@ -26,11 +27,20 @@ import { ModalShowcase } from "./ModalShowcase"
 import { CategoryCard } from "@/components/ui/CategoryCard"
 import { PriceRepeater } from "@/components/ui/PriceRepeater"
 import { DEMO_ASSETS_ALLOWED } from "@/config/services"
+import * as React from "react"
+import { Avatar } from "@/components/ui/Avatar"
+import { Skeleton, Spinner } from "@/components/ui/Skeleton"
+import { Tabs } from "@/components/ui/Tabs"
+import { Accordion } from "@/components/ui/Accordion"
+import { Table } from "@/components/ui/Table"
+import { Tooltip } from "@/components/ui/Tooltip"
+import { Toaster, showToast } from "@/components/ui/Toast"
 
 export default function DesignSystemPage() {
   return (
     <div className="max-w-7xl mx-auto space-y-12 py-10 px-6 relative pb-24">
       <CookiesBanner />
+      <Toaster />
       <div>
         <h1 className="text-3xl font-bold mb-2">Design System</h1>
         <p className="text-text-secondary">Core atomic components powered by Tailwind 4 and Next.js 15.</p>
@@ -236,6 +246,83 @@ export default function DesignSystemPage() {
             </div>
           </section>
         </div>
+      </div>
+
+      <section>
+        <h2 className="text-xl font-bold border-b border-divider pb-2 mb-6">Component Catalogue</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <Card className="space-y-4">
+            <h3 className="font-bold text-text-primary">Avatar</h3>
+            <div className="flex items-center gap-4">
+              <Avatar name="M J" />
+              <Avatar src={DEMO_ASSETS_ALLOWED ? "https://i.pravatar.cc/100?img=18" : undefined} name="Jane Doe" />
+              <Avatar name="SL" size={64} rounded="full" />
+            </div>
+          </Card>
+          <Card className="space-y-4">
+            <h3 className="font-bold text-text-primary">Skeleton & Spinner</h3>
+            <div className="space-y-3">
+              <Skeleton className="h-4 w-1/2" />
+              <Skeleton className="h-4 w-2/3" />
+              <div className="flex items-center gap-3"><Spinner /><span className="text-sm text-text-secondary">Loading</span></div>
+            </div>
+          </Card>
+          <Card className="space-y-4">
+            <h3 className="font-bold text-text-primary">Tooltip</h3>
+            <Tooltip content="Helpful context">
+              <Button variant="secondary">Hover me</Button>
+            </Tooltip>
+          </Card>
+          <Card className="space-y-4">
+            <h3 className="font-bold text-text-primary">Tabs</h3>
+            <TabsDemo />
+          </Card>
+          <Card className="space-y-4">
+            <h3 className="font-bold text-text-primary">Accordion</h3>
+            <Accordion items={[
+              { id: "a", title: "Overview", content: "Concise summary of the feature." },
+              { id: "b", title: "Details", content: "Extended information and edge cases." }
+            ]} />
+          </Card>
+          <Card className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-text-primary">Toast</h3>
+              <Button variant="primary" onClick={() => showToast("Profile updated", "success")} className="text-xs py-1.5 px-3 rounded-lg h-auto cursor-pointer">Show</Button>
+            </div>
+            <p className="text-sm text-text-secondary">Transient notifications with variants.</p>
+          </Card>
+          <div className="md:col-span-2 lg:col-span-3">
+            <Card className="space-y-4">
+              <h3 className="font-bold text-text-primary">Table</h3>
+              <Table columns={[
+                { key: "name", header: "Name" },
+                { key: "role", header: "Role" },
+                { key: "email", header: "Email" },
+              ]} rows={[
+                { name: "Alex Morgan", role: "Designer", email: "alex@example.com" },
+                { name: "Priya D", role: "Engineer", email: "priya@example.com" },
+                { name: "Sam T", role: "PM", email: "sam@example.com" },
+                { name: "Jordan W", role: "QA", email: "jordan@example.com" },
+                { name: "Lee C", role: "Support", email: "lee@example.com" },
+                { name: "Taylor R", role: "Engineer", email: "taylor@example.com" },
+              ]} />
+            </Card>
+          </div>
+        </div>
+      </section>
+    </div>
+  )
+}
+
+function TabsDemo() {
+  const [val, setVal] = React.useState("a")
+  return (
+    <div className="space-y-3">
+      <Tabs tabs={[{ id: "a", label: "Profile" }, { id: "b", label: "Security" }, { id: "c", label: "Billing" }]} value={val} onChange={setVal} />
+      <div className="text-sm text-text-secondary">
+        {val === "a" && "Profile settings"}
+        {val === "b" && "Security preferences"}
+        {val === "c" && "Billing overview"}
       </div>
     </div>
   )

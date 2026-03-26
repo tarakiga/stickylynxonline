@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { sendEmail } from "@/lib/email";
 import { EMAIL_COLORS } from "@/config/theme";
+import { getBaseUrl } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -63,6 +64,7 @@ export async function PUT(
 
   if (page.user?.email) {
     const task = milestones.flatMap((m) => m.tasks).find((t) => t.id === taskId);
+    const base = getBaseUrl();
     await sendEmail({
       to: page.user.email,
       subject: `Task Approved: ${task?.title || "Project Update"}`,
@@ -70,7 +72,7 @@ export async function PUT(
         <div style="font-family: sans-serif; padding: 20px;">
           <h2 style="color: ${EMAIL_COLORS.primary};">Great news!</h2>
           <p>The client has approved your task: <strong>${task?.title}</strong> on the project <strong>${page.title}</strong>.</p>
-          <p>Visit your dashboard to view the next steps.</p>
+          <p>Visit your <a href="${base}/dashboard" style="color: ${EMAIL_COLORS.primary}; text-decoration: underline;">dashboard</a> to view the next steps.</p>
         </div>
       `,
     });

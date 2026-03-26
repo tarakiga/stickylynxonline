@@ -31,7 +31,8 @@ export function ProjectPortalEditor({ page }: { page: any }) {
   const taskBoardContent = blocks.find((b: any) => b.type === "TASK_BOARD")?.content || {};
   const deliverablesContent = blocks.find((b: any) => b.type === "DELIVERABLES")?.content || {};
 
-  const clientName = headerContent.clientName || "Your Client";
+  const [clientName, setClientName] = React.useState<string>(headerContent.clientName || "Your Client");
+  const [clientEmail, setClientEmail] = React.useState<string>(page.clientEmail || "");
 
   /* ── Save state ────────────────────────────────────────────── */
   const [saving, setSaving] = React.useState(false);
@@ -109,7 +110,7 @@ export function ProjectPortalEditor({ page }: { page: any }) {
     setSaving(true);
     try {
       const payload = [
-        { type: "PROJECT_HEADER", content: headerContent, order: 0 },
+        { type: "PROJECT_HEADER", content: { ...headerContent, clientName }, order: 0 },
         { type: "STATUS_SUMMARY", content: { text: statusNote, manualText: statusOverride }, order: 1 },
         { type: "TIMELINE", content: { milestones, currentStep }, order: 2 },
         { type: "DELIVERABLES", content: { items: deliverables }, order: 3 },
@@ -117,7 +118,7 @@ export function ProjectPortalEditor({ page }: { page: any }) {
       const res = await fetch(`/api/editor/${page.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ blocks: payload }),
+        body: JSON.stringify({ blocks: payload, clientEmail }),
       });
       if (res.ok) {
         setLastSaved(new Date().toLocaleTimeString());
@@ -246,17 +247,21 @@ export function ProjectPortalEditor({ page }: { page: any }) {
   const handleDeleteDeliverable = (id: string) => { setDeliverables((prev) => prev.filter((d) => d.id !== id)); markDirty(); };
 
   /* ── Derived ────────────────────────────────────────────── */
-  const allComments = milestones.flatMap((m) =>
-    m.comments.map((c) => ({ ...c, stageLabel: m.label }))
+  type FeedComment = { id: string; taskId: string; author: string; text: string; timestamp: string; stageId: string; stageLabel: string };
+  const taskComments: FeedComment[] = milestones.flatMap((m) =>
+    (m.tasks || []).flatMap((t) =>
+      (t.comments || []).map((c) => ({ ...c, stageId: m.id, stageLabel: m.label, taskId: t.id }))
+    )
   );
-  const pendingCommentCount = allComments.filter((c) => !c.resolved).length;
-  const totalReviewCount = milestones.reduce((sum, m) => sum + m.reviews.length, 0);
+  const pendingCommentCount = taskComments.length;
+  const totalReviewCount = milestones.flatMap((m) => m.tasks || []).filter((t) => t.status === "review").length;
 
   // Badge counts for StepProgress (include task counts)
-  const stepsWithBadges = milestones.map((m) => ({
-    ...m,
-    badgeCount: m.comments.filter((c) => !c.resolved).length + m.reviews.filter((r) => r.status === "submitted").length + m.tasks.filter((t) => t.status === "review").length,
-  }));
+  const stepsWithBadges = milestones.map((m) => {
+    const commentCount = (m.tasks || []).reduce((sum, t) => sum + ((t.comments || []).length), 0);
+    const inReview = (m.tasks || []).filter((t) => t.status === "review").length;
+    return { ...m, badgeCount: commentCount + inReview };
+  });
   const totalTaskCount = milestones.reduce((sum, m) => sum + m.tasks.length, 0);
 
   // Auto-generated status note from project state
@@ -378,6 +383,27 @@ export function ProjectPortalEditor({ page }: { page: any }) {
                      <Button variant="ghost" onClick={handleAdvanceStep} disabled={currentStep >= milestones.length} className="text-xs py-1.5 px-3 rounded-lg h-auto cursor-pointer">Next →</Button>
                    </div>
                 </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div>
+                  <span className="text-[11px] font-bold text-text-secondary uppercase tracking-wider">Client Name</span>
+                  <Input
+                    placeholder="Client or Company"
+                    value={clientName}
+                    onChange={(e) => { setClientName(e.target.value); markDirty(); }}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <span className="text-[11px] font-bold text-text-secondary uppercase tracking-wider">Client Email</span>
+                  <Input
+                    type="email"
+                    placeholder="client@company.com"
+                    value={clientEmail}
+                    onChange={(e) => { setClientEmail(e.target.value); setDirty(true); }}
+                    className="mt-1"
+                  />
+                </div>
+              </div>
                 <div className="mb-4">
                     <StepProgress
                       steps={stepsWithBadges}
@@ -480,28 +506,27 @@ export function ProjectPortalEditor({ page }: { page: any }) {
              </div>
              <div className="mt-8 hidden md:block space-y-3">
                  <div className="bg-surface border border-divider p-4 rounded-xl text-center shadow-sm">
-                     <p className="text-3xl font-bold text-text-primary">{pendingCommentCount}</p>
-                    <p className="text-xs font-bold tracking-widest text-text-secondary uppercase mt-1">Pending {pendingCommentCount === 1 ? "Item" : "Items"}</p>
+                   <p className="text-3xl font-bold text-text-primary">{pendingCommentCount}</p>
+                   <p className="text-xs font-bold tracking-widest text-text-secondary uppercase mt-1">Comments</p>
                  </div>
                  <div className="bg-surface border border-divider p-4 rounded-xl text-center shadow-sm">
-                     <p className="text-3xl font-bold text-primary">{totalReviewCount}</p>
-                    <p className="text-xs font-bold tracking-widest text-text-secondary uppercase mt-1">{totalReviewCount === 1 ? "Review" : "Reviews"}</p>
+                   <p className="text-3xl font-bold text-primary">{totalReviewCount}</p>
+                   <p className="text-xs font-bold tracking-widest text-text-secondary uppercase mt-1">Awaiting Review</p>
                  </div>
              </div>
           </div>
 
           <div className="p-6 sm:p-8 md:w-2/3 flex flex-col justify-between">
              <div className="space-y-3 mb-8 max-h-[420px] overflow-y-auto custom-scrollbar pr-2">
-                 {allComments.length === 0 && (
+                 {taskComments.length === 0 && (
                    <div className="text-center py-8">
                      <MessageSquare size={32} className="text-text-secondary mx-auto mb-3 opacity-30" />
                      <p className="text-sm text-text-secondary font-semibold">No activity yet.</p>
                      <p className="text-xs text-text-secondary mt-1">Click a milestone stage to add comments or submit work for review.</p>
                    </div>
                  )}
-                 {allComments.map((c) => (
-                   <div key={c.id} className={`bg-background border border-divider rounded-xl p-4 relative overflow-hidden transition-all ${c.resolved ? "opacity-50" : "hover:border-primary/20"}`}>
-                     <div className={`absolute top-0 left-0 w-1 h-full ${c.resolved ? "bg-success" : "bg-primary"}`} />
+                 {taskComments.map((c) => (
+                   <div key={c.id} className="bg-background border border-divider rounded-xl p-4 relative overflow-hidden transition-all hover:border-primary/20">
                      <div className="flex items-center justify-between mb-2">
                        <div className="flex items-center gap-2">
                          <div className="w-6 h-6 rounded-full bg-divider flex items-center justify-center text-text-primary font-bold text-[9px]">{c.author.substring(0,2).toUpperCase()}</div>
@@ -509,27 +534,18 @@ export function ProjectPortalEditor({ page }: { page: any }) {
                          <Badge variant="primary" className="text-[9px] px-1.5 py-0">{c.stageLabel}</Badge>
                        </div>
                        <div className="flex items-center gap-2">
-                         {c.resolved && <Badge variant="success" className="text-[9px] px-1.5 py-0">Resolved</Badge>}
                          <span className="text-[10px] text-text-secondary">{c.timestamp}</span>
                        </div>
                      </div>
                      <p className="text-sm text-text-secondary leading-relaxed ml-8">{c.text}</p>
-                     {!c.resolved && (
-                       <div className="mt-2 ml-8 flex gap-2">
-                         <Button variant="ghost" onClick={() => {
-                           const milestone = milestones.find((m) => m.id === c.stageId);
-                           if (milestone) handleStageUpdate({ ...milestone, comments: milestone.comments.map((x) => x.id === c.id ? { ...x, resolved: true } : x) });
-                         }} className="text-[10px] py-1 px-2 rounded-md h-auto cursor-pointer hover:bg-success/10 hover:text-success">
-                           <CheckCircle2 size={10} className="mr-1" /> Resolve
-                         </Button>
-                        <Button variant="ghost" onClick={() => {
-                          const idx = milestones.findIndex((m) => m.id === c.stageId);
-                          if (idx !== -1) setViewedStageIndex(idx);
-                        }} className="text-[10px] py-1 px-2 rounded-md h-auto cursor-pointer hover:bg-primary/10 hover:text-primary">
-                           View Stage
-                         </Button>
-                       </div>
-                     )}
+                     <div className="mt-2 ml-8 flex gap-2">
+                       <Button variant="ghost" onClick={() => {
+                         const idx = milestones.findIndex((m) => m.id === c.stageId);
+                         if (idx !== -1) setViewedStageIndex(idx);
+                       }} className="text-[10px] py-1 px-2 rounded-md h-auto cursor-pointer hover:bg-primary/10 hover:text-primary">
+                         View Stage
+                       </Button>
+                     </div>
                    </div>
                  ))}
              </div>

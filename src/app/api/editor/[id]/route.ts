@@ -23,15 +23,20 @@ export async function PUT(
   const body = await request.json();
   const blocks: { type: string; content: Record<string, unknown>; order: number }[] =
     body.blocks;
+  const clientEmail: string | undefined = body.clientEmail;
 
   if (!Array.isArray(blocks)) {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }
 
-  // Transaction: delete old blocks, insert new ones
-  await prisma.$transaction([
-    prisma.block.deleteMany({ where: { pageId: id } }),
-    ...blocks.map((block, index) =>
+  // Transaction: optional page update, delete old blocks, insert new ones
+  const tx: any[] = [];
+  if (typeof clientEmail === "string") {
+    tx.push(prisma.page.update({ where: { id }, data: { clientEmail } }));
+  }
+  tx.push(prisma.block.deleteMany({ where: { pageId: id } }));
+  blocks.forEach((block, index) => {
+    tx.push(
       prisma.block.create({
         data: {
           pageId: id,
@@ -40,8 +45,9 @@ export async function PUT(
           order: block.order ?? index,
         },
       })
-    ),
-  ]);
+    );
+  });
+  await prisma.$transaction(tx);
 
   return NextResponse.json({ success: true });
 }

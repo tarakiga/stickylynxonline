@@ -97,6 +97,42 @@ export async function createLynxPage(data: {
       ));
     }
 
+    // Seed default blocks for Influencer Media Kit
+    if (data.category === "INFLUENCER_MEDIA_KIT") {
+      const mediaKitBlocks = [
+        { type: "TEXT", content: { section: "creator_hero", name: data.title, handle: data.handle, niche: "", profileImage: "", logo: "", primaryCta: "Request a campaign" }, order: 0 },
+        { type: "TEXT", content: { section: "creator_bio", text: "", pillars: [] }, order: 1 },
+        { type: "GRID", content: { section: "audience", topAges: [], genderSplit: { male: 0, female: 0, other: 0 }, topCountries: [], interests: [] }, order: 2 },
+        { type: "GRID", content: { section: "platform_metrics", platforms: [] }, order: 3 },
+        { type: "GRID", content: { section: "collaborations", items: [] }, order: 4 },
+        { type: "GRID", content: { section: "content_examples", items: [] }, order: 5 },
+        { type: "GRID", content: { section: "services", services: [] }, order: 6 },
+        { type: "GRID", content: { section: "testimonials", items: [] }, order: 7 },
+        { type: "CONTACT", content: { email: "", phone: "", managementName: "", managementEmail: "", website: "", briefForm: { enabled: false } }, order: 8 },
+      ];
+
+      await Promise.all(mediaKitBlocks.map((b) =>
+        tx.block.create({
+          data: { pageId: page.id, type: b.type as BlockType, content: b.content, order: b.order }
+        })
+      ));
+    }
+
+    // Seed default blocks for Food Menu
+    if (category === "FOOD_MENU") {
+      const foodBlocks = [
+        { type: "TEXT", content: { section: "brand_header", businessName: data.title || data.handle, tagline: "", cuisineType: "", shortDescription: "", heroImage: "", logoImage: "" }, order: 0 },
+        { type: "GRID", content: { section: "service_info", serviceType: "all", description: "", emails: [], phones: [], socials: [], locations: [], orderingLinks: [], notes: "" }, order: 1 },
+        { type: "GRID", content: { section: "menu_sections", defaultOpenSectionIds: [], collapsible: true, hasSidebar: false, hasSearch: true, maxDefaultOpen: 3, sections: [] }, order: 2 },
+        { type: "GRID", content: { section: "extras", title: "Add-ons", description: "", items: [] }, order: 3 },
+      ];
+      await Promise.all(foodBlocks.map((b) =>
+        tx.block.create({
+          data: { pageId: page.id, type: b.type as BlockType, content: b.content, order: b.order }
+        })
+      ));
+    }
+
     return page;
   });
 

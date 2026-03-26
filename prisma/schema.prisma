@@ -70,6 +70,7 @@ enum PageCategory {
   EPK
   GENERIC
   PROJECT_PORTAL
+  INFLUENCER_MEDIA_KIT
 }
 
 model Block {

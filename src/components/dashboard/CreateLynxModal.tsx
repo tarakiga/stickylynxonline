@@ -16,8 +16,8 @@ export function CreateLynxModal() {
   const categories = [
     { title: "Project Portal", description: "Progress and feedback hub for your clients.", type: "PROJECT_PORTAL", enabled: true },
     { title: "EPK", description: "Electronic Press Kit for artists and musicians.", type: "EPK", enabled: true },
-    { title: "Food Menu", description: "Mobile-friendly menu for restaurants and cafes.", type: "FOOD_MENU", enabled: false },
-    { title: "Resume", description: "Professional profile with experience and skills.", type: "RESUME", enabled: false },
+    { title: "Food Menu", description: "Mobile-first digital menu with sections, variations, and multi-location support.", type: "FOOD_MENU", enabled: true },
+    { title: "Influencer Media Kit", description: "Live media kit for creators to pitch brands and agencies.", type: "INFLUENCER_MEDIA_KIT", enabled: true },
     { title: "Generic", description: "A simple link-in-bio page for creators.", type: "GENERIC", enabled: false },
   ];
 
@@ -32,7 +32,7 @@ export function CreateLynxModal() {
            <h2 className="text-3xl md:text-4xl font-bold text-text-primary">Choose a Template</h2>
            <p className="text-text-secondary mt-2 text-lg">Select a category to jumpstart your Lynx page.</p>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 lg:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
            {categories.map(cat => (
              <div key={cat.type} className="relative">
                <CategoryCard 
