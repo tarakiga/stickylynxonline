@@ -75,9 +75,9 @@ export function PageItemCard({ id, title, handle, category, imageUrl }: PageItem
             )}
           </div>
           <div className="min-w-0">
+            <Badge variant={catVariant} className="text-[9px] px-1.5 py-0 uppercase mb-1 inline-flex">{catLabel}</Badge>
             <div className="flex items-center gap-2">
               <h3 className="font-bold text-text-primary text-sm sm:text-base truncate">{title}</h3>
-              <Badge variant={catVariant} className="text-[9px] px-1.5 py-0 uppercase">{catLabel}</Badge>
             </div>
             <p className="text-[10px] text-text-secondary truncate">/{handle}</p>
           </div>
