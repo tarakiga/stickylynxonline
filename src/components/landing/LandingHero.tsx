@@ -1,7 +1,10 @@
+ "use client";
 import Link from 'next/link';
 import { ArrowRight, Play, Sparkles } from 'lucide-react';
+import { useUser } from '@clerk/nextjs';
 
 export function LandingHero() {
+  const { isSignedIn } = useUser();
   return (
     <section className="relative pt-32 sm:pt-40 pb-20 overflow-hidden min-h-screen flex items-center">
       {/* Background blobs */}
@@ -23,10 +26,15 @@ export function LandingHero() {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4">
-            <Link href="/register" className="btn-primary px-8 py-4 rounded-2xl flex items-center justify-center gap-2.5 font-bold shadow-premium text-base">
-              Get Started for Free <ArrowRight size={20} />
-            </Link>
-            
+            {isSignedIn ? (
+              <Link href="/dashboard" className="btn-primary px-8 py-4 rounded-2xl flex items-center justify-center gap-2.5 font-bold shadow-premium text-base">
+                Go to Dashboard <ArrowRight size={20} />
+              </Link>
+            ) : (
+              <Link href="/register" className="btn-primary px-8 py-4 rounded-2xl flex items-center justify-center gap-2.5 font-bold shadow-premium text-base">
+                Get Started for Free <ArrowRight size={20} />
+              </Link>
+            )}
           </div>
           
           <div className="grid grid-cols-2 gap-6 pt-6">

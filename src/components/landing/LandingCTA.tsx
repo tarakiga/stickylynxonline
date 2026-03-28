@@ -1,7 +1,11 @@
+ "use client";
 import Link from 'next/link';
 import { Sparkles, ArrowRight } from 'lucide-react';
+import { useUser } from '@clerk/nextjs';
 
 export function LandingCTA() {
+  const { isSignedIn } = useUser();
+  if (isSignedIn) return null;
   return (
     <section className="py-24 bg-background relative overflow-hidden">
       {/* Decorative accent */}
