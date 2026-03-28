@@ -196,6 +196,9 @@ export function ProjectPortalPublic({ page }: { page: any }) {
          <div className="w-16 h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-bold text-2xl border border-primary/20 shadow-sm">
             {(headerContent.title || page.title || "P").substring(0,1).toUpperCase()}
          </div>
+         <span className="inline-flex items-center gap-1.5 rounded-full font-bold tracking-wide border transition-colors bg-primary/10 text-primary border-primary/20 text-[9px] px-1.5 py-0 uppercase">
+           PROJECT PORTAL
+         </span>
          <h1 className="text-2xl font-bold tracking-tight text-text-primary mt-2">{headerContent.title || page.title || "Project Portal"}</h1>
          <p className="text-text-secondary text-sm font-semibold tracking-wide uppercase">Client Portal • <span className="text-primary">{headerContent.clientName || "Protected Account"}</span></p>
       </header>
