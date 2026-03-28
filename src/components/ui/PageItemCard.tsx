@@ -62,70 +62,85 @@ export function PageItemCard({ id, title, handle, category, imageUrl }: PageItem
   }
 
   return (
-    <>
-      <div className="group bg-surface border border-divider rounded-2xl p-3 sm:p-4 flex items-center justify-between shadow-sm hover:shadow-premium transition-all duration-300">
+    <div className="flex flex-col gap-2">
+      <div className="group bg-surface border border-divider rounded-2xl p-4 sm:p-5 flex items-center justify-between shadow-sm hover:shadow-premium transition-all duration-300 relative overflow-hidden">
+        {/* Subtle hover background highlight */}
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+
         {/* Left: avatar + title + category */}
-        <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
-          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl border border-divider bg-background shadow-sm overflow-hidden shrink-0 flex items-center justify-center p-1 group-hover:border-primary/30 transition-colors">
+        <div className="flex items-center gap-4 min-w-0 flex-1 relative z-10">
+          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl border border-divider bg-background shadow-sm overflow-hidden shrink-0 flex items-center justify-center p-1.5 group-hover:border-primary/40 group-hover:shadow-md transition-all duration-300">
             {imageUrl ? (
-              <img src={imageUrl} alt={title} className="w-full h-full object-contain rounded-lg" />
+              <img src={imageUrl} alt={title} className="w-full h-full object-contain rounded-xl" />
             ) : (
-              <div className="w-full h-full bg-primary/10 text-primary rounded-lg flex items-center justify-center font-bold text-sm">
-                {title.substring(0, 2).toUpperCase()}
+              <div className="w-full h-full bg-primary/10 text-primary rounded-xl flex items-center justify-center font-bold text-base">
+                {title.substring(0, 1).toUpperCase()}
               </div>
             )}
           </div>
-          <div className="min-w-0">
-            <Badge variant={catVariant} className="text-[9px] px-1.5 py-0 uppercase mb-1 inline-flex">{catLabel}</Badge>
-            <div className="flex items-center gap-2">
-              <h3 className="font-bold text-text-primary text-sm sm:text-base truncate">{title}</h3>
+          <div className="min-w-0 flex flex-col gap-0.5">
+            <div className="flex items-center gap-2 mb-0.5">
+              <Badge variant={catVariant} className="text-[10px] px-2 py-0.5 font-bold tracking-wider uppercase inline-flex rounded-md">{catLabel}</Badge>
             </div>
-            <p className="text-[10px] text-text-secondary truncate">/{handle}</p>
+            <h3 className="font-bold text-text-primary text-base sm:text-lg leading-tight truncate group-hover:text-primary transition-colors">{title}</h3>
+            <div className="flex items-center gap-1.5 text-text-secondary">
+              <Link2 size={12} className="shrink-0 opacity-60" />
+              <p className="text-xs font-medium truncate opacity-80 group-hover:opacity-100 transition-opacity">stickylynx.online/{handle}</p>
+            </div>
           </div>
         </div>
 
         {/* Right: actions */}
-        <div className="flex items-center gap-1 shrink-0">
+        <div className="flex items-center gap-2 shrink-0 relative z-10">
           {/* Desktop actions */}
-          <div className="hidden sm:flex items-center gap-0.5">
-            <button onClick={handlePreview} className="p-2 rounded-lg text-text-secondary hover:text-primary hover:bg-primary/10 transition-colors cursor-pointer border-none bg-transparent" title="Preview">
-              <Eye size={17} />
+          <div className="hidden md:flex items-center gap-1">
+            <button onClick={handlePreview} className="p-2.5 rounded-xl text-text-secondary hover:text-primary hover:bg-primary/10 transition-all cursor-pointer border-none bg-transparent hover:scale-105 active:scale-95" title="Preview">
+              <Eye size={19} />
             </button>
-            <button onClick={handleEdit} className="p-2 rounded-lg text-text-secondary hover:text-primary hover:bg-primary/10 transition-colors cursor-pointer border-none bg-transparent" title="Edit">
-              <Edit2 size={17} />
+            <button onClick={handleEdit} className="p-2.5 rounded-xl text-text-secondary hover:text-primary hover:bg-primary/10 transition-all cursor-pointer border-none bg-transparent hover:scale-105 active:scale-95" title="Edit">
+              <Edit2 size={19} />
             </button>
-            <button onClick={() => setShowDeleteConfirm(true)} className="p-2 rounded-lg text-text-secondary hover:text-error hover:bg-error/10 transition-colors cursor-pointer border-none bg-transparent" title="Delete">
-              <Trash2 size={17} />
-            </button>
-            <div className="w-px h-5 bg-divider mx-1" />
+            <div className="w-px h-6 bg-divider mx-1 opacity-60" />
             {QR_API_BASE && (
-              <button onClick={() => setShowQrModal(true)} className="p-2 rounded-lg text-text-secondary hover:text-primary hover:bg-primary/10 transition-colors cursor-pointer border-none bg-transparent" title="QR Code">
-                <QrCode size={17} />
+              <button onClick={() => setShowQrModal(true)} className="p-2.5 rounded-xl text-text-secondary hover:text-primary hover:bg-primary/10 transition-all cursor-pointer border-none bg-transparent hover:scale-105 active:scale-95" title="QR Code">
+                <QrCode size={19} />
               </button>
             )}
-            <button onClick={handleCopyLink} className="p-2 rounded-lg text-text-secondary hover:text-primary hover:bg-primary/10 transition-colors cursor-pointer border-none bg-transparent" title="Copy Link">
-              {linkCopied ? <Check size={17} className="text-success" /> : <Link2 size={17} />}
+            <button onClick={handleCopyLink} className="p-2.5 rounded-xl text-text-secondary hover:text-primary hover:bg-primary/10 transition-all cursor-pointer border-none bg-transparent hover:scale-105 active:scale-95" title="Copy Link">
+              {linkCopied ? <Check size={19} className="text-success" /> : <Link2 size={19} />}
+            </button>
+            <button onClick={() => setShowDeleteConfirm(true)} className="ml-1 p-2.5 rounded-xl text-text-secondary hover:text-error hover:bg-error/10 transition-all cursor-pointer border-none bg-transparent hover:scale-105 active:scale-95" title="Delete">
+              <Trash2 size={19} />
             </button>
           </div>
 
-          {/* Mobile: compact row */}
-          <div className="flex sm:hidden items-center gap-1">
-            <button onClick={handlePreview} className="p-1.5 rounded-lg text-text-secondary hover:text-primary transition-colors cursor-pointer border-none bg-transparent" title="Preview"><Eye size={14} /></button>
-            <button onClick={handleEdit} className="p-1.5 rounded-lg text-text-secondary hover:text-primary transition-colors cursor-pointer border-none bg-transparent" title="Edit"><Edit2 size={14} /></button>
-            <button onClick={() => setShowMobileMore(v => !v)} className="p-1.5 rounded-lg text-text-secondary hover:text-primary transition-colors cursor-pointer border-none bg-transparent" title="More"><MoreHorizontal size={14} /></button>
+          {/* Mobile & Tablet compact row */}
+          <div className="flex md:hidden items-center gap-1.5">
+            <button onClick={handlePreview} className="p-2 rounded-xl text-text-secondary hover:text-primary hover:bg-primary/10 transition-all cursor-pointer border border-transparent active:scale-95" title="Preview"><Eye size={18} /></button>
+            <button onClick={handleEdit} className="p-2 rounded-xl text-text-secondary hover:text-primary hover:bg-primary/10 transition-all cursor-pointer border border-transparent active:scale-95" title="Edit"><Edit2 size={18} /></button>
+            <button onClick={() => setShowMobileMore(v => !v)} className={cn("p-2 rounded-xl text-text-secondary transition-all cursor-pointer border active:scale-95", showMobileMore ? "bg-primary/10 text-primary border-primary/20" : "bg-transparent border-transparent")} title="More"><MoreHorizontal size={18} /></button>
           </div>
         </div>
       </div>
 
-      {/* Mobile: expanded extra actions */}
+      {/* Mobile: expanded extra actions with professional styling */}
       {showMobileMore && (
-        <div className="sm:hidden mt-2 flex items-center justify-end gap-1">
-          <button onClick={() => setShowDeleteConfirm(true)} className="p-1.5 rounded-lg text-text-secondary hover:text-error transition-colors cursor-pointer border-none bg-transparent" title="Delete"><Trash2 size={14} /></button>
-          {QR_API_BASE && (
-            <button onClick={() => setShowQrModal(true)} className="p-1.5 rounded-lg text-text-secondary hover:text-primary transition-colors cursor-pointer border-none bg-transparent" title="QR Code"><QrCode size={14} /></button>
-          )}
-          <button onClick={handleCopyLink} className="p-1.5 rounded-lg text-text-secondary hover:text-primary transition-colors cursor-pointer border-none bg-transparent" title="Copy Link">
-            {linkCopied ? <Check size={14} className="text-success" /> : <Link2 size={14} />}
+        <div className="md:hidden animate-in slide-in-from-top-2 fade-in duration-200 bg-surface/50 border border-divider/50 rounded-2xl p-2 flex items-center justify-between gap-2 shadow-inner">
+          <div className="flex items-center gap-1">
+            <button onClick={handleCopyLink} className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-text-secondary hover:text-primary hover:bg-primary/5 transition-all cursor-pointer border-none bg-transparent">
+              {linkCopied ? <Check size={14} className="text-success" /> : <Link2 size={14} />}
+              <span>Copy Link</span>
+            </button>
+            {QR_API_BASE && (
+              <button onClick={() => setShowQrModal(true)} className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-text-secondary hover:text-primary hover:bg-primary/5 transition-all cursor-pointer border-none bg-transparent">
+                <QrCode size={14} />
+                <span>QR Code</span>
+              </button>
+            )}
+          </div>
+          <button onClick={() => setShowDeleteConfirm(true)} className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-error hover:bg-error/5 transition-all cursor-pointer border-none bg-transparent">
+            <Trash2 size={14} />
+            <span>Delete</span>
           </button>
         </div>
       )}
@@ -142,35 +157,56 @@ export function PageItemCard({ id, title, handle, category, imageUrl }: PageItem
       {/* QR Code modal */}
       {showQrModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowQrModal(false)}>
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200" />
-          <div className="relative bg-surface border border-divider rounded-2xl p-6 shadow-premium w-full max-w-sm animate-in fade-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
-            <button onClick={() => setShowQrModal(false)} className="absolute right-4 top-4 text-text-secondary hover:text-text-primary transition-colors bg-background rounded-full p-1 border-none cursor-pointer">
-              <X size={18} />
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-md animate-in fade-in duration-300" />
+          <div className="relative bg-surface border border-divider rounded-[2rem] p-8 shadow-2xl w-full max-w-sm animate-in fade-in zoom-in-95 duration-300 overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            {/* Background decorative elements */}
+            <div className="absolute -top-24 -right-24 w-48 h-48 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
+
+            <button onClick={() => setShowQrModal(false)} className="absolute right-6 top-6 text-text-secondary hover:text-text-primary transition-all bg-background/50 hover:bg-background rounded-full p-2 border border-divider/50 cursor-pointer z-10">
+              <X size={20} />
             </button>
-            <h3 className="text-lg font-bold text-text-primary mb-1">QR Code</h3>
-            <p className="text-xs text-text-secondary mb-4">Scan or download to share <strong>{title}</strong></p>
-            <div className="bg-white rounded-xl p-4 flex items-center justify-center mb-4 border border-divider">
-              <img src={qrUrl} alt={`QR code for ${title}`} className="w-[200px] h-[200px]" />
-            </div>
-            <p className="text-[10px] text-text-secondary text-center mb-4 truncate">{publicUrl}</p>
-            <div className="flex gap-2">
-              <a
-                href={qrUrl}
-                download={`${handle}-qr.png`}
-                className="flex-1 btn-primary py-2.5 rounded-xl text-sm font-bold text-center flex items-center justify-center gap-2 text-white border-none cursor-pointer"
-              >
-                <Download size={14} /> Download
-              </a>
-              <button
-                onClick={handleCopyLink}
-                className="flex-1 bg-surface border border-divider hover:bg-divider py-2.5 rounded-xl text-sm font-bold text-text-primary flex items-center justify-center gap-2 cursor-pointer transition-colors"
-              >
-                {linkCopied ? <><Check size={14} className="text-success" /> Copied!</> : <><Link2 size={14} /> Copy Link</>}
-              </button>
+
+            <div className="relative z-10">
+              <div className="mb-6">
+                <h3 className="text-2xl font-black text-text-primary tracking-tight mb-1">QR Code</h3>
+                <p className="text-sm text-text-secondary">Scan or share to grow your reach</p>
+              </div>
+
+              <div className="bg-white rounded-[1.5rem] p-6 flex flex-col items-center justify-center mb-6 border border-divider shadow-inner group/qr relative overflow-hidden">
+                <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover/qr:opacity-100 transition-opacity pointer-events-none" />
+                <img src={qrUrl} alt={`QR code for ${title}`} className="w-[220px] h-[220px] relative z-10" />
+              </div>
+
+              <div className="bg-background/50 border border-divider rounded-xl p-3 mb-6 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-surface flex items-center justify-center shrink-0 border border-divider">
+                  <Link2 size={18} className="text-primary" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[10px] uppercase font-bold text-text-secondary tracking-widest mb-0.5">Public URL</p>
+                  <p className="text-xs font-medium text-text-primary truncate">{publicUrl.replace(/^https?:\/\//, "")}</p>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                <a
+                  href={qrUrl}
+                  download={`${handle}-qr.png`}
+                  className="w-full btn-primary py-4 rounded-2xl text-base font-bold text-center flex items-center justify-center gap-2 text-white border-none cursor-pointer hover:shadow-lg hover:shadow-primary/20 transition-all active:scale-[0.98]"
+                >
+                  <Download size={18} /> Download Asset
+                </a>
+                <button
+                  onClick={handleCopyLink}
+                  className="w-full bg-surface border border-divider hover:border-primary/30 hover:bg-primary/5 py-4 rounded-2xl text-base font-bold text-text-primary flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-[0.98]"
+                >
+                  {linkCopied ? <><Check size={18} className="text-success" /> Copied!</> : <><Link2 size={18} /> Copy Link</>}
+                </button>
+              </div>
             </div>
           </div>
         </div>
       )}
-    </>
+    </div>
   )
 }
