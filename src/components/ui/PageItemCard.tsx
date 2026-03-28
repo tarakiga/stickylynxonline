@@ -63,13 +63,14 @@ export function PageItemCard({ id, title, handle, category, imageUrl }: PageItem
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="group bg-surface border border-divider rounded-2xl p-4 sm:p-5 flex items-center justify-between shadow-sm hover:shadow-premium transition-all duration-300 relative overflow-hidden">
+      <div className="group bg-surface border border-divider rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between shadow-sm hover:shadow-premium transition-all duration-300 relative overflow-hidden">
         {/* Subtle hover background highlight */}
         <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
 
-        {/* Left: avatar + title + category */}
-        <div className="flex items-center gap-4 min-w-0 flex-1 relative z-10">
-          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl border border-divider bg-background shadow-sm overflow-hidden shrink-0 flex items-center justify-center p-1.5 group-hover:border-primary/40 group-hover:shadow-md transition-all duration-300">
+        {/* Content Section */}
+        <div className="flex items-start md:items-center gap-4 min-w-0 flex-1 relative z-10">
+          {/* Thumbnail: Hidden on mobile, visible on desktop */}
+          <div className="hidden md:flex w-14 h-14 rounded-2xl border border-divider bg-background shadow-sm overflow-hidden shrink-0 items-center justify-center p-1.5 group-hover:border-primary/40 group-hover:shadow-md transition-all duration-300">
             {imageUrl ? (
               <img src={imageUrl} alt={title} className="w-full h-full object-contain rounded-xl" />
             ) : (
@@ -78,8 +79,10 @@ export function PageItemCard({ id, title, handle, category, imageUrl }: PageItem
               </div>
             )}
           </div>
-          <div className="min-w-0 flex flex-col gap-0.5">
-            <div className="flex items-center gap-2 mb-0.5">
+
+          {/* Text stack: Stays stacked on both, but vertical on mobile */}
+          <div className="min-w-0 flex flex-col gap-1 w-full md:w-auto">
+            <div className="flex items-center gap-2">
               <Badge variant={catVariant} className="text-[10px] px-2 py-0.5 font-bold tracking-wider uppercase inline-flex rounded-md">{catLabel}</Badge>
             </div>
             <h3 className="font-bold text-text-primary text-base sm:text-lg leading-tight truncate group-hover:text-primary transition-colors">{title}</h3>
@@ -90,8 +93,8 @@ export function PageItemCard({ id, title, handle, category, imageUrl }: PageItem
           </div>
         </div>
 
-        {/* Right: actions */}
-        <div className="flex items-center gap-2 shrink-0 relative z-10">
+        {/* Actions Section: Aligned at bottom on mobile, right on desktop */}
+        <div className="flex items-center justify-between md:justify-end gap-2 shrink-0 relative z-10 mt-4 md:mt-0 pt-4 md:pt-0 border-t md:border-t-0 border-divider/40">
           {/* Desktop actions */}
           <div className="hidden md:flex items-center gap-1">
             <button onClick={handlePreview} className="p-2.5 rounded-xl text-text-secondary hover:text-primary hover:bg-primary/10 transition-all cursor-pointer border-none bg-transparent hover:scale-105 active:scale-95" title="Preview">
@@ -114,36 +117,51 @@ export function PageItemCard({ id, title, handle, category, imageUrl }: PageItem
             </button>
           </div>
 
-          {/* Mobile & Tablet compact row */}
-          <div className="flex md:hidden items-center gap-1.5">
-            <button onClick={handlePreview} className="p-2 rounded-xl text-text-secondary hover:text-primary hover:bg-primary/10 transition-all cursor-pointer border border-transparent active:scale-95" title="Preview"><Eye size={18} /></button>
-            <button onClick={handleEdit} className="p-2 rounded-xl text-text-secondary hover:text-primary hover:bg-primary/10 transition-all cursor-pointer border border-transparent active:scale-95" title="Edit"><Edit2 size={18} /></button>
-            <button onClick={() => setShowMobileMore(v => !v)} className={cn("p-2 rounded-xl text-text-secondary transition-all cursor-pointer border active:scale-95", showMobileMore ? "bg-primary/10 text-primary border-primary/20" : "bg-transparent border-transparent")} title="More"><MoreHorizontal size={18} /></button>
-          </div>
-        </div>
-      </div>
-
-      {/* Mobile: expanded extra actions with professional styling */}
-      {showMobileMore && (
-        <div className="md:hidden animate-in slide-in-from-top-2 fade-in duration-200 bg-surface/50 border border-divider/50 rounded-2xl p-2 flex items-center justify-between gap-2 shadow-inner">
-          <div className="flex items-center gap-1">
-            <button onClick={handleCopyLink} className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-text-secondary hover:text-primary hover:bg-primary/5 transition-all cursor-pointer border-none bg-transparent">
-              {linkCopied ? <Check size={14} className="text-success" /> : <Link2 size={14} />}
-              <span>Copy Link</span>
-            </button>
-            {QR_API_BASE && (
-              <button onClick={() => setShowQrModal(true)} className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-text-secondary hover:text-primary hover:bg-primary/5 transition-all cursor-pointer border-none bg-transparent">
-                <QrCode size={14} />
-                <span>QR Code</span>
+          {/* Mobile compact row: Full width flex on mobile */}
+          <div className="flex md:hidden items-center justify-between w-full gap-2">
+            <div className="flex items-center gap-2">
+              <button onClick={handlePreview} className="flex items-center gap-2 px-3 py-2 rounded-xl text-text-secondary bg-divider/20 hover:text-primary transition-all active:scale-95 text-xs font-bold" title="Preview">
+                <Eye size={16} /> <span>View</span>
               </button>
-            )}
+              <button onClick={handleEdit} className="flex items-center gap-2 px-3 py-2 rounded-xl text-text-secondary bg-divider/20 hover:text-primary transition-all active:scale-95 text-xs font-bold" title="Edit">
+                <Edit2 size={16} /> <span>Edit</span>
+              </button>
+            </div>
+            <button 
+              onClick={() => setShowMobileMore(v => !v)} 
+              className={cn(
+                "p-2.5 rounded-xl text-text-secondary transition-all cursor-pointer border active:scale-95", 
+                showMobileMore ? "bg-primary/10 text-primary border-primary/20" : "bg-divider/20 border-transparent"
+              )} 
+              title="More"
+            >
+              <MoreHorizontal size={18} />
+            </button>
           </div>
-          <button onClick={() => setShowDeleteConfirm(true)} className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-error hover:bg-error/5 transition-all cursor-pointer border-none bg-transparent">
-            <Trash2 size={14} />
-            <span>Delete</span>
-          </button>
         </div>
-      )}
+
+        {/* Mobile: expanded extra actions with professional styling */}
+        {showMobileMore && (
+          <div className="md:hidden animate-in slide-in-from-top-2 fade-in duration-200 bg-background/50 border-t border-divider/20 mt-2 pt-2 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1">
+              <button onClick={handleCopyLink} className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-text-secondary hover:text-primary transition-all cursor-pointer border-none bg-transparent">
+                {linkCopied ? <Check size={14} className="text-success" /> : <Link2 size={14} />}
+                <span>Link</span>
+              </button>
+              {QR_API_BASE && (
+                <button onClick={() => setShowQrModal(true)} className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-text-secondary hover:text-primary transition-all cursor-pointer border-none bg-transparent">
+                  <QrCode size={14} />
+                  <span>QR</span>
+                </button>
+              )}
+            </div>
+            <button onClick={() => setShowDeleteConfirm(true)} className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-error hover:bg-error/5 transition-all cursor-pointer border-none bg-transparent">
+              <Trash2 size={14} />
+              <span>Delete</span>
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* Delete confirmation */}
       <ConfirmDialog
