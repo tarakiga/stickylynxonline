@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { ProjectPortalPublic } from "@/components/public/ProjectPortalPublic";
@@ -7,6 +8,7 @@ import { FoodMenuPublic } from "@/components/public/FoodMenuPublic";
 import { PortalDeny } from "@/components/public/PortalDeny";
 import { cookies } from "next/headers";
 import { auth } from "@clerk/nextjs/server";
+import { getBrandCssVariables, normalizeBrandProfile } from "@/lib/branding";
 
 export default async function PublicPage({ params }: { params: Promise<{ handle: string }> }) {
   const { handle } = await params;
@@ -35,8 +37,11 @@ export default async function PublicPage({ params }: { params: Promise<{ handle:
     }
   }
 
+  const brandProfile = normalizeBrandProfile(page.user?.brandProfile, page.user?.name || page.user?.email || page.title || page.handle)
+  const brandStyle = getBrandCssVariables(brandProfile)
+
   return (
-    <div className="min-h-screen bg-background text-text-primary">
+    <div className="min-h-screen bg-background text-text-primary" style={brandStyle as CSSProperties}>
        {(page.category as string) === "PROJECT_PORTAL" ? (
            <ProjectPortalPublic page={page} />
        ) : (page.category as string) === "EPK" ? (
