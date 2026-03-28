@@ -118,8 +118,8 @@ export function PageItemCard({ id, title, handle, category, imageUrl }: PageItem
           </div>
 
           {/* Mobile compact row: Full width flex on mobile */}
-          <div className="flex md:hidden items-center justify-between w-full gap-2">
-            <div className="flex items-center gap-2">
+          <div className="flex md:hidden items-center justify-between w-full">
+            <div className="flex items-center gap-1">
               <button onClick={handlePreview} className="p-2.5 rounded-xl text-text-secondary bg-divider/20 hover:text-primary transition-all active:scale-95" title="Preview">
                 <Eye size={18} />
               </button>
@@ -142,7 +142,7 @@ export function PageItemCard({ id, title, handle, category, imageUrl }: PageItem
 
         {/* Mobile: expanded extra actions with professional styling */}
         {showMobileMore && (
-          <div className="md:hidden animate-in slide-in-from-top-2 fade-in duration-200 bg-background/50 border-t border-divider/20 mt-2 pt-2 flex items-center justify-between gap-2">
+          <div className="md:hidden animate-in slide-in-from-top-2 fade-in duration-200 bg-background/50 border-t border-divider/20 mt-2 pt-2 flex items-center justify-between">
             <div className="flex items-center gap-1">
               <button onClick={handleCopyLink} className="p-2.5 rounded-xl text-text-secondary hover:text-primary transition-all cursor-pointer border-none bg-transparent" title="Copy Link">
                 {linkCopied ? <Check size={18} className="text-success" /> : <Link2 size={18} />}
