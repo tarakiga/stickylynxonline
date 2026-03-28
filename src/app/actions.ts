@@ -1,12 +1,23 @@
 "use server";
-import { auth } from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
-import { PageCategory, BlockType, Prisma } from "@prisma/client";
+import { PageCategory, BlockType, Prisma, NotificationEventType } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import crypto from "crypto";
-import { sendEmail } from "@/lib/email";
 import { EMAIL_COLORS } from "@/config/theme";
 import { getBaseUrl } from "@/lib/utils";
+import { ensureUserAccount, getPlanLimitError, getUserPlanSnapshot } from "@/lib/subscription";
+import { sendPlanNotification } from "@/lib/notifications";
+
+type CreateLynxPageError = {
+  code: string
+  field?: string
+  message: string
+}
+
+type CreateLynxPageResult =
+  | { error: CreateLynxPageError }
+  | { pageId: string; emailSent: boolean }
 
 export async function createLynxPage(data: {
   title: string;
@@ -14,24 +25,65 @@ export async function createLynxPage(data: {
   category: string;
   clientEmail?: string;
   config?: Prisma.InputJsonValue;
-}) {
+}): Promise<CreateLynxPageResult> {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
-  const isValidHandle = /^[a-z0-9-]+$/.test(data.handle);
-  if (!isValidHandle) {
-    return { error: "Handle must contain only lowercase letters, numbers, and hyphens (no spaces)." };
+  const authUser = await currentUser();
+  const primaryEmail = authUser?.emailAddresses[0]?.emailAddress;
+  if (!primaryEmail) {
+    return {
+      error: {
+        code: "EMAIL_REQUIRED",
+        field: "email",
+        message: "We could not resolve your account email. Please refresh and try again.",
+      },
+    };
   }
+
+  const isValidHandle = /^[a-z0-9-]+$/.test(data.handle);
+  const configRecord =
+    data.config && typeof data.config === "object" && !Array.isArray(data.config)
+      ? (data.config as Record<string, unknown>)
+      : undefined;
+
+  if (!isValidHandle) {
+    return {
+      error: {
+        code: "INVALID_HANDLE",
+        field: "handle",
+        message: "Handle must contain only lowercase letters, numbers, and hyphens (no spaces).",
+      },
+    };
+  }
+
+  await ensureUserAccount({
+    userId,
+    email: primaryEmail,
+    name: `${authUser?.firstName || ""} ${authUser?.lastName || ""}`.trim() || null,
+  });
 
   const existing = await prisma.page.findUnique({
     where: { handle: data.handle }
   });
 
   if (existing) {
-    return { error: "This URL handle is already taken. Please choose another one." };
+    return {
+      error: {
+        code: "HANDLE_TAKEN",
+        field: "handle",
+        message: "This URL handle is already taken. Please choose another one.",
+      },
+    };
   }
 
   const category = data.category as PageCategory;
+  const planSnapshot = await getUserPlanSnapshot(userId);
+  const planLimitError = getPlanLimitError(planSnapshot, category);
+
+  if (planLimitError) {
+    return { error: planLimitError };
+  }
 
   // Use a transaction to ensure page and blocks are created together
   let inviteToken: string | null = null;
@@ -155,7 +207,7 @@ export async function createLynxPage(data: {
           clientPinHash: pinHash,
           clientPinEnabled: true,
           clientPinCreatedAt: now,
-        } as any
+        }
       });
       inviteToken = token;
       invitePin = pin;
@@ -170,13 +222,16 @@ export async function createLynxPage(data: {
   if ((newPage.category as string) === "PROJECT_PORTAL" && newPage.clientEmail && inviteToken && invitePin) {
     const base = getBaseUrl();
     const owner = await prisma.user.findUnique({ where: { id: newPage.userId } });
-    const result = await sendEmail({
+    const result = await sendPlanNotification({
+      userId: newPage.userId,
+      pageId: newPage.id,
+      type: NotificationEventType.PROJECT_PORTAL_INVITE,
       to: newPage.clientEmail,
       subject: `Project Portal Access: ${newPage.title || newPage.handle}`,
       html: `
         <div style="font-family: sans-serif; padding: 20px;">
           <h2 style="color: ${EMAIL_COLORS.primary}; margin: 0 0 8px;">Your Project Portal Invitation</h2>
-          <p style="margin: 0 0 12px;">Hello${(data.config as any)?.clientName ? " " + (data.config as any)?.clientName : ""},</p>
+          <p style="margin: 0 0 12px;">Hello${typeof configRecord?.clientName === "string" ? ` ${configRecord.clientName}` : ""},</p>
           <p style="margin: 0 0 12px;">${owner?.name || owner?.email || "Your freelancer"} has invited you to track progress for <strong>${newPage.title || newPage.handle}</strong>.</p>
           <p style="margin: 16px 0;">
             <a href="${base}/${newPage.handle}?access=${inviteToken}" style="background: ${EMAIL_COLORS.primary}; color: ${EMAIL_COLORS.onPrimary}; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold;">

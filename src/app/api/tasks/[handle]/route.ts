@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { sendEmail } from "@/lib/email";
 import { EMAIL_COLORS } from "@/config/theme";
 import { getBaseUrl } from "@/lib/utils";
 import { auth } from "@clerk/nextjs/server";
 import { cookies } from "next/headers";
+import { sendPlanNotification } from "@/lib/notifications";
+import { NotificationEventType, PageCategory } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +26,7 @@ export async function PUT(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  if ((page.category as any) === "PROJECT_PORTAL") {
+  if (page.category === PageCategory.PROJECT_PORTAL) {
     const { userId } = await auth();
     const isOwner = !!userId && userId === page.userId;
     const c = await cookies();
@@ -78,7 +79,10 @@ export async function PUT(
   if (page.user?.email) {
     const task = milestones.flatMap((m) => m.tasks).find((t) => t.id === taskId);
     const base = getBaseUrl();
-    await sendEmail({
+    await sendPlanNotification({
+      userId: page.userId,
+      pageId: page.id,
+      type: NotificationEventType.PROJECT_PORTAL_APPROVAL,
       to: page.user.email,
       subject: `Task Approved: ${task?.title || "Project Update"}`,
       html: `

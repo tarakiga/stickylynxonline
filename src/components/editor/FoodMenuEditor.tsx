@@ -15,66 +15,133 @@ import { LocationSearch } from "@/components/ui/LocationSearch";
 type Variation = { id: string; name: string; size?: string; price: string; currency: string; description?: string };
 type MenuItem = { id: string; name: string; baseDescription?: string; variations: Variation[]; tags: string; photo?: string; notes?: string };
 type MenuSection = { id: string; name: string; description?: string; highlighted: boolean; items: MenuItem[] };
+type FoodMenuBlock = { type: string; content?: unknown };
+type FoodMenuPage = { id: string; title?: string | null; handle: string; blocks?: FoodMenuBlock[] };
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null
+  return value as Record<string, unknown>
+}
+
+function asArray(value: unknown) {
+  return Array.isArray(value) ? value : []
+}
+
+function asString(value: unknown, fallback = "") {
+  return typeof value === "string" ? value : fallback
+}
+
+function asStringArray(value: unknown) {
+  return asArray(value).filter((item): item is string => typeof item === "string")
+}
 
 function uid(p = "x") { return `${p}-${Date.now()}-${Math.random().toString(36).slice(2,7)}` }
 
-export function FoodMenuEditor({ page, defaultCurrency = "USD" }: { page: any; defaultCurrency?: string }) {
+export function FoodMenuEditor({
+  page,
+  defaultCurrency = "USD",
+  canUseAdvancedFoodMenu,
+  canUseCustomBranding,
+}: {
+  page: FoodMenuPage
+  defaultCurrency?: string
+  canUseAdvancedFoodMenu: boolean
+  canUseCustomBranding: boolean
+}) {
   const blocks = page.blocks || [];
-  const brand = blocks.find((b: any) => b.type === "TEXT" && b.content?.section === "brand_header")?.content || {};
-  const service = blocks.find((b: any) => b.type === "GRID" && b.content?.section === "service_info")?.content || {};
-  const menu = blocks.find((b: any) => b.type === "GRID" && b.content?.section === "menu_sections")?.content || {};
-  const extras = blocks.find((b: any) => b.type === "GRID" && b.content?.section === "extras")?.content || {};
+  const brand = asRecord(blocks.find((b) => b.type === "TEXT" && asString(asRecord(b.content)?.section) === "brand_header")?.content) || {};
+  const service = asRecord(blocks.find((b) => b.type === "GRID" && asString(asRecord(b.content)?.section) === "service_info")?.content) || {};
+  const menu = asRecord(blocks.find((b) => b.type === "GRID" && asString(asRecord(b.content)?.section) === "menu_sections")?.content) || {};
+  const extras = asRecord(blocks.find((b) => b.type === "GRID" && asString(asRecord(b.content)?.section) === "extras")?.content) || {};
 
-  const [businessName, setBusinessName] = React.useState<string>(brand.businessName || page.title || page.handle);
-  const [tagline, setTagline] = React.useState<string>(brand.tagline || "");
-  const [cuisineType, setCuisineType] = React.useState<string>(brand.cuisineType || "");
-  const [shortDesc, setShortDesc] = React.useState<string>(brand.shortDescription || "");
-  const [heroImage, setHeroImage] = React.useState<string>(brand.heroImage || "");
-  const [logoImage, setLogoImage] = React.useState<string>(brand.logoImage || "");
+  const [businessName, setBusinessName] = React.useState<string>(asString(brand.businessName, page.title || page.handle));
+  const [tagline, setTagline] = React.useState<string>(asString(brand.tagline));
+  const [cuisineType, setCuisineType] = React.useState<string>(asString(brand.cuisineType));
+  const [shortDesc, setShortDesc] = React.useState<string>(asString(brand.shortDescription));
+  const [heroImage, setHeroImage] = React.useState<string>(asString(brand.heroImage));
+  const [logoImage, setLogoImage] = React.useState<string>(asString(brand.logoImage));
 
-  const [serviceType, setServiceType] = React.useState<string>(service.serviceType || "all");
-  const [serviceNotes, setServiceNotes] = React.useState<string>(service.notes || "");
-  const [emails, setEmails] = React.useState<string[]>(service.emails || []);
-  const [phones, setPhones] = React.useState<string[]>(service.phones || []);
-  const [socials, setSocials] = React.useState<Array<{ id: string; platform: string; url: string }>>(Array.isArray(service.socials) ? service.socials.map((s: any) => ({ id: uid("soc"), platform: s.platform || "", url: (s.url || "").replace(/^https?:\/\//i, "") })) : []);
+  const [serviceType, setServiceType] = React.useState<string>(asString(service.serviceType, "all"));
+  const [serviceNotes, setServiceNotes] = React.useState<string>(asString(service.notes));
+  const [emails, setEmails] = React.useState<string[]>(asStringArray(service.emails));
+  const [phones, setPhones] = React.useState<string[]>(asStringArray(service.phones));
+  const [socials, setSocials] = React.useState<Array<{ id: string; platform: string; url: string }>>(
+    asArray(service.socials).map((socialValue) => {
+      const social = asRecord(socialValue) || {}
+      return {
+        id: uid("soc"),
+        platform: asString(social.platform),
+        url: asString(social.url).replace(/^https?:\/\//i, ""),
+      }
+    })
+  );
   const [locations, setLocations] = React.useState<Array<{ id: string; name: string; address: string; city?: string; country?: string }>>(
-    Array.isArray(service.locations) ? service.locations.map((l: any) => ({ id: uid("loc"), name: l.name || "", address: l.address || l.display_name || "", city: l.city || "", country: l.country || "" })) : []
+    asArray(service.locations).map((locationValue) => {
+      const location = asRecord(locationValue) || {}
+      return {
+        id: uid("loc"),
+        name: asString(location.name),
+        address: asString(location.address || location.display_name),
+        city: asString(location.city),
+        country: asString(location.country),
+      }
+    })
   );
   const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const defaultHours = dayLabels.map((_, i) => ({ day: i, open: "", close: "" }));
   const [hours, setHours] = React.useState<Array<{ day: number; open: string; close: string }>>(
-    Array.isArray(service.hours) ? service.hours.map((h: any, i: number) => ({ day: typeof h.day === "number" ? h.day : i, open: h.open || "", close: h.close || "" })) : defaultHours
+    asArray(service.hours).length > 0
+      ? asArray(service.hours).map((hourValue, i) => {
+          const hour = asRecord(hourValue) || {}
+          return {
+            day: typeof hour.day === "number" ? hour.day : i,
+            open: asString(hour.open),
+            close: asString(hour.close),
+          }
+        })
+      : defaultHours
   );
 
   const [sections, setSections] = React.useState<MenuSection[]>(
-    (menu.sections || []).map((s: any) => ({
-      id: s.id || uid("sec"),
-      name: s.name || "",
-      description: s.description || "",
-      highlighted: !!s.highlighted,
-      items: (s.items || []).map((it: any) => ({
-        id: it.id || uid("mi"),
-        name: it.name || "",
-        baseDescription: it.baseDescription || "",
-        tags: (it.tags || []).join(", "),
-        notes: it.notes || "",
-        photo: it.photoUrl || "",
-        variations: (it.variations || []).map((v: any) => ({
-          id: uid("var"),
-          name: v.name || "",
-          size: v.size || "",
-          price: String(v.price ?? ""),
-          currency: v.currency || defaultCurrency,
-          description: v.description || "",
-        })),
-      })),
-    }))
+    asArray(menu.sections).map((sectionValue) => {
+      const section = asRecord(sectionValue) || {}
+      return {
+        id: asString(section.id, uid("sec")),
+        name: asString(section.name),
+        description: asString(section.description),
+        highlighted: Boolean(section.highlighted),
+        items: asArray(section.items).map((itemValue) => {
+          const item = asRecord(itemValue) || {}
+          return {
+            id: asString(item.id, uid("mi")),
+            name: asString(item.name),
+            baseDescription: asString(item.baseDescription),
+            tags: asStringArray(item.tags).join(", "),
+            notes: asString(item.notes),
+            photo: asString(item.photoUrl),
+            variations: asArray(item.variations).map((variationValue) => {
+              const variation = asRecord(variationValue) || {}
+              return {
+                id: uid("var"),
+                name: asString(variation.name),
+                size: asString(variation.size),
+                price: String(variation.price ?? ""),
+                currency: asString(variation.currency, defaultCurrency),
+                description: asString(variation.description),
+              }
+            }),
+          }
+        }),
+      }
+    })
   );
 
   const [saving, setSaving] = React.useState(false);
   const [dirty, setDirty] = React.useState(false);
   const markDirty = () => setDirty(true);
   const handleViewPublic = () => window.open(`/${page.handle}`, "_blank");
+  const advancedFoodMenuMessage = "Advanced Food Menu is available on Creator. Payments are not live yet, so higher tiers are still locked."
+  const customBrandingMessage = "Custom Branding is available on Creator. Payments are not live yet, so higher tiers are still locked."
 
   async function compressImageFile(file: File, maxDim = 1024, quality = 0.85): Promise<string> {
     const dataUrl = await new Promise<string>((resolve) => { const r = new FileReader(); r.onload = () => resolve(String(r.result)); r.readAsDataURL(file); });
@@ -160,7 +227,7 @@ export function FoodMenuEditor({ page, defaultCurrency = "USD" }: { page: any; d
             {heroImage && <div className="mt-3"><img src={heroImage} alt="Hero" className="w-full max-h-48 object-cover rounded-xl border border-divider" /></div>}
           </div>
           <div className="sm:col-span-2">
-            <Dropzone label="Restaurant Logo" hint="PNG, JPG up to 512KB" accept="image/*" onChange={async (file) => { const img = await compressImageFile(file, 512, 0.9); setLogoImage(img); markDirty(); }} />
+            <Dropzone label="Restaurant Logo" hint={canUseCustomBranding ? "PNG, JPG up to 512KB" : customBrandingMessage} accept="image/*" disabled={!canUseCustomBranding} onChange={async (file) => { const img = await compressImageFile(file, 512, 0.9); setLogoImage(img); markDirty(); }} />
             {logoImage && <div className="mt-3"><img src={logoImage} alt="Logo" className="h-16 w-16 object-cover rounded-xl border border-divider" /></div>}
           </div>
         </div>
@@ -175,13 +242,13 @@ export function FoodMenuEditor({ page, defaultCurrency = "USD" }: { page: any; d
           <Textarea rows={2} placeholder="Service notes (e.g., hours)" value={serviceNotes} onChange={(e) => { setServiceNotes(e.target.value); markDirty(); }} className="sm:col-span-2" />
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <MultiContactInput label="Emails" value={emails} onChange={(v) => { setEmails(v); markDirty(); }} />
-          <MultiContactInput label="Phones" value={phones} onChange={(v) => { setPhones(v); markDirty(); }} />
+          <MultiContactInput label="Emails" value={emails} onChange={(v) => { setEmails(v); markDirty(); }} maxItems={canUseAdvancedFoodMenu ? undefined : 1} addPlaceholder={canUseAdvancedFoodMenu ? "Add contact..." : "Creator required for more"} />
+          <MultiContactInput label="Phones" value={phones} onChange={(v) => { setPhones(v); markDirty(); }} maxItems={canUseAdvancedFoodMenu ? undefined : 1} addPlaceholder={canUseAdvancedFoodMenu ? "Add contact..." : "Creator required for more"} />
         </div>
         <div className="space-y-2">
           <span className="text-sm font-semibold text-text-secondary">Social Links</span>
           <div className="space-y-2">
-            {socials.map((s, idx) => (
+            {socials.map((s) => (
               <div key={s.id} className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                 <Select label="Platform" value={s.platform} onChange={(e) => { const v = e.target.value; setSocials(prev => prev.map(x => x.id === s.id ? { ...x, platform: v } : x)); markDirty(); }} options={[
                   { label: "Instagram", value: "instagram" },
@@ -201,7 +268,8 @@ export function FoodMenuEditor({ page, defaultCurrency = "USD" }: { page: any; d
               </div>
             ))}
             <div>
-              <Button variant="ghost" onClick={() => { setSocials(prev => [...prev, { id: uid("soc"), platform: "", url: "" }]); markDirty(); }} className="text-xs py-1.5 px-3 rounded-lg h-auto cursor-pointer">Add Social</Button>
+              <Button variant="ghost" onClick={() => { setSocials(prev => [...prev, { id: uid("soc"), platform: "", url: "" }]); markDirty(); }} className="text-xs py-1.5 px-3 rounded-lg h-auto cursor-pointer" disabled={!canUseAdvancedFoodMenu && socials.length >= 1}>Add Social</Button>
+              {!canUseAdvancedFoodMenu && <p className="text-[11px] text-text-secondary mt-2">{advancedFoodMenuMessage}</p>}
             </div>
           </div>
         </div>
@@ -210,8 +278,13 @@ export function FoodMenuEditor({ page, defaultCurrency = "USD" }: { page: any; d
           <div className="space-y-2">
             {locations.map((l) => (
               <div key={l.id} className="space-y-2">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-start">
                   <Input labelInside="Location Name" value={l.name} onChange={(e) => { const v = e.target.value; setLocations(prev => prev.map(x => x.id === l.id ? { ...x, name: v } : x)); markDirty(); }} />
+                  <div className="sm:col-span-2 flex justify-start sm:justify-end">
+                    <Button variant="ghost" onClick={() => { setLocations(prev => prev.filter(x => x.id !== l.id)); markDirty(); }} className="text-xs py-1.5 px-3 rounded-lg h-auto cursor-pointer hover:text-error hover:bg-error/10">
+                      Remove Location
+                    </Button>
+                  </div>
                 </div>
                 <LocationSearch label="Location (Async OpenStreetMap)" onSelect={(display) => {
                   setLocations(prev => prev.map(x => x.id === l.id ? { ...x, address: display } : x));
@@ -220,7 +293,8 @@ export function FoodMenuEditor({ page, defaultCurrency = "USD" }: { page: any; d
               </div>
             ))}
             <div>
-              <Button variant="ghost" onClick={() => { setLocations(prev => [...prev, { id: uid("loc"), name: "", address: "" }]); markDirty(); }} className="text-xs py-1.5 px-3 rounded-lg h-auto cursor-pointer">Add Location</Button>
+              <Button variant="ghost" onClick={() => { setLocations(prev => [...prev, { id: uid("loc"), name: "", address: "" }]); markDirty(); }} className="text-xs py-1.5 px-3 rounded-lg h-auto cursor-pointer" disabled={!canUseAdvancedFoodMenu && locations.length >= 1}>Add Location</Button>
+              {!canUseAdvancedFoodMenu && <p className="text-[11px] text-text-secondary mt-2">{advancedFoodMenuMessage}</p>}
             </div>
           </div>
         </div>
@@ -288,6 +362,8 @@ export function FoodMenuEditor({ page, defaultCurrency = "USD" }: { page: any; d
                           updateVariationsFromPriceRepeater(s.id, it.id, opts, currency)
                         }}
                         currencySymbol={currencySymbol(defaultCurrency)}
+                        disableMultiple={!canUseAdvancedFoodMenu && it.variations.length >= 1}
+                        lockedMessage={advancedFoodMenuMessage}
                       />
                     </div>
                     <Input labelInside="Notes" value={it.notes || ""} onChange={(e) => { setSections(prev => prev.map(x => x.id === s.id ? { ...x, items: x.items.map(y => y.id === it.id ? { ...y, notes: e.target.value } : y) } : x)); markDirty(); }} className="mt-2" />

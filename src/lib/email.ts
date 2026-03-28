@@ -5,6 +5,9 @@ function buildTransport(host: string, port: number, secure: boolean) {
     host,
     port,
     secure,
+    connectionTimeout: 5000,
+    greetingTimeout: 5000,
+    socketTimeout: 8000,
     auth: {
       user: process.env.EMAIL_SERVER_USER,
       pass: process.env.EMAIL_SERVER_PASSWORD,
@@ -27,9 +30,9 @@ function getCandidates() {
   return candidates;
 }
 
-export async function sendEmail({ to, subject, html }: { to: string; subject: string; html: string }): Promise<{ ok: boolean; accepted?: Array<string>; rejected?: Array<string>; response?: string; error?: any }> {
+export async function sendEmail({ to, subject, html }: { to: string; subject: string; html: string }): Promise<{ ok: boolean; accepted?: Array<string>; rejected?: Array<string>; response?: string; error?: unknown }> {
   const candidates = getCandidates();
-  let lastErr: any = null;
+  let lastErr: unknown = null;
   for (const c of candidates) {
     try {
       const transporter = buildTransport(c.host, c.port, c.secure);
@@ -39,8 +42,8 @@ export async function sendEmail({ to, subject, html }: { to: string; subject: st
         subject,
         html,
       });
-      const accepted = Array.isArray(info.accepted) ? info.accepted.map((x: any) => String(x)) : [];
-      const rejected = Array.isArray(info.rejected) ? info.rejected.map((x: any) => String(x)) : [];
+      const accepted = Array.isArray(info.accepted) ? info.accepted.map((x: unknown) => String(x)) : [];
+      const rejected = Array.isArray(info.rejected) ? info.rejected.map((x: unknown) => String(x)) : [];
       const ok = accepted.length > 0;
       if (ok) return { ok, accepted, rejected, response: info.response };
       lastErr = info.response || "Unknown send error";
@@ -51,7 +54,7 @@ export async function sendEmail({ to, subject, html }: { to: string; subject: st
   return { ok: false, error: lastErr };
 }
 
-export async function verifyTransport(): Promise<{ ok: boolean; error?: any }> {
+export async function verifyTransport(): Promise<{ ok: boolean; error?: unknown }> {
   const candidates = getCandidates();
   for (const c of candidates) {
     try {

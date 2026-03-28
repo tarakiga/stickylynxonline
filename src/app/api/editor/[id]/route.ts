@@ -1,6 +1,9 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
+import { getUserPlanSnapshot, getFeatureAccessError } from "@/lib/subscription";
+import { getFoodMenuFeatureViolations } from "@/lib/food-menu-entitlements";
 
 export const dynamic = "force-dynamic";
 
@@ -29,8 +32,20 @@ export async function PUT(
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }
 
+  if (page.category === "FOOD_MENU") {
+    const planSnapshot = await getUserPlanSnapshot(userId)
+    const violations = getFoodMenuFeatureViolations(blocks)
+
+    for (const feature of violations) {
+      const featureError = getFeatureAccessError(planSnapshot, feature)
+      if (featureError) {
+        return NextResponse.json({ error: featureError.message, code: featureError.code, field: featureError.field, feature }, { status: 403 });
+      }
+    }
+  }
+
   // Transaction: optional page update, delete old blocks, insert new ones
-  const tx: any[] = [];
+  const tx: Prisma.PrismaPromise<unknown>[] = [];
   if (typeof clientEmail === "string") {
     tx.push(prisma.page.update({ where: { id }, data: { clientEmail } }));
   }

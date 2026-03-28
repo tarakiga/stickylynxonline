@@ -12,9 +12,10 @@ export interface DropzoneProps {
   onMultiple?: (files: File[]) => void;
   multiple?: boolean;
   value?: File | null;
+  disabled?: boolean;
 }
 
-export function Dropzone({ label, hint, accept, className, onChange, onMultiple, multiple, value }: DropzoneProps) {
+export function Dropzone({ label, hint, accept, className, onChange, onMultiple, multiple, value, disabled = false }: DropzoneProps) {
   const inputRef = React.useRef<HTMLInputElement>(null)
   const [dragOver, setDragOver] = React.useState(false)
   const [selectedFile, setSelectedFile] = React.useState<File | null>(value || null)
@@ -35,12 +36,14 @@ export function Dropzone({ label, hint, accept, className, onChange, onMultiple,
   }
 
   function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
+    if (disabled) return
     if (e.target.files) handleFiles(e.target.files)
   }
 
   function handleDrop(e: React.DragEvent) {
     e.preventDefault()
     setDragOver(false)
+    if (disabled) return
     if (e.dataTransfer.files) handleFiles(e.dataTransfer.files)
   }
 
@@ -60,16 +63,20 @@ export function Dropzone({ label, hint, accept, className, onChange, onMultiple,
         multiple={multiple}
         className="sr-only"
         onChange={handleInputChange}
+        disabled={disabled}
       />
       <div
-        onClick={() => inputRef.current?.click()}
-        onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
+        onClick={() => { if (!disabled) inputRef.current?.click() }}
+        onDragOver={(e) => { e.preventDefault(); if (!disabled) setDragOver(true) }}
         onDragLeave={() => setDragOver(false)}
         onDrop={handleDrop}
         className={cn(
-          "border-2 border-dashed rounded-xl p-4 sm:p-6 md:p-8 flex flex-col items-center justify-center text-center transition-all cursor-pointer group",
+          "border-2 border-dashed rounded-xl p-4 sm:p-6 md:p-8 flex flex-col items-center justify-center text-center transition-all group",
+          disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer",
           dragOver
             ? "border-primary bg-primary/10 scale-[1.01]"
+            : disabled
+            ? "border-divider bg-background"
             : "border-divider hover:border-primary bg-background hover:bg-primary/5"
         )}
       >
@@ -86,6 +93,7 @@ export function Dropzone({ label, hint, accept, className, onChange, onMultiple,
               onClick={handleClear}
               className="w-6 h-6 rounded-full bg-divider hover:bg-error/10 hover:text-error flex items-center justify-center transition-colors border-none cursor-pointer shrink-0"
               aria-label="Remove file"
+              disabled={disabled}
             >
               <X className="w-3.5 h-3.5" />
             </button>

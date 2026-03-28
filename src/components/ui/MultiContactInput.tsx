@@ -2,14 +2,29 @@
 import * as React from "react"
 import { X } from "lucide-react"
 
-export function MultiContactInput({ label, error, value, onChange }: { label: string, error?: string, value?: string[], onChange?: (v: string[]) => void }) {
+export function MultiContactInput({
+  label,
+  error,
+  value,
+  onChange,
+  maxItems,
+  addPlaceholder,
+}: {
+  label: string
+  error?: string
+  value?: string[]
+  onChange?: (v: string[]) => void
+  maxItems?: number
+  addPlaceholder?: string
+}) {
   const [contacts, setContacts] = React.useState<string[]>(value ?? ["alex@example.com"])
   const [inputVal, setInputVal] = React.useState("")
   const [localError, setLocalError] = React.useState(false)
+  const addDisabled = typeof maxItems === "number" && contacts.length >= maxItems
 
   React.useEffect(() => {
     if (value) setContacts(value)
-  }, [value?.join(",")])
+  }, [value])
 
   const setAndEmit = (vals: string[]) => {
     if (onChange) onChange(vals)
@@ -27,7 +42,7 @@ export function MultiContactInput({ label, error, value, onChange }: { label: st
 
   const addContact = () => {
     const val = inputVal.trim().replace(/,$/, '')
-    if (!val) return
+    if (!val || addDisabled) return
     if (validate(val) && !contacts.includes(val)) {
       setAndEmit([...contacts, val])
       setInputVal("")
@@ -42,7 +57,9 @@ export function MultiContactInput({ label, error, value, onChange }: { label: st
   return (
     <div className="space-y-2 w-full">
       <span className="text-sm font-semibold text-text-secondary">{label}</span>
-      <p className="text-xs text-text-secondary mb-2">Type email/phone and press Enter or comma.</p>
+      <p className="text-xs text-text-secondary mb-2">
+        Type email/phone and press Enter or comma.{addDisabled ? " Plan limit reached for this field." : ""}
+      </p>
       <div 
         className="min-h-[3rem] w-full input-base p-1.5 flex flex-wrap gap-2 items-center cursor-text" 
         onClick={() => document.getElementById('mc-input')?.focus()}
@@ -59,11 +76,12 @@ export function MultiContactInput({ label, error, value, onChange }: { label: st
           id="mc-input"
           type="text" 
           className="flex-1 bg-transparent border-none min-w-[120px] outline-none text-sm p-1 text-text-primary placeholder:text-text-secondary/50 focus:ring-0" 
-          placeholder="Add contact..."
+          placeholder={addPlaceholder || "Add contact..."}
           value={inputVal}
           onChange={(e) => setInputVal(e.target.value)}
           onKeyDown={handleKeyDown}
           onBlur={addContact}
+          disabled={addDisabled}
         />
       </div>
       {(error || localError) && <p className="text-xs text-error mt-1">{error || "Invalid email or phone number"}</p>}

@@ -18,6 +18,7 @@ model User {
   
   pages         Page[]
   subscription  Subscription?
+  notificationEvents NotificationEvent[]
 }
 
 enum UserRole {
@@ -29,7 +30,7 @@ model Subscription {
   id            String             @id @default(cuid())
   userId        String             @unique
   user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  plan          SubscriptionPlan   @default(FREE)
+  plan          SubscriptionPlan   @default(STARTER)
   status        SubscriptionStatus @default(ACTIVE)
   paystackId    String?            @unique
   createdAt     DateTime           @default(now())
@@ -37,8 +38,9 @@ model Subscription {
 }
 
 enum SubscriptionPlan {
-  FREE
-  PRO
+  STARTER
+  CREATOR
+  STUDIO
 }
 
 enum SubscriptionStatus {
@@ -69,9 +71,32 @@ model Page {
   lastClientAccessAt DateTime?
   
   blocks      Block[]
+  notificationEvents NotificationEvent[]
   
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
+}
+
+model NotificationEvent {
+  id        String                @id @default(cuid())
+  userId    String
+  user      User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pageId    String?
+  page      Page?                 @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  type      NotificationEventType
+  createdAt DateTime              @default(now())
+
+  @@index([userId, createdAt])
+  @@index([pageId, createdAt])
+}
+
+enum NotificationEventType {
+  PROJECT_PORTAL_INVITE
+  PROJECT_PORTAL_REINVITE
+  PROJECT_PORTAL_COMMENT
+  PROJECT_PORTAL_APPROVAL
+  PROJECT_PORTAL_SUBMISSION
+  MEDIA_KIT_REQUEST
 }
 
 enum PageCategory {

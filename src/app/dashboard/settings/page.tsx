@@ -5,8 +5,9 @@ import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { User, Mail, CreditCard, AlertTriangle, Image as ImageIcon } from "lucide-react";
-import prisma from "@/lib/prisma";
 import { CurrencySettings } from "@/components/dashboard/CurrencySettings";
+import { ensureUserAccount, getUserPlanSnapshot } from "@/lib/subscription";
+import { formatFoodMenuLimit, hasFeature } from "@/lib/plan-rules";
 
 export default async function SettingsPage() {
   const { userId } = await auth();
@@ -21,12 +22,13 @@ export default async function SettingsPage() {
   const lastName = user.lastName || "";
   const imageUrl = user.imageUrl;
 
-  const dbUser = await prisma.user.findUnique({
-    where: { id: userId },
-    include: { subscription: true }
+  const dbUser = await ensureUserAccount({
+    userId,
+    email: primaryEmail,
+    name: `${firstName} ${lastName}`.trim(),
   });
-
-  const plan = dbUser?.subscription?.plan || "FREE";
+  const planSnapshot = await getUserPlanSnapshot(userId);
+  const planLabel = planSnapshot.rules.label;
   
   return (
     <div className="space-y-8 max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500 pb-12">
@@ -115,42 +117,60 @@ export default async function SettingsPage() {
                <div>
                  <p className="text-sm font-bold text-text-secondary uppercase tracking-wider mb-1">Current Plan</p>
                  <div className="flex items-end gap-3">
-                   <h3 className="text-3xl font-bold text-text-primary">{plan}</h3>
-                   {plan === "FREE" && <span className="text-sm text-text-secondary mb-1">Forever</span>}
+                   <h3 className="text-3xl font-bold text-text-primary">{planLabel}</h3>
+                   <span className="text-sm text-text-secondary mb-1">{planSnapshot.rules.priceLabel}</span>
                  </div>
                </div>
                <div>
-                  {plan === "FREE" ? (
-                    <Button variant="primary" className="bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity border-none px-6 py-3 rounded-xl shadow-premium cursor-pointer text-white">
-                      Upgrade to PRO
-                    </Button>
-                  ) : (
-                    <Button variant="secondary" className="px-6 py-3 rounded-xl cursor-pointer">
-                      Manage via Paystack
-                    </Button>
-                  )}
+                  <Button variant="secondary" className="px-6 py-3 rounded-xl" disabled>
+                    Payments Coming Soon
+                  </Button>
                </div>
             </div>
 
-            {plan === "FREE" && (
-              <div className="space-y-4">
-                <h4 className="font-bold text-text-primary">PRO Plan Benefits:</h4>
-                <ul className="space-y-2 text-text-secondary text-sm">
-                   <li className="flex items-center gap-2">
-                     <div className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0"></div>
-                     Unlimited Lynx block creations.
-                   </li>
-                   <li className="flex items-center gap-2">
-                     <div className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0"></div>
-                     Advanced link analytics and demographics.
-                   </li>
-                   <li className="flex items-center gap-2">
-                     <div className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0"></div>
-                     Remove Stickylynx branding and use custom domains.
-                   </li>
-                </ul>
-              </div>
-            )}
+            <div className="space-y-4">
+              <h4 className="font-bold text-text-primary">Current Plan Limits</h4>
+              <ul className="space-y-2 text-text-secondary text-sm">
+                 <li className="flex items-center gap-2">
+                   <div className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0"></div>
+                   {planSnapshot.usage.totalPages} of {planSnapshot.rules.maxPages} Lynx used.
+                 </li>
+                 <li className="flex items-center gap-2">
+                   <div className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0"></div>
+                   {planSnapshot.usage.foodMenus} of {formatFoodMenuLimit(planSnapshot.rules.maxFoodMenus)} used.
+                 </li>
+                 <li className="flex items-center gap-2">
+                   <div className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0"></div>
+                   {planSnapshot.rules.dailyEmailNotifications} email notifications per day.
+                 </li>
+                 <li className="flex items-center gap-2">
+                   <div className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0"></div>
+                   Creator and Studio upgrades will unlock after payments are integrated.
+                 </li>
+              </ul>
+            </div>
+
+            <div className="space-y-4 pt-2">
+              <h4 className="font-bold text-text-primary">Feature Access</h4>
+              <ul className="space-y-2 text-text-secondary text-sm">
+                 <li className="flex items-center gap-2">
+                   <div className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0"></div>
+                   Advanced Food Menu: {hasFeature(planSnapshot.plan, "ADVANCED_FOOD_MENU") ? "Unlocked" : "Creator required"}
+                 </li>
+                 <li className="flex items-center gap-2">
+                   <div className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0"></div>
+                   Custom Branding: {hasFeature(planSnapshot.plan, "CUSTOM_BRANDING") ? "Unlocked" : "Creator required"}
+                 </li>
+                 <li className="flex items-center gap-2">
+                   <div className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0"></div>
+                   Advanced Analytics: {hasFeature(planSnapshot.plan, "ADVANCED_ANALYTICS") ? "Unlocked" : "Studio required"}
+                 </li>
+                 <li className="flex items-center gap-2">
+                   <div className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0"></div>
+                   Data Export: {hasFeature(planSnapshot.plan, "DATA_EXPORT") ? "Unlocked" : "Studio required"}
+                 </li>
+              </ul>
+            </div>
           </div>
         </Card>
 

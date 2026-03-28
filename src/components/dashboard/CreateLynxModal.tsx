@@ -4,20 +4,36 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { X } from "lucide-react";
 import { CategoryCard } from "@/components/ui/CategoryCard";
 
-export function CreateLynxModal() {
+type CreateLynxModalProps = {
+  planLabel: string
+  totalPages: number
+  maxPages: number
+  foodMenus: number
+  maxFoodMenus: number | null
+}
+
+export function CreateLynxModal({
+  planLabel,
+  totalPages,
+  maxPages,
+  foodMenus,
+  maxFoodMenus,
+}: CreateLynxModalProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isOpen = searchParams.get("create") === "true";
+  const totalLimitReached = totalPages >= maxPages;
+  const foodMenuLimitReached = maxFoodMenus !== null && foodMenus >= maxFoodMenus;
 
   if (!isOpen) return null;
 
   const close = () => router.push("/dashboard");
 
   const categories = [
-    { title: "Project Portal", description: "Progress and feedback hub for your clients.", type: "PROJECT_PORTAL", enabled: true },
-    { title: "EPK", description: "Electronic Press Kit for artists and musicians.", type: "EPK", enabled: true },
-    { title: "Food Menu", description: "Mobile-first digital menu with sections, variations, and multi-location support.", type: "FOOD_MENU", enabled: true },
-    { title: "Influencer Media Kit", description: "Live media kit for creators to pitch brands and agencies.", type: "INFLUENCER_MEDIA_KIT", enabled: true },
+    { title: "Project Portal", description: totalLimitReached ? `${planLabel} includes up to ${maxPages} Lynx.` : "Progress and feedback hub for your clients.", type: "PROJECT_PORTAL", enabled: !totalLimitReached },
+    { title: "EPK", description: totalLimitReached ? `${planLabel} includes up to ${maxPages} Lynx.` : "Electronic Press Kit for artists and musicians.", type: "EPK", enabled: !totalLimitReached },
+    { title: "Food Menu", description: totalLimitReached ? `${planLabel} includes up to ${maxPages} Lynx.` : foodMenuLimitReached ? `${planLabel} includes ${maxFoodMenus} Food Menu${maxFoodMenus === 1 ? "" : "s"}.` : "Mobile-first digital menu with sections, variations, and multi-location support.", type: "FOOD_MENU", enabled: !totalLimitReached && !foodMenuLimitReached },
+    { title: "Influencer Media Kit", description: totalLimitReached ? `${planLabel} includes up to ${maxPages} Lynx.` : "Live media kit for creators to pitch brands and agencies.", type: "INFLUENCER_MEDIA_KIT", enabled: !totalLimitReached },
     { title: "Generic", description: "A simple link-in-bio page for creators.", type: "GENERIC", enabled: false },
   ];
 
@@ -32,6 +48,12 @@ export function CreateLynxModal() {
            <h2 className="text-3xl md:text-4xl font-bold text-text-primary">Choose a Template</h2>
            <p className="text-text-secondary mt-2 text-lg">Select a category to jumpstart your Lynx page.</p>
         </div>
+        <div className="mb-8 rounded-2xl border border-divider bg-background px-5 py-4">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-text-secondary mb-1">{planLabel} Plan</p>
+          <p className="text-sm font-semibold text-text-primary">
+            {totalPages}/{maxPages} Lynx used • {maxFoodMenus === null ? `${foodMenus} Food Menus used` : `${foodMenus}/${maxFoodMenus} Food Menus used`}
+          </p>
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
            {categories.map(cat => (
              <div key={cat.type} className="relative">
@@ -43,7 +65,15 @@ export function CreateLynxModal() {
                />
                {!cat.enabled && (
                  <div className="absolute inset-0 bg-surface/70 backdrop-blur-[1px] rounded-2xl flex items-center justify-center cursor-not-allowed">
-                   <span className="bg-divider text-text-secondary text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest">Coming Soon</span>
+                   <span className="bg-divider text-text-secondary text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest">
+                     {cat.type === "GENERIC"
+                       ? "Coming Soon"
+                       : totalLimitReached
+                       ? `${maxPages}/${maxPages} Lynx Used`
+                       : cat.type === "FOOD_MENU" && maxFoodMenus !== null
+                       ? `${foodMenus}/${maxFoodMenus} Menus Used`
+                       : "Unavailable"}
+                   </span>
                  </div>
                )}
              </div>

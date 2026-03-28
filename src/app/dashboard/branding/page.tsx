@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Wrench } from "lucide-react";
+import { getUserPlanSnapshot } from "@/lib/subscription";
+import { hasFeature } from "@/lib/plan-rules";
 
 export default async function BrandingPage() {
   const { userId } = await auth();
@@ -11,6 +13,8 @@ export default async function BrandingPage() {
   if (!userId || !user) {
     redirect("/login");
   }
+  const planSnapshot = await getUserPlanSnapshot(userId);
+  const hasCustomBranding = hasFeature(planSnapshot.plan, "CUSTOM_BRANDING");
 
   return (
     <div className="space-y-8 max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500 pb-12">
@@ -29,7 +33,12 @@ export default async function BrandingPage() {
             This section is being built. Soon you&apos;ll be able to define brand colors, typography, and reusable assets
             for all your Lynx pages.
           </p>
-          <Badge variant="info">Coming Soon</Badge>
+          <Badge variant="info">{hasCustomBranding ? "Creator Enabled" : "Creator Required"}</Badge>
+          {!hasCustomBranding ? (
+            <p className="text-xs text-text-secondary max-w-md">
+              Custom Branding is reserved for Creator and Studio. Payments are not live yet, so higher tiers remain locked.
+            </p>
+          ) : null}
         </div>
       </Card>
     </div>

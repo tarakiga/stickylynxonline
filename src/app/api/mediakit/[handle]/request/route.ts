@@ -1,8 +1,9 @@
 import prisma from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
-import { sendEmail } from "@/lib/email";
 import { EMAIL_COLORS } from "@/config/theme";
 import { getBaseUrl } from "@/lib/utils";
+import { sendPlanNotification } from "@/lib/notifications";
+import { NotificationEventType } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +30,10 @@ export async function POST(
   if (!to) return NextResponse.json({ error: "No contact email configured" }, { status: 400 });
 
   const base = getBaseUrl();
-  await sendEmail({
+  await sendPlanNotification({
+    userId: page.userId,
+    pageId: page.id,
+    type: NotificationEventType.MEDIA_KIT_REQUEST,
     to,
     subject: `Campaign Request from ${name}`,
     html: `

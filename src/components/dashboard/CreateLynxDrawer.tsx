@@ -9,7 +9,21 @@ import { showToast } from "@/components/ui/Toast";
 
 import { createLynxPage } from "@/app/actions";
 
-export function CreateLynxDrawer() {
+type CreateLynxDrawerProps = {
+  planLabel: string
+  totalPages: number
+  maxPages: number
+  foodMenus: number
+  maxFoodMenus: number | null
+}
+
+export function CreateLynxDrawer({
+  planLabel,
+  totalPages,
+  maxPages,
+  foodMenus,
+  maxFoodMenus,
+}: CreateLynxDrawerProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const categoryStr = searchParams.get("drawer");
@@ -39,11 +53,24 @@ export function CreateLynxDrawer() {
   const isEpk = categoryStr === "EPK";
   const isFoodMenu = categoryStr === "FOOD_MENU";
   const isMediaKit = categoryStr === "INFLUENCER_MEDIA_KIT";
+  const totalLimitReached = totalPages >= maxPages;
+  const foodMenuLimitReached = isFoodMenu && maxFoodMenus !== null && foodMenus >= maxFoodMenus;
+  const creationBlocked = totalLimitReached || foodMenuLimitReached;
+  const limitMessage = totalLimitReached
+    ? `${planLabel} allows up to ${maxPages} Lynx. Payments are not live yet, so higher tiers are still locked.`
+    : foodMenuLimitReached
+    ? `${planLabel} allows ${maxFoodMenus} Food Menu${maxFoodMenus === 1 ? "" : "s"}. Payments are not live yet, so higher tiers are still locked.`
+    : null;
 
   const handleNext = () => setStep(2);
   const handleBack = () => setStep(1);
   
   const handleCreate = async () => {
+    if (limitMessage) {
+      showToast(limitMessage, "warning");
+      return;
+    }
+
     setIsLoading(true);
     try {
       const result = await createLynxPage({
@@ -54,8 +81,8 @@ export function CreateLynxDrawer() {
         config: isProjectPortal ? { clientName } : isEpk ? { artistName: title, genre: "" } : undefined
       });
 
-      if (result.error) {
-        showToast(String(result.error), "error");
+      if ("error" in result) {
+        showToast(result.error.message, "error");
         setIsLoading(false);
         return;
       }
@@ -67,8 +94,9 @@ export function CreateLynxDrawer() {
           showToast("Portal created; email not sent (check SMTP config)", "warning");
         }
       }
-      router.push(`/dashboard/editor/${result.pageId}`);
-    } catch (e: unknown) {
+      router.replace(`/dashboard/editor/${result.pageId}`);
+      router.refresh();
+    } catch {
       showToast("Failed to create Lynx", "error");
       setIsLoading(false);
     }
@@ -117,6 +145,19 @@ export function CreateLynxDrawer() {
            <div className="mb-12">
               <StepProgress steps={processSteps} currentStep={step} />
            </div>
+
+           <div className="mb-6 rounded-2xl border border-divider bg-background px-5 py-4">
+             <p className="text-xs font-bold uppercase tracking-[0.18em] text-text-secondary mb-1">{planLabel} Plan</p>
+             <p className="text-sm font-semibold text-text-primary">
+               {totalPages}/{maxPages} Lynx used • {maxFoodMenus === null ? `${foodMenus} Food Menus used` : `${foodMenus}/${maxFoodMenus} Food Menus used`}
+             </p>
+           </div>
+
+           {limitMessage ? (
+             <div className="mb-6 rounded-2xl border border-warning/20 bg-warning/5 px-5 py-4 text-sm font-medium text-text-primary">
+               {limitMessage}
+             </div>
+           ) : null}
 
            {/* Step 1: Core details */}
            {step === 1 && (
@@ -242,14 +283,14 @@ export function CreateLynxDrawer() {
            )}
            
           {step === 1 && (
-            <Button variant="primary" onClick={handleNext} className="flex-1 py-3.5 text-base cursor-pointer flex items-center justify-center gap-2 shadow-premium" disabled={!title || !/^[a-z0-9-]+$/.test(handle)}>
+            <Button variant="primary" onClick={handleNext} className="flex-1 py-3.5 text-base cursor-pointer flex items-center justify-center gap-2 shadow-premium" disabled={creationBlocked || !title || !/^[a-z0-9-]+$/.test(handle)}>
                 Continue
                 <ChevronRight size={20} />
              </Button>
            )}
 
            {step === 2 && (
-             <Button variant="primary" onClick={handleCreate} className="flex-1 py-3.5 text-base cursor-pointer flex items-center justify-center shadow-premium" disabled={isLoading || (isProjectPortal && (!clientName || !clientEmail))}>
+             <Button variant="primary" onClick={handleCreate} className="flex-1 py-3.5 text-base cursor-pointer flex items-center justify-center shadow-premium" disabled={creationBlocked || isLoading || (isProjectPortal && (!clientName || !clientEmail))}>
                {isLoading ? <Loader2 className="animate-spin" size={20} /> : "Finalize & Launch Editor"}
              </Button>
            )}

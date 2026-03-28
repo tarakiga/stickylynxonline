@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import crypto from "crypto";
-import { sendEmail } from "@/lib/email";
 import { EMAIL_COLORS } from "@/config/theme";
 import { getBaseUrl } from "@/lib/utils";
 import { auth } from "@clerk/nextjs/server";
+import { getNotificationQuota, sendPlanNotification } from "@/lib/notifications";
+import { NotificationEventType, PageCategory } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
@@ -19,9 +20,14 @@ export async function POST(
     include: { user: true },
   });
   if (!page) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  if ((page.category as any) !== "PROJECT_PORTAL") return NextResponse.json({ error: "Not applicable" }, { status: 400 });
+  if (page.category !== PageCategory.PROJECT_PORTAL) return NextResponse.json({ error: "Not applicable" }, { status: 400 });
   if (!userId || userId !== page.userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (!page.clientEmail) return NextResponse.json({ error: "Missing client email" }, { status: 400 });
+
+  const quota = await getNotificationQuota(page.userId);
+  if (!quota.allowed) {
+    return NextResponse.json({ error: `Daily email notification limit reached (${quota.limit}).` }, { status: 429 });
+  }
 
   const token = crypto.randomBytes(24).toString("hex");
   const pin = String(Math.floor(100000 + Math.random() * 900000));
@@ -42,7 +48,10 @@ export async function POST(
   });
 
   const base = getBaseUrl();
-  const result = await sendEmail({
+  const result = await sendPlanNotification({
+    userId: page.userId,
+    pageId: page.id,
+    type: NotificationEventType.PROJECT_PORTAL_REINVITE,
     to: page.clientEmail,
     subject: `Project Portal Access: ${page.title || page.handle}`,
     html: `
@@ -65,7 +74,10 @@ export async function POST(
   });
 
   if (!result.ok) {
+    if (result.quotaExceeded) {
+      return NextResponse.json({ error: `Daily email notification limit reached (${result.limit}).` }, { status: 429 });
+    }
     return NextResponse.json({ error: "Email failed", detail: result.error || result.response }, { status: 500 });
   }
-  return NextResponse.json({ success: true, accepted: result.accepted });
+  return NextResponse.json({ success: true, used: result.used, limit: result.limit });
 }

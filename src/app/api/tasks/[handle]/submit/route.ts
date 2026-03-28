@@ -1,9 +1,10 @@
 import prisma from "@/lib/prisma";
-import { sendEmail } from "@/lib/email";
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 import { getBaseUrl } from "@/lib/utils";
 import { EMAIL_COLORS } from "@/config/theme";
+import { sendPlanNotification } from "@/lib/notifications";
+import { NotificationEventType } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
@@ -57,7 +58,10 @@ export async function POST(
 
   // Notify Client
   if (page.clientEmail) {
-    await sendEmail({
+    await sendPlanNotification({
+      userId: page.userId,
+      pageId: page.id,
+      type: NotificationEventType.PROJECT_PORTAL_SUBMISSION,
       to: page.clientEmail,
       subject: `Draft Ready for Review: ${taskToNotify.title}`,
       html: `

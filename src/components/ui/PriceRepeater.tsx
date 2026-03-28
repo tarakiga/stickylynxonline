@@ -14,9 +14,11 @@ export interface PriceRepeaterProps {
   onChange?: (options: PriceOption[]) => void;
   error?: string;
   currencySymbol?: string;
+  disableMultiple?: boolean;
+  lockedMessage?: string;
 }
 
-export function PriceRepeater({ label, value, onChange, error, currencySymbol = "$" }: PriceRepeaterProps) {
+export function PriceRepeater({ label, value, onChange, error, currencySymbol = "$", disableMultiple = false, lockedMessage }: PriceRepeaterProps) {
   const [internalOptions, setInternalOptions] = React.useState<PriceOption[]>([
     { id: "1", name: "", price: "" }
   ])
@@ -25,6 +27,7 @@ export function PriceRepeater({ label, value, onChange, error, currencySymbol = 
   const setOptions = onChange ? onChange : setInternalOptions
 
   const addOption = () => {
+    if (disableMultiple) return
     setOptions([...options, { id: Math.random().toString(36).substring(7), name: "", price: "" }])
   }
 
@@ -41,7 +44,7 @@ export function PriceRepeater({ label, value, onChange, error, currencySymbol = 
     <div className="w-full space-y-3">
       {label && <span className="text-sm font-semibold text-text-secondary block">{label}</span>}
       <div className="space-y-3">
-        {options.map((opt, index) => (
+        {options.map((opt) => (
           <div key={opt.id} className="flex gap-2 items-center group">
             <div className="flex-1 flex flex-col sm:flex-row items-stretch sm:items-center bg-surface border border-divider rounded-xl focus-within:ring-2 focus-within:ring-primary-light focus-within:border-primary transition-all shadow-sm">
               <div className="flex-1 relative">
@@ -83,11 +86,13 @@ export function PriceRepeater({ label, value, onChange, error, currencySymbol = 
         <button 
           type="button" 
           onClick={addOption}
-          className="flex items-center gap-2 text-primary font-bold text-sm bg-primary/10 hover:bg-primary/20 px-4 py-2.5 rounded-xl transition-colors border-none cursor-pointer"
+          className="flex items-center gap-2 text-primary font-bold text-sm bg-primary/10 hover:bg-primary/20 px-4 py-2.5 rounded-xl transition-colors border-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={disableMultiple}
         >
           <Plus size={16} />
           Add price option
         </button>
+        {disableMultiple && <p className="text-[11px] text-text-secondary mt-2">{lockedMessage || "Higher plan required for multiple price options."}</p>}
       </div>
       {error && <p className="text-xs text-error mt-1">{error}</p>}
     </div>

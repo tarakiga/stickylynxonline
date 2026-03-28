@@ -7,23 +7,7 @@ import { CreateLynxModal } from "@/components/dashboard/CreateLynxModal";
 import { CreateLynxDrawer } from "@/components/dashboard/CreateLynxDrawer";
 import { Plus } from "lucide-react";
 import { Suspense } from "react";
-
-async function getOrCreateUser(userId: string, email: string, name: string | null) {
-  let user = await prisma.user.findUnique({
-    where: { id: userId }
-  });
-
-  if (!user) {
-    user = await prisma.user.create({
-      data: {
-        id: userId,
-        email: email,
-        name: name,
-      }
-    });
-  }
-  return user;
-}
+import { ensureUserAccount, getUserPlanSnapshot } from "@/lib/subscription";
 
 export default async function DashboardPage() {
   const { userId } = await auth();
@@ -36,13 +20,18 @@ export default async function DashboardPage() {
   const primaryEmail = user.emailAddresses[0]?.emailAddress;
 
   if (primaryEmail) {
-    await getOrCreateUser(userId, primaryEmail, `${user.firstName || ""} ${user.lastName || ""}`.trim());
+    await ensureUserAccount({
+      userId,
+      email: primaryEmail,
+      name: `${user.firstName || ""} ${user.lastName || ""}`.trim(),
+    });
   }
 
   const pages = await prisma.page.findMany({
     where: { userId },
     orderBy: { updatedAt: "desc" },
   });
+  const planSnapshot = await getUserPlanSnapshot(userId);
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -50,6 +39,9 @@ export default async function DashboardPage() {
          <div>
            <h1 className="text-3xl font-bold text-text-primary tracking-tight">Your Lynx</h1>
            <p className="text-text-secondary mt-1">Manage, edit, and share your individual lynx profiles, menus, and EPKs.</p>
+           <p className="text-xs font-bold uppercase tracking-[0.18em] text-text-secondary mt-3">
+             {planSnapshot.rules.label} • {planSnapshot.usage.totalPages}/{planSnapshot.rules.maxPages} Lynx • {planSnapshot.rules.maxFoodMenus === null ? `${planSnapshot.usage.foodMenus} Food Menus` : `${planSnapshot.usage.foodMenus}/${planSnapshot.rules.maxFoodMenus} Food Menus`}
+           </p>
          </div>
          <Link href="/dashboard?create=true" className="btn-primary font-bold px-6 py-3 rounded-xl flex items-center gap-2 shadow-sm text-sm sm:text-base cursor-pointer">
            <Plus size={20} />
@@ -62,13 +54,13 @@ export default async function DashboardPage() {
            <div className="w-16 h-16 bg-primary/10 text-primary rounded-full flex items-center justify-center mb-6">
              <Plus size={32} />
            </div>
-           <h2 className="text-xl font-bold text-text-primary mb-2">You don't have any lynx yet</h2>
+           <h2 className="text-xl font-bold text-text-primary mb-2">You don&apos;t have any lynx yet</h2>
            <p className="text-text-secondary mb-6 max-w-md">Click the exact button below to pick a template and start building your brand online.</p>
            <Link href="/dashboard?create=true" className="btn-primary font-bold px-8 py-3.5 rounded-xl shadow-sm cursor-pointer block">Get Started</Link>
         </div>
       ) : (
         <div className="flex flex-col gap-4 w-full">
-          {pages.map((page: any) => (
+          {pages.map((page) => (
              <PageItemCard
                key={page.id}
                id={page.id}
@@ -81,8 +73,20 @@ export default async function DashboardPage() {
       )}
       
       <Suspense fallback={null}>
-        <CreateLynxModal />
-        <CreateLynxDrawer />
+        <CreateLynxModal
+          planLabel={planSnapshot.rules.label}
+          totalPages={planSnapshot.usage.totalPages}
+          maxPages={planSnapshot.rules.maxPages}
+          foodMenus={planSnapshot.usage.foodMenus}
+          maxFoodMenus={planSnapshot.rules.maxFoodMenus}
+        />
+        <CreateLynxDrawer
+          planLabel={planSnapshot.rules.label}
+          totalPages={planSnapshot.usage.totalPages}
+          maxPages={planSnapshot.rules.maxPages}
+          foodMenus={planSnapshot.usage.foodMenus}
+          maxFoodMenus={planSnapshot.rules.maxFoodMenus}
+        />
       </Suspense>
     </div>
   )

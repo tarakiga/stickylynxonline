@@ -8,6 +8,8 @@ import { ProjectPortalEditor } from "@/components/editor/ProjectPortalEditor";
 import { EpkEditor } from "@/components/editor/EpkEditor";
 import { MediaKitEditor } from "@/components/editor/MediaKitEditor";
 import { FoodMenuEditor } from "@/components/editor/FoodMenuEditor";
+import { hasFeature } from "@/lib/plan-rules";
+import { getUserPlanSnapshot } from "@/lib/subscription";
 
 export default async function EditorPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -24,6 +26,7 @@ export default async function EditorPage({ params }: { params: Promise<{ id: str
   }
   const user = await prisma.user.findUnique({ where: { id: userId } });
   const defaultCurrency = user?.currencyCode || "USD";
+  const planSnapshot = await getUserPlanSnapshot(userId);
 
   return (
     <div className="flex flex-col animate-in fade-in duration-500 pb-12 w-full h-full min-h-screen relative">
@@ -34,8 +37,20 @@ export default async function EditorPage({ params }: { params: Promise<{ id: str
            </Link>
            <div>
              <p className="text-text-secondary text-sm font-bold tracking-widest uppercase mb-0.5">{page.category.replace("_", " ")} WORKSPACE</p>
-             <h1 className="text-2xl font-bold tracking-tight text-text-primary">Editing '{page.title || page.handle}'</h1>
+             <h1 className="text-2xl font-bold tracking-tight text-text-primary">Editing &apos;{page.title || page.handle}&apos;</h1>
            </div>
+        </div>
+      </div>
+
+      <div className="w-full max-w-5xl mx-auto px-4 mb-6">
+        <div className="rounded-3xl border border-primary/20 bg-primary/5 px-5 py-4 shadow-sm">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary mb-1">{planSnapshot.rules.label} Notification Limit</p>
+          <p className="text-sm font-semibold text-text-primary">
+            Your current plan allows up to {planSnapshot.rules.dailyEmailNotifications} email notifications per day.
+          </p>
+          <p className="text-xs text-text-secondary mt-1">
+            Applies to project portal invites, feedback updates, approvals, submissions, and media kit requests.
+          </p>
         </div>
       </div>
       
@@ -47,7 +62,12 @@ export default async function EditorPage({ params }: { params: Promise<{ id: str
          ) : (page.category as string) === "INFLUENCER_MEDIA_KIT" ? (
              <MediaKitEditor page={page} />
          ) : (page.category as string) === "FOOD_MENU" ? (
-             <FoodMenuEditor page={page} defaultCurrency={defaultCurrency} />
+             <FoodMenuEditor
+               page={page}
+               defaultCurrency={defaultCurrency}
+               canUseAdvancedFoodMenu={hasFeature(planSnapshot.plan, "ADVANCED_FOOD_MENU")}
+               canUseCustomBranding={hasFeature(planSnapshot.plan, "CUSTOM_BRANDING")}
+             />
          ) : (
              <div className="w-full max-w-5xl mx-auto bg-surface border border-divider p-8 rounded-3xl flex items-center justify-center text-text-secondary shadow-sm min-h-[400px]">
                 <div className="text-center">

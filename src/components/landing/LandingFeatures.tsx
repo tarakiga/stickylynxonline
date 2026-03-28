@@ -48,11 +48,6 @@ export function LandingFeatures() {
                    </div>
                    <h4 className="text-xl font-bold text-text-primary mb-3">{cat.title}</h4>
                    <p className="text-text-secondary text-sm leading-relaxed font-medium">{cat.description}</p>
-                   
-                   <div className="mt-8 flex items-center gap-2 text-primary text-xs font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-all">
-                      <span>Learn More</span>
-                      <div className="w-4 h-0.5 bg-primary" />
-                   </div>
                 </div>
               )
            })}
