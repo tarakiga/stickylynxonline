@@ -120,11 +120,11 @@ export function PageItemCard({ id, title, handle, category, imageUrl }: PageItem
           {/* Mobile compact row: Full width flex on mobile */}
           <div className="flex md:hidden items-center justify-between w-full gap-2">
             <div className="flex items-center gap-2">
-              <button onClick={handlePreview} className="flex items-center gap-2 px-3 py-2 rounded-xl text-text-secondary bg-divider/20 hover:text-primary transition-all active:scale-95 text-xs font-bold" title="Preview">
-                <Eye size={16} /> <span>View</span>
+              <button onClick={handlePreview} className="p-2.5 rounded-xl text-text-secondary bg-divider/20 hover:text-primary transition-all active:scale-95" title="Preview">
+                <Eye size={18} />
               </button>
-              <button onClick={handleEdit} className="flex items-center gap-2 px-3 py-2 rounded-xl text-text-secondary bg-divider/20 hover:text-primary transition-all active:scale-95 text-xs font-bold" title="Edit">
-                <Edit2 size={16} /> <span>Edit</span>
+              <button onClick={handleEdit} className="p-2.5 rounded-xl text-text-secondary bg-divider/20 hover:text-primary transition-all active:scale-95" title="Edit">
+                <Edit2 size={18} />
               </button>
             </div>
             <button 
@@ -144,20 +144,17 @@ export function PageItemCard({ id, title, handle, category, imageUrl }: PageItem
         {showMobileMore && (
           <div className="md:hidden animate-in slide-in-from-top-2 fade-in duration-200 bg-background/50 border-t border-divider/20 mt-2 pt-2 flex items-center justify-between gap-2">
             <div className="flex items-center gap-1">
-              <button onClick={handleCopyLink} className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-text-secondary hover:text-primary transition-all cursor-pointer border-none bg-transparent">
-                {linkCopied ? <Check size={14} className="text-success" /> : <Link2 size={14} />}
-                <span>Link</span>
+              <button onClick={handleCopyLink} className="p-2.5 rounded-xl text-text-secondary hover:text-primary transition-all cursor-pointer border-none bg-transparent" title="Copy Link">
+                {linkCopied ? <Check size={18} className="text-success" /> : <Link2 size={18} />}
               </button>
               {QR_API_BASE && (
-                <button onClick={() => setShowQrModal(true)} className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-text-secondary hover:text-primary transition-all cursor-pointer border-none bg-transparent">
-                  <QrCode size={14} />
-                  <span>QR</span>
+                <button onClick={() => setShowQrModal(true)} className="p-2.5 rounded-xl text-text-secondary hover:text-primary transition-all cursor-pointer border-none bg-transparent" title="QR Code">
+                  <QrCode size={18} />
                 </button>
               )}
             </div>
-            <button onClick={() => setShowDeleteConfirm(true)} className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-error hover:bg-error/5 transition-all cursor-pointer border-none bg-transparent">
-              <Trash2 size={14} />
-              <span>Delete</span>
+            <button onClick={() => setShowDeleteConfirm(true)} className="p-2.5 rounded-xl text-error hover:bg-error/5 transition-all cursor-pointer border-none bg-transparent" title="Delete">
+              <Trash2 size={18} />
             </button>
           </div>
         )}
