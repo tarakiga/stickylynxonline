@@ -1,7 +1,7 @@
 "use client"
 import * as React from "react"
 import { useRouter } from "next/navigation"
-import { Eye, Edit2, Trash2, QrCode, Link2, Check, Download, X } from "lucide-react"
+import { Eye, Edit2, Trash2, QrCode, Link2, Check, Download, X, MoreHorizontal } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog"
 import { Badge } from "@/components/ui/Badge"
@@ -21,6 +21,7 @@ export function PageItemCard({ id, title, handle, category, imageUrl }: PageItem
   const [showQrModal, setShowQrModal] = React.useState(false);
   const [linkCopied, setLinkCopied] = React.useState(false);
   const [deleting, setDeleting] = React.useState(false);
+  const [showMobileMore, setShowMobileMore] = React.useState(false);
 
   const publicUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/${handle}`;
   const qrUrl = QR_API_BASE ? `${QR_API_BASE}/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(publicUrl)}` : "";
@@ -108,16 +109,26 @@ export function PageItemCard({ id, title, handle, category, imageUrl }: PageItem
           </div>
 
           {/* Mobile: compact row */}
-          <div className="flex sm:hidden items-center gap-0.5">
-            <button onClick={handlePreview} className="p-1.5 rounded-lg text-text-secondary hover:text-primary transition-colors cursor-pointer border-none bg-transparent"><Eye size={16} /></button>
-            <button onClick={handleEdit} className="p-1.5 rounded-lg text-text-secondary hover:text-primary transition-colors cursor-pointer border-none bg-transparent"><Edit2 size={16} /></button>
-            <button onClick={() => setShowDeleteConfirm(true)} className="p-1.5 rounded-lg text-text-secondary hover:text-error transition-colors cursor-pointer border-none bg-transparent"><Trash2 size={16} /></button>
-            <button onClick={handleCopyLink} className="p-1.5 rounded-lg text-text-secondary hover:text-primary transition-colors cursor-pointer border-none bg-transparent">
-              {linkCopied ? <Check size={16} className="text-success" /> : <Link2 size={16} />}
-            </button>
+          <div className="flex sm:hidden items-center gap-1">
+            <button onClick={handlePreview} className="p-1.5 rounded-lg text-text-secondary hover:text-primary transition-colors cursor-pointer border-none bg-transparent" title="Preview"><Eye size={14} /></button>
+            <button onClick={handleEdit} className="p-1.5 rounded-lg text-text-secondary hover:text-primary transition-colors cursor-pointer border-none bg-transparent" title="Edit"><Edit2 size={14} /></button>
+            <button onClick={() => setShowMobileMore(v => !v)} className="p-1.5 rounded-lg text-text-secondary hover:text-primary transition-colors cursor-pointer border-none bg-transparent" title="More"><MoreHorizontal size={14} /></button>
           </div>
         </div>
       </div>
+
+      {/* Mobile: expanded extra actions */}
+      {showMobileMore && (
+        <div className="sm:hidden mt-2 flex items-center justify-end gap-1">
+          <button onClick={() => setShowDeleteConfirm(true)} className="p-1.5 rounded-lg text-text-secondary hover:text-error transition-colors cursor-pointer border-none bg-transparent" title="Delete"><Trash2 size={14} /></button>
+          {QR_API_BASE && (
+            <button onClick={() => setShowQrModal(true)} className="p-1.5 rounded-lg text-text-secondary hover:text-primary transition-colors cursor-pointer border-none bg-transparent" title="QR Code"><QrCode size={14} /></button>
+          )}
+          <button onClick={handleCopyLink} className="p-1.5 rounded-lg text-text-secondary hover:text-primary transition-colors cursor-pointer border-none bg-transparent" title="Copy Link">
+            {linkCopied ? <Check size={14} className="text-success" /> : <Link2 size={14} />}
+          </button>
+        </div>
+      )}
 
       {/* Delete confirmation */}
       <ConfirmDialog
