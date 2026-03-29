@@ -3,14 +3,12 @@ import { LandingHero } from "@/components/landing/LandingHero";
 import { LandingStats } from "@/components/landing/LandingStats";
 import { LandingFeatures } from "@/components/landing/LandingFeatures";
 import { LandingShowcase } from "@/components/landing/LandingShowcase";
+import { LandingRequest } from "@/components/landing/LandingRequest";
 import { LandingPricing } from "@/components/landing/LandingPricing";
 import { LandingCTA } from "@/components/landing/LandingCTA";
 import { LandingFooter } from "@/components/landing/LandingFooter";
-import { auth } from "@clerk/nextjs/server";
 
-export default async function Home() {
-  const { userId } = await auth();
-  
+export default function Home() {
   return (
     <div className="min-h-screen bg-background selection:bg-primary/20 selection:text-primary overflow-x-hidden">
       <LandingNavbar />
@@ -25,6 +23,8 @@ export default async function Home() {
         <LandingPricing />
 
         <LandingShowcase />
+
+        <LandingRequest />
         
         <LandingCTA />
       </main>

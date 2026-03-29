@@ -8,6 +8,7 @@ import { StepProgress } from "@/components/ui/Progress";
 import { showToast } from "@/components/ui/Toast";
 
 import { createLynxPage } from "@/app/actions";
+import { PROPERTY_LISTING_CATEGORY } from "@/lib/property-listing";
 
 type CreateLynxDrawerProps = {
   planLabel: string
@@ -53,6 +54,7 @@ export function CreateLynxDrawer({
   const isEpk = categoryStr === "EPK";
   const isFoodMenu = categoryStr === "FOOD_MENU";
   const isMediaKit = categoryStr === "INFLUENCER_MEDIA_KIT";
+  const isPropertyListing = categoryStr === PROPERTY_LISTING_CATEGORY;
   const totalLimitReached = totalPages >= maxPages;
   const foodMenuLimitReached = isFoodMenu && maxFoodMenus !== null && foodMenus >= maxFoodMenus;
   const creationBlocked = totalLimitReached || foodMenuLimitReached;
@@ -78,7 +80,11 @@ export function CreateLynxDrawer({
         handle,
         category: categoryStr as string,
         clientEmail: isProjectPortal ? clientEmail : undefined,
-        config: isProjectPortal ? { clientName } : isEpk ? { artistName: title, genre: "" } : undefined
+        config: isProjectPortal
+          ? { clientName }
+          : isEpk
+          ? { artistName: title, genre: "" }
+          : undefined
       });
 
       if ("error" in result) {
@@ -94,8 +100,12 @@ export function CreateLynxDrawer({
           showToast("Portal created; email not sent (check SMTP config)", "warning");
         }
       }
-      router.replace(`/dashboard/editor/${result.pageId}`);
-      router.refresh();
+      const targetHref = `/dashboard/editor/${result.pageId}`;
+      if (typeof window !== "undefined") {
+        window.location.assign(targetHref);
+        return;
+      }
+      router.replace(targetHref);
     } catch {
       showToast("Failed to create Lynx", "error");
       setIsLoading(false);
@@ -169,7 +179,7 @@ export function CreateLynxDrawer({
                
                <Input 
                  labelInside="Lynx Title" 
-                 placeholder={isProjectPortal ? "e.g. Acme Corp Redesign" : "e.g. My Awesome Page"}
+                 placeholder={isProjectPortal ? "e.g. Acme Corp Redesign" : isPropertyListing ? "e.g. 4-Bed Waterfront Duplex" : "e.g. My Awesome Page"}
                  value={title}
                  onChange={(e) => setTitle(e.target.value)}
                  autoFocus
@@ -259,6 +269,13 @@ export function CreateLynxDrawer({
                    <div className="bg-primary/5 border border-primary/20 rounded-2xl p-5 text-text-primary text-sm flex gap-3 shadow-sm">
                      <Layers className="text-primary mt-1 shrink-0" size={18} />
                      <p>Your Food Menu will include <strong>brand header</strong>, <strong>service info</strong>, <strong>menu sections</strong>, and <strong>extras</strong>. You can add sections and items with size/option-based pricing in the editor.</p>
+                   </div>
+                 </>
+              ) : isPropertyListing ? (
+                 <>
+                   <div className="bg-primary/5 border border-primary/20 rounded-2xl p-5 text-text-primary text-sm flex gap-3 shadow-sm">
+                     <Layers className="text-primary mt-1 shrink-0" size={18} />
+                     <p>Your Property Listing will launch with a <strong>hero</strong>, <strong>gallery</strong>, <strong>overview</strong>, <strong>spec sheet</strong>, <strong>location</strong>, <strong>pricing</strong>, and <strong>agent contact</strong> structure already in place. Complete the listing details inside the editor for a consistent setup flow.</p>
                    </div>
                  </>
                ) : (

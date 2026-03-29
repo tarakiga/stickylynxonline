@@ -32,6 +32,8 @@ export function PageItemCard({ id, title, handle, category, imageUrl }: PageItem
       ? "primary"
       : category === "EPK"
       ? "info"
+      : category === "PROPERTY_LISTING"
+      ? "warning"
       : /MENU|FOOD/i.test(category || "")
       ? "success"
       : "neutral";

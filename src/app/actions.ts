@@ -8,6 +8,7 @@ import { EMAIL_COLORS } from "@/config/theme";
 import { getBaseUrl } from "@/lib/utils";
 import { ensureUserAccount, getPlanLimitError, getUserPlanSnapshot } from "@/lib/subscription";
 import { sendPlanNotification } from "@/lib/notifications";
+import { createDefaultPropertyListingBlocks } from "@/lib/property-listing";
 
 type CreateLynxPageError = {
   code: string
@@ -191,6 +192,37 @@ export async function createLynxPage(data: {
       ));
     }
 
+    if (category === "PROPERTY_LISTING") {
+      const cfg = data.config as Record<string, unknown> | undefined;
+      const propertyBlocks = createDefaultPropertyListingBlocks({
+        title: data.title,
+        handle: data.handle,
+        locationLabel: typeof cfg?.locationLabel === "string" ? cfg.locationLabel : undefined,
+        area: typeof cfg?.area === "string" ? cfg.area : undefined,
+        city: typeof cfg?.city === "string" ? cfg.city : undefined,
+        country: typeof cfg?.country === "string" ? cfg.country : undefined,
+        listingType: cfg?.listingType === "rent" ? "rent" : "sale",
+        price: typeof cfg?.price === "number" || typeof cfg?.price === "string" ? cfg.price : null,
+        currency: typeof cfg?.currency === "string" ? cfg.currency : undefined,
+        beds: typeof cfg?.beds === "number" || typeof cfg?.beds === "string" ? cfg.beds : null,
+        baths: typeof cfg?.baths === "number" || typeof cfg?.baths === "string" ? cfg.baths : null,
+        propertyType: typeof cfg?.propertyType === "string" ? cfg.propertyType as never : undefined,
+        agentName: typeof cfg?.agentName === "string" ? cfg.agentName : undefined,
+        agentEmail: typeof cfg?.agentEmail === "string" ? cfg.agentEmail : undefined,
+      })
+
+      await Promise.all(propertyBlocks.map((block) =>
+        tx.block.create({
+          data: {
+            pageId: page.id,
+            type: block.type as BlockType,
+            content: block.content,
+            order: block.order,
+          }
+        })
+      ))
+    }
+
     // Project Portal: generate client access + PIN (email sent after transaction)
     if (category === "PROJECT_PORTAL" && page.clientEmail) {
       const token = crypto.randomBytes(24).toString("hex");
@@ -218,6 +250,8 @@ export async function createLynxPage(data: {
   });
 
   revalidatePath("/dashboard");
+  revalidatePath(`/dashboard/editor/${newPage.id}`);
+  revalidatePath(`/${newPage.handle}`);
   let emailSent = false;
   if ((newPage.category as string) === "PROJECT_PORTAL" && newPage.clientEmail && inviteToken && invitePin) {
     const base = getBaseUrl();

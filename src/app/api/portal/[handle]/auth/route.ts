@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import crypto from "crypto";
+import { PageCategory } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
@@ -23,20 +24,17 @@ export async function GET(
   if (!page) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
-  if ((page.category as any) !== "PROJECT_PORTAL") {
+  if (page.category !== PageCategory.PROJECT_PORTAL) {
     return NextResponse.json({ error: "Not applicable" }, { status: 400 });
   }
 
-  const p: any = page as any;
   const now = new Date();
-  const revoked = !!p.clientAccessRevoked;
-  const expired = !!p.clientAccessExpiresAt && now > p.clientAccessExpiresAt;
 
   let ok = false;
   let val = "";
-  if (pin && p.clientPinEnabled && p.clientPinHash) {
+  if (pin && page.clientPinEnabled && page.clientPinHash) {
     const hash = sha256Hex(pin);
-    ok = hash === p.clientPinHash;
+    ok = hash === page.clientPinHash;
     val = hash;
   }
 
@@ -46,7 +44,7 @@ export async function GET(
 
   await prisma.page.update({
     where: { id: page.id },
-    data: { lastClientAccessAt: now } as any,
+    data: { lastClientAccessAt: now },
   });
 
   const res = NextResponse.redirect(new URL(`/${handle}`, request.url));

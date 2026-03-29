@@ -35,6 +35,7 @@ import { Accordion } from "@/components/ui/Accordion"
 import { Table } from "@/components/ui/Table"
 import { Tooltip } from "@/components/ui/Tooltip"
 import { Toaster, showToast } from "@/components/ui/Toast"
+import { PropertyAgentCard, PropertyMapCard, PropertyTemplatePreview } from "@/components/ui/PropertyListingKit"
 
 export default function DesignSystemPage() {
   return (
@@ -62,6 +63,12 @@ export default function DesignSystemPage() {
             handle="my-epk"
             category="EPK"
           />
+          <PageItemCard
+            id="demo-3"
+            title="waterfront-duplex"
+            handle="waterfront-duplex"
+            category="PROPERTY_LISTING"
+          />
         </div>
       </section>
 
@@ -80,6 +87,26 @@ export default function DesignSystemPage() {
                     title="Music & Audio" 
                     description="Electronic Press Kits (EPKs), release radar, and tour dates for audio professionals." 
                     imageUrl={DEMO_ASSETS_ALLOWED ? "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=400&q=80" : undefined} 
+                 />
+                 <CategoryCard
+                    title="Property Listing"
+                    description="High-conviction real estate listings with hero facts, location context, specs, and agent CTAs."
+                    preview={
+                      <PropertyTemplatePreview
+                        title="4-Bed Waterfront Duplex"
+                        status="for_sale"
+                        propertyType="duplex"
+                        price={1250000}
+                        currency="USD"
+                        pricing={{ listingType: "sale", period: "one_time" }}
+                        beds={4}
+                        baths={4}
+                        areaSqm={320}
+                        locationLabel="Banana Island, Lagos"
+                        highlights={["Private dock", "Cinema room", "Pool deck"]}
+                        embedded
+                      />
+                    }
                  />
               </div>
            </div>
@@ -106,6 +133,30 @@ export default function DesignSystemPage() {
       <section>
         <h2 className="text-xl font-bold border-b border-divider pb-2 mb-6">Modals & Dialogs</h2>
         <ModalShowcase />
+      </section>
+
+      <section>
+        <h2 className="text-xl font-bold border-b border-divider pb-2 mb-6">Property Listing Kit</h2>
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+          <PropertyMapCard
+            area="Lekki Phase 1"
+            city="Lagos"
+            country="Nigeria"
+            addressLine1="Freedom Way"
+            nearbyPlaces={["Nexus Mall", "British International School", "Admiralty Way"]}
+          />
+          <PropertyAgentCard
+            agentName="Amaka Johnson"
+            role="Senior Property Consultant"
+            agencyName="Signature Estates"
+            bio="Drives premium residential sales with a focus on fast response times, polished presentation, and inspection-ready listings."
+            contacts={[
+              { id: "phone", type: "phone", label: "Call Agent", value: "+2348000000000" },
+              { id: "email", type: "email", label: "Email Agent", value: "amaka@signatureestates.com" },
+              { id: "site", type: "website", label: "Agency Website", value: "signatureestates.com" },
+            ]}
+          />
+        </div>
       </section>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">

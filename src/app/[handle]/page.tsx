@@ -5,6 +5,7 @@ import { ProjectPortalPublic } from "@/components/public/ProjectPortalPublic";
 import { EpkPublic } from "@/components/public/EpkPublic";
 import { MediaKitPublic } from "@/components/public/MediaKitPublic";
 import { FoodMenuPublic } from "@/components/public/FoodMenuPublic";
+import { PropertyListingPublic } from "@/components/public/PropertyListingPublic";
 import { PortalDeny } from "@/components/public/PortalDeny";
 import { cookies } from "next/headers";
 import { auth } from "@clerk/nextjs/server";
@@ -37,7 +38,8 @@ export default async function PublicPage({ params }: { params: Promise<{ handle:
     }
   }
 
-  const brandProfile = normalizeBrandProfile(page.user?.brandProfile, page.user?.name || page.user?.email || page.title || page.handle)
+  const brandProfileSource = page.user as ({ brandProfile?: unknown; name?: string | null; email?: string | null } | null)
+  const brandProfile = normalizeBrandProfile(brandProfileSource?.brandProfile, page.user?.name || page.user?.email || page.title || page.handle)
   const brandStyle = getBrandCssVariables(brandProfile)
 
   return (
@@ -50,6 +52,8 @@ export default async function PublicPage({ params }: { params: Promise<{ handle:
            <MediaKitPublic page={page} />
        ) : (page.category as string) === "FOOD_MENU" ? (
            <FoodMenuPublic page={page} />
+       ) : (page.category as string) === "PROPERTY_LISTING" ? (
+           <PropertyListingPublic page={page} />
        ) : (
            <div className="p-10 flex flex-col items-center justify-center min-h-screen text-center">
               <h1 className="text-4xl font-bold mb-4">{page.title || page.handle}</h1>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@clerk/nextjs/server"
 import prisma from "@/lib/prisma"
+import { Prisma } from "@prisma/client"
 import { getFeatureAccessError, getUserPlanSnapshot } from "@/lib/subscription"
 import { normalizeBrandProfile } from "@/lib/branding"
 
@@ -31,7 +32,7 @@ export async function POST(request: NextRequest) {
     where: { id: userId },
     data: {
       brandProfile: profile,
-    },
+    } as Prisma.UserUpdateInput,
   })
 
   return NextResponse.json({ success: true, brandProfile: profile })

@@ -8,6 +8,7 @@ import { ProjectPortalEditor } from "@/components/editor/ProjectPortalEditor";
 import { EpkEditor } from "@/components/editor/EpkEditor";
 import { MediaKitEditor } from "@/components/editor/MediaKitEditor";
 import { FoodMenuEditor } from "@/components/editor/FoodMenuEditor";
+import { PropertyListingEditor } from "@/components/editor/PropertyListingEditor";
 import { hasFeature } from "@/lib/plan-rules";
 import { getUserPlanSnapshot } from "@/lib/subscription";
 
@@ -68,6 +69,8 @@ export default async function EditorPage({ params }: { params: Promise<{ id: str
                canUseAdvancedFoodMenu={hasFeature(planSnapshot.plan, "ADVANCED_FOOD_MENU")}
                canUseCustomBranding={hasFeature(planSnapshot.plan, "CUSTOM_BRANDING")}
              />
+         ) : (page.category as string) === "PROPERTY_LISTING" ? (
+             <PropertyListingEditor page={page} defaultCurrency={defaultCurrency} />
          ) : (
              <div className="w-full max-w-5xl mx-auto bg-surface border border-divider p-8 rounded-3xl flex items-center justify-center text-text-secondary shadow-sm min-h-[400px]">
                 <div className="text-center">

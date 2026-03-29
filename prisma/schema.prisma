@@ -107,6 +107,7 @@ enum PageCategory {
   GENERIC
   PROJECT_PORTAL
   INFLUENCER_MEDIA_KIT
+  PROPERTY_LISTING
 }
 
 model Block {

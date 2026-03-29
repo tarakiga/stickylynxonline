@@ -3,6 +3,7 @@ import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { X } from "lucide-react";
 import { CategoryCard } from "@/components/ui/CategoryCard";
+import { PROPERTY_LISTING_CATEGORY } from "@/lib/property-listing";
 
 type CreateLynxModalProps = {
   planLabel: string
@@ -30,11 +31,11 @@ export function CreateLynxModal({
   const close = () => router.push("/dashboard");
 
   const categories = [
-    { title: "Project Portal", description: totalLimitReached ? `${planLabel} includes up to ${maxPages} Lynx.` : "Progress and feedback hub for your clients.", type: "PROJECT_PORTAL", enabled: !totalLimitReached },
+    { title: "Project Portal", description: totalLimitReached ? `${planLabel} includes up to ${maxPages} Lynx.` : "Clear project status, tasks, updates, and feedback.", type: "PROJECT_PORTAL", enabled: !totalLimitReached },
     { title: "EPK", description: totalLimitReached ? `${planLabel} includes up to ${maxPages} Lynx.` : "Electronic Press Kit for artists and musicians.", type: "EPK", enabled: !totalLimitReached },
     { title: "Food Menu", description: totalLimitReached ? `${planLabel} includes up to ${maxPages} Lynx.` : foodMenuLimitReached ? `${planLabel} includes ${maxFoodMenus} Food Menu${maxFoodMenus === 1 ? "" : "s"}.` : "Mobile-first digital menu with sections, variations, and multi-location support.", type: "FOOD_MENU", enabled: !totalLimitReached && !foodMenuLimitReached },
     { title: "Influencer Media Kit", description: totalLimitReached ? `${planLabel} includes up to ${maxPages} Lynx.` : "Live media kit for creators to pitch brands and agencies.", type: "INFLUENCER_MEDIA_KIT", enabled: !totalLimitReached },
-    { title: "Generic", description: "A simple link-in-bio page for creators.", type: "GENERIC", enabled: false },
+    { title: "Property Listing", description: totalLimitReached ? `${planLabel} includes up to ${maxPages} Lynx.` : "Premium real estate pages with gallery, specs, pricing, and agent contact built in.", type: PROPERTY_LISTING_CATEGORY, enabled: !totalLimitReached },
   ];
 
   return (
@@ -66,9 +67,7 @@ export function CreateLynxModal({
                {!cat.enabled && (
                  <div className="absolute inset-0 bg-surface/70 backdrop-blur-[1px] rounded-2xl flex items-center justify-center cursor-not-allowed">
                    <span className="bg-divider text-text-secondary text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest">
-                     {cat.type === "GENERIC"
-                       ? "Coming Soon"
-                       : totalLimitReached
+                     {totalLimitReached
                        ? `${maxPages}/${maxPages} Lynx Used`
                        : cat.type === "FOOD_MENU" && maxFoodMenus !== null
                        ? `${foodMenus}/${maxFoodMenus} Menus Used`

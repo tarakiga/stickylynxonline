@@ -1,7 +1,8 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
-import { Prisma } from "@prisma/client";
+import { BlockType, Prisma } from "@prisma/client";
 import { getUserPlanSnapshot, getFeatureAccessError } from "@/lib/subscription";
 import { getFoodMenuFeatureViolations } from "@/lib/food-menu-entitlements";
 
@@ -44,25 +45,31 @@ export async function PUT(
     }
   }
 
-  // Transaction: optional page update, delete old blocks, insert new ones
-  const tx: Prisma.PrismaPromise<unknown>[] = [];
-  if (typeof clientEmail === "string") {
-    tx.push(prisma.page.update({ where: { id }, data: { clientEmail } }));
-  }
-  tx.push(prisma.block.deleteMany({ where: { pageId: id } }));
-  blocks.forEach((block, index) => {
-    tx.push(
-      prisma.block.create({
-        data: {
-          pageId: id,
-          type: block.type as never,
-          content: block.content as never,
-          order: block.order ?? index,
-        },
-      })
-    );
-  });
-  await prisma.$transaction(tx);
+  await prisma.$transaction(
+    async (tx) => {
+      if (typeof clientEmail === "string") {
+        await tx.page.update({ where: { id }, data: { clientEmail } });
+      }
+
+      await tx.block.deleteMany({ where: { pageId: id } });
+
+      if (blocks.length > 0) {
+        await tx.block.createMany({
+          data: blocks.map((block, index) => ({
+            pageId: id,
+            type: block.type as BlockType,
+            content: block.content as Prisma.InputJsonValue,
+            order: block.order ?? index,
+          })),
+        });
+      }
+    },
+    { timeout: 30000 }
+  );
+
+  revalidatePath(`/dashboard/editor/${id}`);
+  revalidatePath("/dashboard");
+  revalidatePath(`/${page.handle}`);
 
   return NextResponse.json({ success: true });
 }

@@ -7,9 +7,11 @@ export interface CategoryCardProps {
   imageUrl?: string;
   layout?: "grid" | "list";
   onClick?: () => void;
+  preview?: React.ReactNode;
+  footer?: React.ReactNode;
 }
 
-export function CategoryCard({ title, description, imageUrl, layout = "grid", onClick }: CategoryCardProps) {
+export function CategoryCard({ title, description, imageUrl, layout = "grid", onClick, preview, footer }: CategoryCardProps) {
   if (layout === "list") {
     return (
       <div 
@@ -46,19 +48,27 @@ export function CategoryCard({ title, description, imageUrl, layout = "grid", on
       )}
     >
       <div className="aspect-[4/3] sm:aspect-video w-full bg-divider relative overflow-hidden">
-        {imageUrl ? (
-          <img src={imageUrl} alt={title} className="w-full h-full object-cover filter group-hover:scale-105 transition-transform duration-500" />
+        {preview ? (
+          <div className="h-full w-full bg-[radial-gradient(circle_at_top_right,rgba(109,40,217,0.08),transparent_35%),linear-gradient(180deg,rgba(249,250,251,0.98),rgba(243,244,246,0.96))] p-3 sm:p-4">
+            <div className="pointer-events-none h-full w-full">{preview}</div>
+          </div>
         ) : (
-          <div className="w-full h-full bg-primary/5 flex items-center justify-center font-bold text-primary text-3xl">
-             {title.substring(0, 2).toUpperCase()}
+          <div className="h-full w-full bg-divider relative overflow-hidden">
+            {imageUrl ? (
+              <img src={imageUrl} alt={title} className="w-full h-full object-cover filter group-hover:scale-105 transition-transform duration-500" />
+            ) : (
+              <div className="w-full h-full bg-primary/5 flex items-center justify-center font-bold text-primary text-3xl">
+                 {title.substring(0, 2).toUpperCase()}
+              </div>
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
           </div>
         )}
-        {/* Subtle gradient overlay to premiumize the image */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
       </div>
       <div className="p-5 flex-1 flex flex-col bg-surface z-10 relative">
         <h3 className="font-bold text-text-primary text-lg truncate group-hover:text-primary transition-colors">{title}</h3>
         <p className="text-sm text-text-secondary mt-2 line-clamp-2 flex-1">{description}</p>
+        {footer ? <div className="mt-4">{footer}</div> : null}
       </div>
     </div>
   )
