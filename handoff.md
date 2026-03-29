@@ -67,6 +67,70 @@
 - **StepProgress** now interactive: clickable stages with badge counts for pending items, `pb-10` fixes label clipping.
 - **DraggableList** fully controlled (no internal state) — fixes React setState-during-render error.
 
+### Property Listing Category
+- **New category constant + helpers** live in `src/lib/property-listing.ts`.
+- **Editor**: `src/components/editor/PropertyListingEditor.tsx` — multi-section property editor for hero, gallery, overview, specs, location, pricing, documents, and agent details.
+- **Public page**: `src/components/public/PropertyListingPublic.tsx` with gallery support from `src/components/public/PropertyGalleryCarousel.tsx`.
+- **Shared UI preview kit**: `src/components/ui/PropertyListingKit.tsx`.
+- **Creation flow**: `createLynxPage` seeds default property blocks through `createDefaultPropertyListingBlocks(...)`.
+- **Routing**:
+  - editor route wiring lives in `src/app/dashboard/editor/[id]/page.tsx`
+  - public route wiring lives in `src/app/[handle]/page.tsx`
+  - create modal card is registered in `src/components/dashboard/CreateLynxModal.tsx`
+- **Payload handling**: `next.config.ts` now sets `experimental.proxyClientMaxBodySize = "50mb"` so large editor saves can complete.
+- **Upload protection**: property editor compresses uploaded images aggressively, caps document uploads, and blocks oversized save payloads before they hit the API.
+
+### Home Page Custom Request Flow
+- Added `LandingRequest` (`src/components/landing/LandingRequest.tsx`) directly after the premium template gallery on the home page.
+- Added `POST /api/lynx-request` (`src/app/api/lynx-request/route.ts`) to send custom Lynx requests to `request@stickylynx.online`.
+- The request form now includes:
+  - inline field validation
+  - success state after submission
+  - toast feedback for server and network failures
+- This flow is intended for visitors who cannot find a suitable category/template in the current library.
+
+### Category Creation Procedure
+- When adding a new category, follow this sequence so the feature is complete end-to-end:
+  1. Add the category to Prisma / enum definitions if required.
+  2. Create a shared helper module for the category’s constants, block defaults, and parsing utilities if the category has bespoke structure.
+  3. Seed default blocks in `src/app/actions.ts` inside `createLynxPage(...)`.
+  4. Register the category card in `src/components/dashboard/CreateLynxModal.tsx`.
+  5. Add drawer-specific setup fields in `src/components/dashboard/CreateLynxDrawer.tsx` if the category needs startup config.
+  6. Wire the editor renderer in `src/app/dashboard/editor/[id]/page.tsx`.
+  7. Wire the public renderer in `src/app/[handle]/page.tsx`.
+  8. Add any category-specific API validation or entitlement rules.
+  9. Run targeted lint, typecheck, and `next build`.
+- Property Listing is the latest reference implementation for a full custom category.
+
+### Consistent Card System
+- Category selection in the create modal now relies on the shared `CategoryCard` component (`src/components/ui/CategoryCard.tsx`) instead of one-off card markup.
+- `CategoryCard` supports both `grid` and `list` layouts plus optional `preview` and `footer` slots.
+- Use `CategoryCard` for future category/gallery selectors so hover states, spacing, borders, previews, and typography remain consistent across the product.
+- Keep category metadata in a single `categories` array where possible, then map over it to render cards uniformly.
+
+### Project Portal Invite Delivery Feedback
+- `createLynxPage(...)` now returns `{ pageId, emailSent }`.
+- Project Portal creation sends the invite after the transaction and reports whether email delivery succeeded.
+- `CreateLynxDrawer.tsx` now shows:
+  - success toast when the invitation email is sent
+  - warning toast when the portal is created but SMTP delivery fails
+- After creation, the drawer redirects straight to `/dashboard/editor/[id]`.
+
+### Email Delivery Notes
+- Shared SMTP transport lives in `src/lib/email.ts`.
+- Delivery uses environment variables, not hardcoded runtime values:
+  - `EMAIL_SERVER_HOST`
+  - `EMAIL_SERVER_PORT`
+  - `EMAIL_SERVER_USER`
+  - `EMAIL_SERVER_PASSWORD`
+  - `EMAIL_FROM`
+  - `APP_NAME`
+- `sendPlanNotification(...)` in `src/lib/notifications.ts` wraps `sendEmail(...)`, adds quota tracking, and is used by invite/request/update flows.
+- `GET /api/email/verify` verifies SMTP transport connectivity using the same env-based transport config.
+- The home-page request route uses `sendEmail(...)` directly, while plan-governed flows such as project portal invites and media kit requests use `sendPlanNotification(...)`.
+- If delivery fails while routes still return correctly, check runtime/deployment env values first before changing code.
+- Avoid committing live email secrets to version control. Keep real credentials in local `.env` / deployment secrets.
+
 ## Next Steps
 - Connect Stage Reviews + Comments to Prisma persistence (currently client-side state).
 - Address Analytics and Paystack Monetization.
@@ -76,3 +140,30 @@
 - Design System tokens must be used for all styling (no hardcoded Hex colors).
 - Typescript strict checks. 
 - Use Server components to conditionally check logic with hooks like `await auth()`.
+- Prefer shared card primitives like `CategoryCard` for category selection and gallery-like layouts instead of duplicating card markup.
+- For email features, use the shared env-driven transport in `src/lib/email.ts` or the quota-aware wrapper in `src/lib/notifications.ts`.
+
+## ENV
+DATABASE_URL="postgresql://neondb_owner:npg_AjXtNOQ3R8Fe@ep-blue-tooth-an9rtuhu-pooler.c-6.us-east-1.aws.neon.tech/neondb?sslmode=require"
+DIRECT_URL="postgresql://neondb_owner:npg_AjXtNOQ3R8Fe@ep-blue-tooth-an9rtuhu-pooler.c-6.us-east-1.aws.neon.tech/neondb?sslmode=require"
+
+## Email Settings
+EMAIL_SERVER_HOST="smtp.titan.email"
+EMAIL_SERVER_PORT="465"
+EMAIL_SERVER_USER="notifications@stickylynx.online"
+EMAIL_SERVER_PASSWORD="Galvatron101!"
+EMAIL_FROM="notifications@stickylynx.online"
+
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_cmljaC1kaW5nby0xMi5jbGVyay5hY2NvdW50cy5kZXYk
+CLERK_SECRET_KEY=sk_test_GSvmvojRojCMB7FoFisqOJncdCh8NLPpcKJxb2EEKR
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=/login
+NEXT_PUBLIC_CLERK_SIGN_UP_URL=/register
+NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/dashboard
+NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/dashboard
+
+NEXT_PUBLIC_APP_URL= https://stickylynx.online
+NEXT_PUBLIC_NOMINATIM_URL= https://nominatim.openstreetmap.org
+NEXT_PUBLIC_QR_API_URL= https://api.qrserver.com
+NEXT_PUBLIC_ALLOW_DEMO_ASSETS=true
+NEXT_PUBLIC_SHOW_INVOICING=false
+NEXT_PUBLIC_SHOW_WAITLIST=false

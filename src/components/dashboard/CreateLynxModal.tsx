@@ -31,11 +31,11 @@ export function CreateLynxModal({
   const close = () => router.push("/dashboard");
 
   const categories = [
-    { title: "Project Portal", description: totalLimitReached ? `${planLabel} includes up to ${maxPages} Lynx.` : "Clear project status, tasks, updates, and feedback.", type: "PROJECT_PORTAL", enabled: !totalLimitReached },
-    { title: "EPK", description: totalLimitReached ? `${planLabel} includes up to ${maxPages} Lynx.` : "Electronic Press Kit for artists and musicians.", type: "EPK", enabled: !totalLimitReached },
-    { title: "Food Menu", description: totalLimitReached ? `${planLabel} includes up to ${maxPages} Lynx.` : foodMenuLimitReached ? `${planLabel} includes ${maxFoodMenus} Food Menu${maxFoodMenus === 1 ? "" : "s"}.` : "Mobile-first digital menu with sections, variations, and multi-location support.", type: "FOOD_MENU", enabled: !totalLimitReached && !foodMenuLimitReached },
-    { title: "Influencer Media Kit", description: totalLimitReached ? `${planLabel} includes up to ${maxPages} Lynx.` : "Live media kit for creators to pitch brands and agencies.", type: "INFLUENCER_MEDIA_KIT", enabled: !totalLimitReached },
-    { title: "Property Listing", description: totalLimitReached ? `${planLabel} includes up to ${maxPages} Lynx.` : "Premium real estate pages with gallery, specs, pricing, and agent contact built in.", type: PROPERTY_LISTING_CATEGORY, enabled: !totalLimitReached },
+    { title: "Project Portal", description: totalLimitReached ? `${planLabel} includes up to ${maxPages} Lynx.` : "Clear project status, tasks, updates, and feedback.", imageUrl: "/categories/project-portal.jpg", type: "PROJECT_PORTAL", enabled: !totalLimitReached },
+    { title: "EPK", description: totalLimitReached ? `${planLabel} includes up to ${maxPages} Lynx.` : "Electronic Press Kit for artists and musicians.", imageUrl: "/categories/epk.jpg", type: "EPK", enabled: !totalLimitReached },
+    { title: "Food Menu", description: totalLimitReached ? `${planLabel} includes up to ${maxPages} Lynx.` : foodMenuLimitReached ? `${planLabel} includes ${maxFoodMenus} Food Menu${maxFoodMenus === 1 ? "" : "s"}.` : "Mobile-first digital menu with sections, variations, and multi-location support.", imageUrl: "/categories/food-menu.jpg", type: "FOOD_MENU", enabled: !totalLimitReached && !foodMenuLimitReached },
+    { title: "Influencer Media Kit", description: totalLimitReached ? `${planLabel} includes up to ${maxPages} Lynx.` : "Live media kit for creators to pitch brands and agencies.", imageUrl: "/categories/influencer.jpg", type: "INFLUENCER_MEDIA_KIT", enabled: !totalLimitReached },
+    { title: "Property Listing", description: totalLimitReached ? `${planLabel} includes up to ${maxPages} Lynx.` : "Premium real estate pages with gallery, specs, pricing, and agent contact built in.", imageUrl: "/categories/property-listing.jpg", type: PROPERTY_LISTING_CATEGORY, enabled: !totalLimitReached },
   ];
 
   return (
@@ -61,6 +61,7 @@ export function CreateLynxModal({
                <CategoryCard 
                   title={cat.title} 
                   description={cat.enabled ? cat.description : "Coming Soon"} 
+                  imageUrl={cat.imageUrl}
                   layout="grid"
                   onClick={cat.enabled ? () => router.push(`/dashboard?drawer=${cat.type}`) : undefined}
                />
