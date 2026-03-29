@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button"
 import { Input } from "@/components/ui/Input"
 import { Select } from "@/components/ui/Select"
 import { Textarea } from "@/components/ui/Textarea"
+import { showToast } from "@/components/ui/Toast"
 
 type RequestField = "name" | "email" | "requestType" | "summary"
 
@@ -71,11 +72,17 @@ export function LandingRequest() {
           }
         }
         setErrors(nextErrors)
+        if (Object.keys(nextErrors).length === 0) {
+          showToast(data?.error || "We could not send your request right now. Please try again shortly.", "error")
+        }
         return
       }
 
       setSent(true)
       setForm(initialForm)
+      showToast("Your request has been sent successfully.", "success")
+    } catch {
+      showToast("We could not reach the request service. Please try again shortly.", "error")
     } finally {
       setSending(false)
     }
