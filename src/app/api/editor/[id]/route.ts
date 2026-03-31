@@ -5,6 +5,7 @@ import prisma from "@/lib/prisma";
 import { BlockType, Prisma } from "@prisma/client";
 import { getUserPlanSnapshot, getFeatureAccessError } from "@/lib/subscription";
 import { getFoodMenuFeatureViolations } from "@/lib/food-menu-entitlements";
+import { normalizeDataUrlsToCloudinary } from "@/lib/cloudinary";
 
 export const dynamic = "force-dynamic";
 
@@ -45,6 +46,17 @@ export async function PUT(
     }
   }
 
+  const normalizedBlocks = await Promise.all(
+    blocks.map(async (block) => ({
+      ...block,
+      content: await normalizeDataUrlsToCloudinary(block.content, {
+        userId,
+        pageId: id,
+        scope: "editor",
+      }),
+    }))
+  )
+
   await prisma.$transaction(
     async (tx) => {
       if (typeof clientEmail === "string") {
@@ -53,9 +65,9 @@ export async function PUT(
 
       await tx.block.deleteMany({ where: { pageId: id } });
 
-      if (blocks.length > 0) {
+      if (normalizedBlocks.length > 0) {
         await tx.block.createMany({
-          data: blocks.map((block, index) => ({
+          data: normalizedBlocks.map((block, index) => ({
             pageId: id,
             type: block.type as BlockType,
             content: block.content as Prisma.InputJsonValue,

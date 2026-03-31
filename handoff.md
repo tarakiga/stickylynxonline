@@ -131,6 +131,41 @@
 - If delivery fails while routes still return correctly, check runtime/deployment env values first before changing code.
 - Avoid committing live email secrets to version control. Keep real credentials in local `.env` / deployment secrets.
 
+### Cloudinary Upload Migration
+- Shared upload constraints live in `src/lib/upload-config.ts`.
+- Shared Cloudinary helpers live in `src/lib/cloudinary.ts`.
+- Client-side upload helper lives in `src/lib/upload-client.ts`.
+- Authenticated upload endpoint lives in `src/app/api/uploads/route.ts`.
+- Current upload policy:
+  - images are uploaded to Cloudinary image assets
+  - PDFs/docs/spreadsheets/presentations/text files are uploaded as Cloudinary raw assets
+  - audio files are uploaded through Cloudinary video resource handling
+- Uploads are overwrite-safe:
+  - every asset uses a generated folder + UUID-based `public_id`
+  - `overwrite=false`
+  - `unique_filename=false` because uniqueness is enforced by the generated ID instead
+- Current size limits:
+  - images: 10MB
+  - documents: 10MB
+  - audio: 20MB
+- Allowed mime families are enforced centrally before upload.
+- Editors and flows now storing hosted asset URLs instead of base64/data URLs include:
+  - `EpkEditor.tsx`
+  - `PropertyListingEditor.tsx`
+  - `FoodMenuEditor.tsx`
+  - `MediaKitEditor.tsx`
+  - `BrandingWorkspace.tsx`
+  - `ProjectPortalEditor.tsx`
+- Server-side normalization also protects persisted content:
+  - `PUT /api/editor/[id]` converts any remaining data URLs in block JSON to Cloudinary URLs before saving
+  - `POST /api/user/settings/branding` converts branding data URLs before persisting
+  - `POST /api/tasks/[handle]/submit` converts task submission payloads before saving
+- Existing DB migration script:
+  - `scripts/migrate-cloudinary-assets.cjs`
+  - run without flags for dry-run scanning only
+  - run with `--write` to upload matching data URLs to Cloudinary and replace stored DB values
+- Operational note: Cloudinary credentials should live in `.env` / deployment secrets, not in tracked markdown handoff files.
+
 ## Next Steps
 - Connect Stage Reviews + Comments to Prisma persistence (currently client-side state).
 - Address Analytics and Paystack Monetization.
@@ -142,6 +177,7 @@
 - Use Server components to conditionally check logic with hooks like `await auth()`.
 - Prefer shared card primitives like `CategoryCard` for category selection and gallery-like layouts instead of duplicating card markup.
 - For email features, use the shared env-driven transport in `src/lib/email.ts` or the quota-aware wrapper in `src/lib/notifications.ts`.
+- For uploads, store hosted Cloudinary URLs in Prisma JSON instead of base64/data URLs.
 
 ## ENV
 DATABASE_URL="postgresql://neondb_owner:npg_AjXtNOQ3R8Fe@ep-blue-tooth-an9rtuhu-pooler.c-6.us-east-1.aws.neon.tech/neondb?sslmode=require"
@@ -167,3 +203,9 @@ NEXT_PUBLIC_QR_API_URL= https://api.qrserver.com
 NEXT_PUBLIC_ALLOW_DEMO_ASSETS=true
 NEXT_PUBLIC_SHOW_INVOICING=false
 NEXT_PUBLIC_SHOW_WAITLIST=false
+
+
+## Cloudinary Settings
+CLOUDINARY_CLOUD_NAME=dqyiibusv
+CLOUDINARY_API_KEY=465318646822376
+CLOUDINARY_API_SECRET=gRhW-Jwm3DwZhWT3pO1PomvivLQ

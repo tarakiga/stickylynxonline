@@ -10,6 +10,7 @@ import { Dropzone } from "@/components/ui/Dropzone";
 import { IconButton } from "@/components/ui/IconButton";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Modal } from "@/components/ui/Modal";
+import { uploadAssetFile } from "@/lib/upload-client";
 import type { EpkHero, StreamingLink, StreamingPlatform, EpkTrack, EpkVideo, EpkGalleryImage, EpkBio, EpkContact, PressFeature, Highlight, TourEvent, TourEventStatus } from "@/types/epk";
 import { STREAMING_PLATFORMS, SOCIAL_PLATFORMS, TOUR_STATUS_META } from "@/types/epk";
 import {
@@ -20,14 +21,6 @@ import {
 
 let _seq = 0;
 function uid() { return `epk-${Date.now()}-${++_seq}`; }
-
-async function fileToDataUrl(file: File): Promise<string> {
-  return new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.readAsDataURL(file);
-  });
-}
 
 export function EpkEditor({ page }: { page: any }) {
   const blocks = page.blocks || [];
@@ -148,6 +141,17 @@ export function EpkEditor({ page }: { page: any }) {
     setDeleteTarget(null); markDirty();
   }
 
+  const actionButtons = (
+    <>
+      <Button variant="secondary" onClick={() => window.open(`/${page.handle}`, "_blank")} className="py-2 px-4 shadow-sm text-xs rounded-xl cursor-pointer whitespace-nowrap">
+        <Eye size={14} className="mr-1.5" /> Preview
+      </Button>
+      <Button variant="primary" onClick={handleSave} disabled={saving || !dirty} className="py-2 px-5 shadow-sm text-sm rounded-xl cursor-pointer border-none text-white whitespace-nowrap">
+        {saving ? <><Loader2 size={14} className="mr-1.5 animate-spin" /> Saving…</> : <><Save size={14} className="mr-1.5" /> Save Changes</>}
+      </Button>
+    </>
+  );
+
   function addLink() {
     if (!newLinkUrl.trim()) return;
     const meta = STREAMING_PLATFORMS.find((p) => p.value === newLinkPlatform);
@@ -177,10 +181,10 @@ export function EpkEditor({ page }: { page: any }) {
       }
       URL.revokeObjectURL(objUrl);
     } catch {}
-    const dataUrl = await fileToDataUrl(file);
+    const uploaded = await uploadAssetFile(file, { kind: "audio", pageId: page.id });
     setNewTrackTitle(title);
     setNewTrackDuration(duration);
-    setNewTrackUrl(dataUrl);
+    setNewTrackUrl(uploaded.secureUrl);
     setShowAddTrack(true);
     setTrackUploading(false);
   }
@@ -201,8 +205,8 @@ export function EpkEditor({ page }: { page: any }) {
         }
         URL.revokeObjectURL(objUrl);
       } catch {}
-      const dataUrl = await fileToDataUrl(file);
-      setTracks((p) => [...p, { id: uid(), title, duration, url: dataUrl, coverArt: "" }]);
+      const uploaded = await uploadAssetFile(file, { kind: "audio", pageId: page.id });
+      setTracks((p) => [...p, { id: uid(), title, duration, url: uploaded.secureUrl, coverArt: "" }]);
     }
     markDirty();
   }
@@ -215,8 +219,8 @@ export function EpkEditor({ page }: { page: any }) {
 
   async function addGalleryImages(files: File[]) {
     for (const file of files) {
-      const src = await fileToDataUrl(file);
-      setGallery((p) => [...p, { id: uid(), src, caption: file.name }]);
+      const uploaded = await uploadAssetFile(file, { kind: "image", pageId: page.id });
+      setGallery((p) => [...p, { id: uid(), src: uploaded.secureUrl, caption: file.name }]);
     }
     markDirty();
   }
@@ -248,13 +252,8 @@ export function EpkEditor({ page }: { page: any }) {
           {lastSaved && <span className="text-text-secondary font-normal">· Saved at {lastSaved}</span>}
           {dirty && !saving && <span className="text-warning font-normal">· Unsaved changes</span>}
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="secondary" onClick={() => window.open(`/${page.handle}`, "_blank")} className="py-2 px-4 shadow-sm text-xs rounded-xl cursor-pointer whitespace-nowrap">
-            <Eye size={14} className="mr-1.5" /> Preview
-          </Button>
-          <Button variant="primary" onClick={handleSave} disabled={saving || !dirty} className="py-2 px-5 shadow-sm text-sm rounded-xl cursor-pointer border-none text-white whitespace-nowrap">
-            {saving ? <><Loader2 size={14} className="mr-1.5 animate-spin" /> Saving…</> : <><Save size={14} className="mr-1.5" /> Save Changes</>}
-          </Button>
+        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:flex-nowrap">
+          {actionButtons}
         </div>
       </div>
 
@@ -269,8 +268,8 @@ export function EpkEditor({ page }: { page: any }) {
           </div>
           <Input labelInside="Tagline" placeholder="A one-liner that defines your sound" value={hero.tagline} onChange={(e) => { setHero((h) => ({ ...h, tagline: e.target.value })); markDirty(); }} />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Dropzone label="Profile Photo" hint="Square image, min 400×400" accept="image/*" onChange={async (f) => { const d = await fileToDataUrl(f); setHero((h) => ({ ...h, profileImage: d })); markDirty(); }} />
-            <Dropzone label="Cover / Banner Image" hint="Landscape, min 1200×400" accept="image/*" onChange={async (f) => { const d = await fileToDataUrl(f); setHero((h) => ({ ...h, coverImage: d })); markDirty(); }} />
+            <Dropzone label="Profile Photo" hint="Square image, min 400×400" accept="image/*" onChange={async (f) => { const uploaded = await uploadAssetFile(f, { kind: "image", pageId: page.id }); setHero((h) => ({ ...h, profileImage: uploaded.secureUrl })); markDirty(); }} />
+            <Dropzone label="Cover / Banner Image" hint="Landscape, min 1200×400" accept="image/*" onChange={async (f) => { const uploaded = await uploadAssetFile(f, { kind: "image", pageId: page.id }); setHero((h) => ({ ...h, coverImage: uploaded.secureUrl })); markDirty(); }} />
           </div>
           {(hero.profileImage || hero.coverImage) && (
             <div className="flex gap-3 flex-wrap">
@@ -391,7 +390,7 @@ export function EpkEditor({ page }: { page: any }) {
             ))}
           </div>
         )}
-        <Dropzone hint="Add more press photos — select multiple or drag & drop" accept="image/*" multiple onMultiple={async (files) => { for (const f of files) { const src = await fileToDataUrl(f); setGallery((p) => [...p, { id: uid(), src, caption: f.name }]); } markDirty(); }} />
+        <Dropzone hint="Add more press photos — select multiple or drag & drop" accept="image/*" multiple onMultiple={async (files) => { for (const f of files) { const uploaded = await uploadAssetFile(f, { kind: "image", pageId: page.id }); setGallery((p) => [...p, { id: uid(), src: uploaded.secureUrl, caption: f.name }]); } markDirty(); }} />
       </Card>
 
       {/* ══════════════ PRESS COVERAGE ══════════════ */}
@@ -587,6 +586,14 @@ export function EpkEditor({ page }: { page: any }) {
       </Modal>
 
       <ConfirmDialog isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} onConfirm={handleDeleteConfirm} title="Delete Item" description={`Are you sure you want to delete "${deleteTarget?.name}"?`} />
+      <div className="sticky bottom-4 z-20">
+        <div className="ml-auto flex w-full max-w-md items-center justify-end gap-3 rounded-[1.6rem] border border-primary/20 bg-surface/95 p-3 shadow-premium backdrop-blur">
+          <div className="mr-auto px-2 text-xs font-semibold text-text-secondary">
+            {dirty ? "Unsaved changes" : "All changes saved"}
+          </div>
+          {actionButtons}
+        </div>
+      </div>
     </div>
   );
 }

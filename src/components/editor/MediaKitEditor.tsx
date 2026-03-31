@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Select } from "@/components/ui/Select";
 import { Dropzone } from "@/components/ui/Dropzone";
+import { uploadAssetFile } from "@/lib/upload-client";
 
 type PlatformMetric = {
   id: string;
@@ -81,41 +82,6 @@ export function MediaKitEditor({ page }: { page: any }) {
   const [dirty, setDirty] = React.useState(false);
   const markDirty = () => setDirty(true);
   const handleViewPublic = () => window.open(`/${page.handle}`, "_blank");
-
-  async function compressImageFile(file: File, maxDim = 640, quality = 0.85): Promise<string> {
-    const dataUrl = await new Promise<string>((resolve) => {
-      const r = new FileReader();
-      r.onload = () => resolve(String(r.result));
-      r.readAsDataURL(file);
-    });
-    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
-      const i = new Image();
-      i.onload = () => resolve(i);
-      i.onerror = reject;
-      i.src = dataUrl;
-    });
-    const canvas = document.createElement("canvas");
-    let { width, height } = img;
-    if (width > height) {
-      if (width > maxDim) {
-        height = Math.round((height * maxDim) / width);
-        width = maxDim;
-      }
-    } else {
-      if (height > maxDim) {
-        width = Math.round((width * maxDim) / height);
-        height = maxDim;
-      }
-    }
-    canvas.width = width;
-    canvas.height = height;
-    const ctx = canvas.getContext("2d");
-    if (ctx) {
-      ctx.drawImage(img, 0, 0, width, height);
-    }
-    const mime = "image/jpeg";
-    return canvas.toDataURL(mime, quality);
-  }
 
   const addPlatform = () => {
     setPlatforms((p) => [...p, { id: uid("pf"), name: "", handle: "", url: "", followers: undefined, avgViews: undefined, engagementRate: undefined, notes: "" }]);
@@ -213,21 +179,27 @@ export function MediaKitEditor({ page }: { page: any }) {
     }
   }
 
+  const actionButtons = (
+    <>
+      <Button variant="secondary" onClick={handleViewPublic} className="py-2 px-4 shadow-sm text-xs rounded-xl cursor-pointer whitespace-nowrap">
+        Preview
+      </Button>
+      <Button variant="primary" onClick={handleSave} disabled={saving || !dirty} className="py-2 px-5 shadow-sm text-sm cursor-pointer border-none text-white whitespace-nowrap">
+        {saving ? "Saving…" : "Save Changes"}
+      </Button>
+    </>
+  );
+
   return (
     <div className="w-full max-w-5xl mx-auto space-y-8">
-      <div className="bg-primary/5 border border-primary/20 rounded-2xl p-4 flex items-center justify-between shadow-sm">
+      <div className="bg-primary/5 border border-primary/20 rounded-2xl p-4 flex flex-col items-start justify-between gap-3 shadow-sm sm:flex-row sm:items-center">
         <div className="flex items-center gap-2 text-primary text-sm font-semibold">
           <Badge variant="primary">Media Kit</Badge>
           <span>Edit Mode</span>
           {dirty && <span className="text-warning">· Unsaved changes</span>}
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="secondary" onClick={handleViewPublic} className="py-2 px-4 shadow-sm text-xs rounded-xl cursor-pointer whitespace-nowrap">
-            Preview
-          </Button>
-          <Button variant="primary" onClick={handleSave} disabled={saving || !dirty} className="py-2 px-5 shadow-sm text-sm cursor-pointer border-none text-white whitespace-nowrap">
-            {saving ? "Saving…" : "Save Changes"}
-          </Button>
+        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:flex-nowrap">
+          {actionButtons}
         </div>
       </div>
 
@@ -244,11 +216,11 @@ export function MediaKitEditor({ page }: { page: any }) {
           <div className="sm:col-span-2">
             <Dropzone
               label="Profile Image"
-              hint="PNG, JPG up to 5MB"
+              hint="PNG, JPG up to 10MB"
               accept="image/*"
               onChange={async (file) => {
-                const resized = await compressImageFile(file, 640, 0.85);
-                setHeroProfileImage(resized);
+                const uploaded = await uploadAssetFile(file, { kind: "image", pageId: page.id });
+                setHeroProfileImage(uploaded.secureUrl);
                 markDirty();
               }}
             />
@@ -351,6 +323,14 @@ export function MediaKitEditor({ page }: { page: any }) {
           <Input labelInside="Website" value={contactWebsite} onChange={(e) => { setContactWebsite(e.target.value); markDirty(); }} />
         </div>
       </Card>
+      <div className="sticky bottom-4 z-20">
+        <div className="ml-auto flex w-full max-w-md items-center justify-end gap-3 rounded-[1.6rem] border border-primary/20 bg-surface/95 p-3 shadow-premium backdrop-blur">
+          <div className="mr-auto px-2 text-xs font-semibold text-text-secondary">
+            {dirty ? "Unsaved changes" : "All changes saved"}
+          </div>
+          {actionButtons}
+        </div>
+      </div>
     </div>
   );
 }

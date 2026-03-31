@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/Input"
 import { Select } from "@/components/ui/Select"
 import { Textarea } from "@/components/ui/Textarea"
 import { showToast } from "@/components/ui/Toast"
+import { uploadAssetFile } from "@/lib/upload-client"
 import {
   PROPERTY_FURNISHING_OPTIONS,
   PROPERTY_PERIOD_OPTIONS,
@@ -48,64 +49,6 @@ function normalizePillValues(values: string[]) {
     })
 }
 
-async function compressImageFile(file: File, maxDim = 1600, quality = 0.88, maxBytes = 450_000): Promise<string> {
-  const dataUrl = await new Promise<string>((resolve) => {
-    const reader = new FileReader()
-    reader.onload = () => resolve(String(reader.result))
-    reader.readAsDataURL(file)
-  })
-
-  const image = await new Promise<HTMLImageElement>((resolve, reject) => {
-    const nextImage = new Image()
-    nextImage.onload = () => resolve(nextImage)
-    nextImage.onerror = reject
-    nextImage.src = dataUrl
-  })
-
-  const canvas = document.createElement("canvas")
-  let { width, height } = image
-
-  if (width > height && width > maxDim) {
-    height = Math.round((height * maxDim) / width)
-    width = maxDim
-  } else if (height >= width && height > maxDim) {
-    width = Math.round((width * maxDim) / height)
-    height = maxDim
-  }
-
-  const context = canvas.getContext("2d")
-  if (!context) return dataUrl
-
-  let currentWidth = width
-  let currentHeight = height
-  let currentQuality = quality
-  const render = () => {
-    canvas.width = currentWidth
-    canvas.height = currentHeight
-    context.clearRect(0, 0, currentWidth, currentHeight)
-    context.drawImage(image, 0, 0, currentWidth, currentHeight)
-    return canvas.toDataURL("image/jpeg", currentQuality)
-  }
-
-  let output = render()
-  let attempts = 0
-
-  while (getDataSizeInBytes(output) > maxBytes && attempts < 10) {
-    attempts += 1
-
-    if (currentQuality > 0.46) {
-      currentQuality = Number((currentQuality - 0.08).toFixed(2))
-    } else {
-      currentWidth = Math.max(640, Math.round(currentWidth * 0.85))
-      currentHeight = Math.max(640, Math.round(currentHeight * 0.85))
-    }
-
-    output = render()
-  }
-
-  return output
-}
-
 function fileNameToLabel(fileName: string) {
   return fileName
     .replace(/\.[^/.]+$/, "")
@@ -119,14 +62,6 @@ function inferDocumentType(fileName: string): PropertyDocumentItem["type"] {
   if (normalized.includes("brochure")) return "brochure"
   if (normalized.includes("spec")) return "spec_sheet"
   return "other"
-}
-
-async function readFileAsDataUrl(file: File) {
-  return await new Promise<string>((resolve) => {
-    const reader = new FileReader()
-    reader.onload = () => resolve(String(reader.result))
-    reader.readAsDataURL(file)
-  })
 }
 
 function PillInput({
@@ -462,7 +397,7 @@ export function PropertyListingEditor({ page, defaultCurrency }: { page: Propert
         files.map(async (file, index) => ({
           id: `gallery-upload-${Date.now()}-${index}`,
           label: fileNameToLabel(file.name),
-          url: await compressImageFile(file, 1440, 0.82, 280_000),
+          url: (await uploadAssetFile(file, { kind: "image", pageId: page.id })).secureUrl,
         }))
       )
 
@@ -491,7 +426,7 @@ export function PropertyListingEditor({ page, defaultCurrency }: { page: Propert
           id: `doc-upload-${Date.now()}-${index}`,
           title: fileNameToLabel(file.name),
           type: inferDocumentType(file.name),
-          url: await readFileAsDataUrl(file),
+          url: (await uploadAssetFile(file, { kind: "document", pageId: page.id })).secureUrl,
         }))
       )
 
@@ -613,8 +548,8 @@ export function PropertyListingEditor({ page, defaultCurrency }: { page: Propert
                   onChange={async (file) => {
                     setProcessingHeroImage(true)
                     try {
-                      const nextImage = await compressImageFile(file, 1440, 0.84, 420_000)
-                      updateHero("heroImageUrl", nextImage)
+                      const uploaded = await uploadAssetFile(file, { kind: "image", pageId: page.id })
+                      updateHero("heroImageUrl", uploaded.secureUrl)
                     } catch {
                       showToast("We could not process that image. Try another file.", "error")
                     } finally {
@@ -894,7 +829,7 @@ export function PropertyListingEditor({ page, defaultCurrency }: { page: Propert
             <div className="space-y-4">
               <Dropzone
                 label="Documents"
-                hint={processingDocuments ? "Preparing uploaded files..." : "Upload brochures, floor plans, or spec sheets in one step."}
+                hint={processingDocuments ? "Preparing uploaded files..." : "Upload PDFs, docs, spreadsheets, or presentations up to 10MB each."}
                 multiple
                 disabled={processingDocuments}
                 onMultiple={handleDocumentUpload}
@@ -969,8 +904,8 @@ export function PropertyListingEditor({ page, defaultCurrency }: { page: Propert
                   onChange={async (file) => {
                     setProcessingAgentPhoto(true)
                     try {
-                      const nextImage = await compressImageFile(file, 720, 0.8, 180_000)
-                      updateAgent("agentPhotoUrl", nextImage)
+                      const uploaded = await uploadAssetFile(file, { kind: "image", pageId: page.id })
+                      updateAgent("agentPhotoUrl", uploaded.secureUrl)
                     } catch {
                       showToast("We could not process that agent photo. Try another file.", "error")
                     } finally {

@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/Button"
 import { Badge } from "@/components/ui/Badge"
 import { Dropzone } from "@/components/ui/Dropzone"
 import { Toaster, showToast } from "@/components/ui/Toast"
+import { uploadAssetFile } from "@/lib/upload-client"
 import {
   BRAND_THEME_PRESETS,
   BRAND_TYPOGRAPHY_PRESETS,
@@ -147,41 +148,6 @@ export function BrandingWorkspace({
     }
   }, [])
 
-  async function compressImageFile(file: File, maxDim = 512, quality = 0.9): Promise<string> {
-    const dataUrl = await new Promise<string>((resolve) => {
-      const reader = new FileReader()
-      reader.onload = () => resolve(String(reader.result))
-      reader.readAsDataURL(file)
-    })
-
-    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
-      const image = new Image()
-      image.onload = () => resolve(image)
-      image.onerror = reject
-      image.src = dataUrl
-    })
-
-    const canvas = document.createElement("canvas")
-    let { width, height } = img
-
-    if (width > height && width > maxDim) {
-      height = Math.round((height * maxDim) / width)
-      width = maxDim
-    } else if (height > maxDim) {
-      width = Math.round((width * maxDim) / height)
-      height = maxDim
-    }
-
-    canvas.width = width
-    canvas.height = height
-    const ctx = canvas.getContext("2d")
-    if (ctx) {
-      ctx.drawImage(img, 0, 0, width, height)
-    }
-
-    return canvas.toDataURL("image/png", quality)
-  }
-
   async function handleSave() {
     if (!canUseCustomBranding) {
       showToast("Custom Branding is available on Creator. Payments are not live yet, so higher tiers are still locked.", "warning")
@@ -288,12 +254,12 @@ export function BrandingWorkspace({
                   <div>
                     <Dropzone
                       label="Brand Logo"
-                      hint={canUseCustomBranding ? "PNG or JPG up to 512KB" : "Creator plan required to upload logos"}
+                      hint={canUseCustomBranding ? "PNG or JPG up to 10MB" : "Creator plan required to upload logos"}
                       accept="image/*"
                       disabled={!canUseCustomBranding}
                       onChange={async (file) => {
-                        const next = await compressImageFile(file)
-                        update("logoImage", next)
+                        const uploaded = await uploadAssetFile(file, { kind: "image" })
+                        update("logoImage", uploaded.secureUrl)
                       }}
                     />
                   </div>

@@ -5,6 +5,7 @@ import { getBaseUrl } from "@/lib/utils";
 import { EMAIL_COLORS } from "@/config/theme";
 import { sendPlanNotification } from "@/lib/notifications";
 import { NotificationEventType } from "@prisma/client";
+import { normalizeDataUrlsToCloudinary } from "@/lib/cloudinary";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +27,11 @@ export async function POST(
   }
 
   const { taskId, stageId, submission } = await request.json();
+  const normalizedSubmission = await normalizeDataUrlsToCloudinary(submission, {
+    userId,
+    pageId: page.id,
+    scope: "task-submissions",
+  });
 
   const timelineBlock = page.blocks.find((b) => b.type === "TIMELINE");
   if (!timelineBlock) return NextResponse.json({ error: "No timeline" }, { status: 404 });
@@ -42,7 +48,7 @@ export async function POST(
     for (const t of m.tasks || []) {
       if (t.id === taskId) {
         t.status = "review";
-        t.submission = submission;
+        t.submission = normalizedSubmission;
         taskToNotify = t;
         break;
       }
@@ -69,7 +75,7 @@ export async function POST(
           <h2 style="color: ${EMAIL_COLORS.primary};">Hello from ${page.title}!</h2>
           <p>The latest updates for <strong>${taskToNotify.title}</strong> are ready for your review.</p>
           <div style="background: ${EMAIL_COLORS.surfaceMuted}; padding: 15px; border-radius: 8px; margin: 15px 0;">
-             <p><strong>Submission Type:</strong> ${submission.type}</p>
+             <p><strong>Submission Type:</strong> ${normalizedSubmission.type}</p>
              <p><strong>Message:</strong> Check the project portal for details.</p>
           </div>
           <p><a href="${getBaseUrl()}/${page.handle}" style="background: ${EMAIL_COLORS.primary}; color: ${EMAIL_COLORS.onPrimary}; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold;">Launch Project Portal</a></p>

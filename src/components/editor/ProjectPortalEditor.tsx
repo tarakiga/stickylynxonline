@@ -17,6 +17,7 @@ import { Dropzone } from "@/components/ui/Dropzone";
 import { CheckCircle2, Clock, FileText, MessageSquare, AlertCircle, Plus, Save, Loader2, Eye, UploadCloud, Link as LinkIcon, AlignLeft, Mail, ShieldCheck, ShieldOff, Clipboard } from "lucide-react";
 import { getBaseUrl } from "@/lib/utils";
 import { Toaster, showToast } from "@/components/ui/Toast";
+import { uploadAssetFile } from "@/lib/upload-client";
 
 /* ─── ID helper ──────────────────────────────────────────────── */
 let _seq = 0;
@@ -239,12 +240,11 @@ export function ProjectPortalEditor({ page }: { page: any }) {
     setSaving(true);
     let value: string;
     if ((submitType === "file" || submitType === "image") && submitFile) {
-      // Convert file to data URL so it's viewable/downloadable on the frontend
-      value = await new Promise<string>((resolve) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result as string);
-        reader.readAsDataURL(submitFile);
+      const uploaded = await uploadAssetFile(submitFile, {
+        kind: submitType === "image" ? "image" : "document",
+        pageId: page.id,
       });
+      value = uploaded.secureUrl;
     } else {
       value = submitValue.trim();
     }
@@ -342,6 +342,16 @@ export function ProjectPortalEditor({ page }: { page: any }) {
   }, [milestones, currentStep, totalTaskCount]);
 
   const statusNote = statusOverride ?? autoStatusNote;
+  const actionButtons = (
+    <>
+      <Button variant="secondary" onClick={handleViewPublic} className="py-2 px-4 shadow-sm text-xs rounded-xl cursor-pointer whitespace-nowrap">
+        <Eye size={14} className="mr-1.5" /> Preview
+      </Button>
+      <Button variant="primary" onClick={handleSave} disabled={saving || !dirty} className="py-2 px-5 shadow-sm text-sm rounded-xl cursor-pointer border-none text-white whitespace-nowrap">
+        {saving ? <><Loader2 size={14} className="mr-1.5 animate-spin" /> Saving…</> : <><Save size={14} className="mr-1.5" /> Save Changes</>}
+      </Button>
+    </>
+  );
 
   return (
     <div className="w-full max-w-5xl mx-auto space-y-8 animate-in fade-in duration-500 pb-16">
@@ -354,14 +364,9 @@ export function ProjectPortalEditor({ page }: { page: any }) {
            {lastSaved && <span className="text-text-secondary font-normal">· Saved at {lastSaved}</span>}
            {dirty && !saving && <span className="text-warning font-normal">· Unsaved changes</span>}
          </div>
-         <div className="flex items-center gap-2">
-           <Button variant="secondary" onClick={handleViewPublic} className="py-2 px-4 shadow-sm text-xs rounded-xl cursor-pointer whitespace-nowrap">
-             <Eye size={14} className="mr-1.5" /> Preview
-           </Button>
-           <Button variant="primary" onClick={handleSave} disabled={saving || !dirty} className="py-2 px-5 shadow-sm text-sm rounded-xl cursor-pointer border-none text-white whitespace-nowrap">
-             {saving ? <><Loader2 size={14} className="mr-1.5 animate-spin" /> Saving…</> : <><Save size={14} className="mr-1.5" /> Save Changes</>}
-           </Button>
-         </div>
+        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:flex-nowrap">
+          {actionButtons}
+        </div>
        </div>
 
        {/* 1. Project Header & Status */}
@@ -684,7 +689,7 @@ export function ProjectPortalEditor({ page }: { page: any }) {
            {submitType === "text" && <Textarea placeholder="Paste or write your text content…" rows={4} value={submitValue} onChange={(e) => setSubmitValue(e.target.value)} />}
            {(submitType === "file" || submitType === "image") && (
              <Dropzone
-               hint={submitType === "image" ? "PNG, JPG, SVG up to 10MB" : "Any file type up to 50MB"}
+               hint={submitType === "image" ? "PNG, JPG, WEBP, GIF, or AVIF up to 10MB" : "PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, RTF, or TXT up to 10MB"}
                accept={submitType === "image" ? "image/*" : undefined}
                value={submitFile}
                onChange={(file) => setSubmitFile(file)}
@@ -778,6 +783,14 @@ export function ProjectPortalEditor({ page }: { page: any }) {
           </div>
         </div>
       </Modal>
+      <div className="sticky bottom-4 z-20">
+        <div className="ml-auto flex w-full max-w-md items-center justify-end gap-3 rounded-[1.6rem] border border-primary/20 bg-surface/95 p-3 shadow-premium backdrop-blur">
+          <div className="mr-auto px-2 text-xs font-semibold text-text-secondary">
+            {dirty ? "Unsaved changes" : "All changes saved"}
+          </div>
+          {actionButtons}
+        </div>
+      </div>
     </div>
   );
 }

@@ -9,6 +9,7 @@ import { Select } from "@/components/ui/Select";
 import { Dropzone } from "@/components/ui/Dropzone";
 import { MultiContactInput } from "@/components/ui/MultiContactInput";
 import { PriceRepeater, type PriceOption } from "@/components/ui/PriceRepeater";
+import { uploadAssetFile } from "@/lib/upload-client";
 import { currencySymbol } from "@/lib/utils";
 import { LocationSearch } from "@/components/ui/LocationSearch";
 
@@ -143,18 +144,6 @@ export function FoodMenuEditor({
   const advancedFoodMenuMessage = "Advanced Food Menu is available on Creator. Payments are not live yet, so higher tiers are still locked."
   const customBrandingMessage = "Custom Branding is available on Creator. Payments are not live yet, so higher tiers are still locked."
 
-  async function compressImageFile(file: File, maxDim = 1024, quality = 0.85): Promise<string> {
-    const dataUrl = await new Promise<string>((resolve) => { const r = new FileReader(); r.onload = () => resolve(String(r.result)); r.readAsDataURL(file); });
-    const img = await new Promise<HTMLImageElement>((resolve, reject) => { const i = new Image(); i.onload = () => resolve(i); i.onerror = reject; i.src = dataUrl; });
-    const canvas = document.createElement("canvas");
-    let { width, height } = img;
-    if (width > height) { if (width > maxDim) { height = Math.round((height * maxDim) / width); width = maxDim; } }
-    else { if (height > maxDim) { width = Math.round((width * maxDim) / height); height = maxDim; } }
-    canvas.width = width; canvas.height = height;
-    const ctx = canvas.getContext("2d"); if (ctx) ctx.drawImage(img, 0, 0, width, height);
-    return canvas.toDataURL("image/jpeg", quality);
-  }
-
   function addSection() {
     setSections(prev => [...prev, { id: uid("sec"), name: "New Section", description: "", highlighted: false, items: [] }]); markDirty();
   }
@@ -201,17 +190,23 @@ export function FoodMenuEditor({
     } finally { setSaving(false); }
   }
 
+  const actionButtons = (
+    <>
+      <Button variant="secondary" onClick={handleViewPublic} className="py-2 px-4 shadow-sm text-xs rounded-xl cursor-pointer whitespace-nowrap">Preview</Button>
+      <Button variant="primary" onClick={handleSave} disabled={saving || !dirty} className="py-2 px-5 shadow-sm text-sm cursor-pointer border-none text-white whitespace-nowrap">{saving ? "Saving…" : "Save Changes"}</Button>
+    </>
+  );
+
   return (
     <div className="w-full max-w-5xl mx-auto space-y-8">
-      <div className="bg-primary/5 border border-primary/20 rounded-2xl p-4 flex items-center justify-between shadow-sm">
+      <div className="bg-primary/5 border border-primary/20 rounded-2xl p-4 flex flex-col items-start justify-between gap-3 shadow-sm sm:flex-row sm:items-center">
         <div className="flex items-center gap-2 text-primary text-sm font-semibold">
           <Badge variant="primary">Food Menu</Badge>
           <span>Edit Mode</span>
           {dirty && <span className="text-warning">· Unsaved changes</span>}
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="secondary" onClick={handleViewPublic} className="py-2 px-4 shadow-sm text-xs rounded-xl cursor-pointer whitespace-nowrap">Preview</Button>
-          <Button variant="primary" onClick={handleSave} disabled={saving || !dirty} className="py-2 px-5 shadow-sm text-sm cursor-pointer border-none text-white whitespace-nowrap">{saving ? "Saving…" : "Save Changes"}</Button>
+        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:flex-nowrap">
+          {actionButtons}
         </div>
       </div>
 
@@ -223,11 +218,11 @@ export function FoodMenuEditor({
           <Input labelInside="Cuisine Type" value={cuisineType} onChange={(e) => { setCuisineType(e.target.value); markDirty(); }} />
           <Textarea rows={2} placeholder="Short description" value={shortDesc} onChange={(e) => { setShortDesc(e.target.value); markDirty(); }} />
           <div className="sm:col-span-2">
-            <Dropzone label="Hero Image" hint="PNG, JPG up to 1MB" accept="image/*" onChange={async (file) => { const img = await compressImageFile(file, 1200, 0.85); setHeroImage(img); markDirty(); }} />
+            <Dropzone label="Hero Image" hint="PNG, JPG up to 10MB" accept="image/*" onChange={async (file) => { const uploaded = await uploadAssetFile(file, { kind: "image", pageId: page.id }); setHeroImage(uploaded.secureUrl); markDirty(); }} />
             {heroImage && <div className="mt-3"><img src={heroImage} alt="Hero" className="w-full max-h-48 object-cover rounded-xl border border-divider" /></div>}
           </div>
           <div className="sm:col-span-2">
-            <Dropzone label="Restaurant Logo" hint={canUseCustomBranding ? "PNG, JPG up to 512KB" : customBrandingMessage} accept="image/*" disabled={!canUseCustomBranding} onChange={async (file) => { const img = await compressImageFile(file, 512, 0.9); setLogoImage(img); markDirty(); }} />
+            <Dropzone label="Restaurant Logo" hint={canUseCustomBranding ? "PNG, JPG up to 10MB" : customBrandingMessage} accept="image/*" disabled={!canUseCustomBranding} onChange={async (file) => { const uploaded = await uploadAssetFile(file, { kind: "image", pageId: page.id }); setLogoImage(uploaded.secureUrl); markDirty(); }} />
             {logoImage && <div className="mt-3"><img src={logoImage} alt="Logo" className="h-16 w-16 object-cover rounded-xl border border-divider" /></div>}
           </div>
         </div>
@@ -346,9 +341,9 @@ export function FoodMenuEditor({
                     </div>
                     <Textarea rows={2} placeholder="Base description" value={it.baseDescription || ""} onChange={(e) => { setSections(prev => prev.map(x => x.id === s.id ? { ...x, items: x.items.map(y => y.id === it.id ? { ...y, baseDescription: e.target.value } : y) } : x)); markDirty(); }} className="mt-2" />
                     <div className="mt-3">
-                      <Dropzone label="Item Photo" hint="PNG, JPG up to 1MB" accept="image/*" onChange={async (file) => {
-                        const img = await compressImageFile(file, 800, 0.85);
-                        setSections(prev => prev.map(x => x.id === s.id ? { ...x, items: x.items.map(y => y.id === it.id ? { ...y, photo: img } : y) } : x));
+                      <Dropzone label="Item Photo" hint="PNG, JPG up to 10MB" accept="image/*" onChange={async (file) => {
+                        const uploaded = await uploadAssetFile(file, { kind: "image", pageId: page.id });
+                        setSections(prev => prev.map(x => x.id === s.id ? { ...x, items: x.items.map(y => y.id === it.id ? { ...y, photo: uploaded.secureUrl } : y) } : x));
                         markDirty();
                       }} />
                       {it.photo && <img src={it.photo} alt="Item" className="mt-2 w-full max-h-40 object-cover rounded-lg border border-divider" />}
@@ -377,6 +372,14 @@ export function FoodMenuEditor({
           </div>
         </div>
       </Card>
+      <div className="sticky bottom-4 z-20">
+        <div className="ml-auto flex w-full max-w-md items-center justify-end gap-3 rounded-[1.6rem] border border-primary/20 bg-surface/95 p-3 shadow-premium backdrop-blur">
+          <div className="mr-auto px-2 text-xs font-semibold text-text-secondary">
+            {dirty ? "Unsaved changes" : "All changes saved"}
+          </div>
+          {actionButtons}
+        </div>
+      </div>
     </div>
   );
 }

@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma"
 import { Prisma } from "@prisma/client"
 import { getFeatureAccessError, getUserPlanSnapshot } from "@/lib/subscription"
 import { normalizeBrandProfile } from "@/lib/branding"
+import { normalizeDataUrlsToCloudinary } from "@/lib/cloudinary"
 
 export const dynamic = "force-dynamic"
 
@@ -26,7 +27,13 @@ export async function POST(request: NextRequest) {
     select: { name: true, email: true },
   })
 
-  const profile = normalizeBrandProfile(body.brandProfile, user?.name || user?.email || "")
+  const profile = await normalizeDataUrlsToCloudinary(
+    normalizeBrandProfile(body.brandProfile, user?.name || user?.email || ""),
+    {
+      userId,
+      scope: "branding",
+    }
+  )
 
   await prisma.user.update({
     where: { id: userId },
