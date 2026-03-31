@@ -1,7 +1,6 @@
 "use client"
 
 import * as React from "react"
-import { cn } from "@/lib/utils"
 import { NOMINATIM_BASE } from "@/config/services"
 
 export interface LocationSearchProps {

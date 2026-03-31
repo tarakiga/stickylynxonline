@@ -3,7 +3,6 @@ import * as React from "react"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/Badge"
 import { FileText, ImageIcon, Link as LinkIcon, AlignLeft, ExternalLink, Eye, Download, X } from "lucide-react"
-import type { DeliverableType } from "@/types/editor"
 
 const TYPE_CONFIG: Record<string, { label: string; icon: React.ReactNode; color: string; badgeVariant: "info" | "success" | "primary" | "warning" }> = {
   file:     { label: "File",  icon: <FileText className="w-4 h-4" />,  color: "bg-info/10 text-info",         badgeVariant: "info" },
@@ -26,6 +25,7 @@ export interface AttachmentCardProps {
 
 export function AttachmentCard({ type, value, className }: AttachmentCardProps) {
   const config = TYPE_CONFIG[type] || TYPE_CONFIG.file
+  const [showPreview, setShowPreview] = React.useState(false)
 
   // URL: render as a clickable hyperlink card
   if (type === "url") {
@@ -73,8 +73,6 @@ export function AttachmentCard({ type, value, className }: AttachmentCardProps) 
   const canPreview = isDataUrl || isWebUrl;
   const isImageType = type === "image" || (isDataUrl && value.startsWith("data:image"));
   const displayName = isDataUrl ? (isImageType ? "Uploaded image" : "Uploaded file") : value;
-  const [showPreview, setShowPreview] = React.useState(false);
-
   return (
     <>
       <div className={cn("bg-background border border-divider rounded-xl overflow-hidden", className)}>

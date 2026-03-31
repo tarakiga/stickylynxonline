@@ -20,7 +20,6 @@ export function PageItemCard({ id, title, handle, category, imageUrl }: PageItem
   const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
   const [showQrModal, setShowQrModal] = React.useState(false);
   const [linkCopied, setLinkCopied] = React.useState(false);
-  const [deleting, setDeleting] = React.useState(false);
   const [showMobileMore, setShowMobileMore] = React.useState(false);
 
   const publicUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/${handle}`;
@@ -47,12 +46,10 @@ export function PageItemCard({ id, title, handle, category, imageUrl }: PageItem
   }
 
   async function handleDelete() {
-    setDeleting(true);
     try {
       const res = await fetch(`/api/pages/${id}`, { method: "DELETE" });
       if (res.ok) router.refresh();
     } finally {
-      setDeleting(false);
       setShowDeleteConfirm(false);
     }
   }

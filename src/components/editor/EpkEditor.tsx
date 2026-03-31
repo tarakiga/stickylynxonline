@@ -11,28 +11,40 @@ import { IconButton } from "@/components/ui/IconButton";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Modal } from "@/components/ui/Modal";
 import { uploadAssetFile } from "@/lib/upload-client";
-import type { EpkHero, StreamingLink, StreamingPlatform, EpkTrack, EpkVideo, EpkGalleryImage, EpkBio, EpkContact, PressFeature, Highlight, TourEvent, TourEventStatus } from "@/types/epk";
+import Image from "next/image";
+import type { EpkHero, StreamingLink, StreamingPlatform, EpkTrack, EpkVideo, EpkGalleryImage, EpkBio, EpkContact, PressFeature, Highlight, TourEvent } from "@/types/epk";
 import { STREAMING_PLATFORMS, SOCIAL_PLATFORMS, TOUR_STATUS_META } from "@/types/epk";
+import type { EditorPage } from "@/types/editor-page";
+import { findEditorBlock } from "@/types/editor-page";
 import {
-  Save, Loader2, Eye, Plus, Trash2, Music, Video, ImageIcon,
-  Link as LinkIcon, Mail, User, Edit2, ExternalLink, GripVertical,
-  Newspaper, Award, Calendar, MapPin, Upload,
+  Save, Loader2, Eye, Plus, Trash2, Music, Video,
+  Link as LinkIcon, ExternalLink, Newspaper, Award, Calendar,
 } from "lucide-react";
 
 let _seq = 0;
 function uid() { return `epk-${Date.now()}-${++_seq}`; }
 
-export function EpkEditor({ page }: { page: any }) {
+type EpkItemsBlock<T> = {
+  items?: T[]
+}
+
+type EpkGridBlock = {
+  press?: PressFeature[]
+  highlights?: Highlight[]
+  tours?: TourEvent[]
+}
+
+export function EpkEditor({ page }: { page: EditorPage }) {
   const blocks = page.blocks || [];
 
-  const heroBlock = blocks.find((b: any) => b.type === "TEXT" && b.content?.section === "hero")?.content || {};
-  const linksBlock = blocks.find((b: any) => b.type === "LINK")?.content || {};
-  const audioBlock = blocks.find((b: any) => b.type === "AUDIO")?.content || {};
-  const videoBlock = blocks.find((b: any) => b.type === "VIDEO")?.content || {};
-  const imageBlock = blocks.find((b: any) => b.type === "IMAGE")?.content || {};
-  const bioBlock = blocks.find((b: any) => b.type === "TEXT" && b.content?.section === "bio")?.content || {};
-  const contactBlock = blocks.find((b: any) => b.type === "CONTACT")?.content || {};
-  const gridBlock = blocks.find((b: any) => b.type === "GRID")?.content || {};
+  const heroBlock = (findEditorBlock(blocks, "TEXT", "hero")?.content || {}) as Partial<EpkHero>;
+  const linksBlock = (findEditorBlock(blocks, "LINK")?.content || {}) as EpkItemsBlock<StreamingLink>;
+  const audioBlock = (findEditorBlock(blocks, "AUDIO")?.content || {}) as EpkItemsBlock<EpkTrack>;
+  const videoBlock = (findEditorBlock(blocks, "VIDEO")?.content || {}) as EpkItemsBlock<EpkVideo>;
+  const imageBlock = (findEditorBlock(blocks, "IMAGE")?.content || {}) as EpkItemsBlock<EpkGalleryImage>;
+  const bioBlock = (findEditorBlock(blocks, "TEXT", "bio")?.content || {}) as Partial<EpkBio>;
+  const contactBlock = (findEditorBlock(blocks, "CONTACT")?.content || {}) as Partial<EpkContact>;
+  const gridBlock = (findEditorBlock(blocks, "GRID")?.content || {}) as EpkGridBlock;
 
   /* ── State ─────────────────────────────────────────────────── */
   const [saving, setSaving] = React.useState(false);
@@ -192,7 +204,7 @@ export function EpkEditor({ page }: { page: any }) {
   // Batch upload audio files with data URL storage
   async function handleAudioBatchUpload(files: File[]) {
     for (const file of files) {
-      let title = file.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ");
+      const title = file.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ");
       let duration = "";
       try {
         const objUrl = URL.createObjectURL(file);
@@ -215,14 +227,6 @@ export function EpkEditor({ page }: { page: any }) {
     if (!newVideoUrl.trim()) return;
     setVideos((p) => [...p, { id: uid(), title: newVideoTitle.trim() || "Untitled Video", url: newVideoUrl.trim() }]);
     setNewVideoTitle(""); setNewVideoUrl(""); setShowAddVideo(false); markDirty();
-  }
-
-  async function addGalleryImages(files: File[]) {
-    for (const file of files) {
-      const uploaded = await uploadAssetFile(file, { kind: "image", pageId: page.id });
-      setGallery((p) => [...p, { id: uid(), src: uploaded.secureUrl, caption: file.name }]);
-    }
-    markDirty();
   }
 
   function addPress() {
@@ -273,8 +277,8 @@ export function EpkEditor({ page }: { page: any }) {
           </div>
           {(hero.profileImage || hero.coverImage) && (
             <div className="flex gap-3 flex-wrap">
-              {hero.profileImage && <img src={hero.profileImage} alt="Profile" className="w-16 h-16 rounded-xl object-cover border border-divider" />}
-              {hero.coverImage && <img src={hero.coverImage} alt="Cover" className="h-16 rounded-xl object-cover border border-divider max-w-[200px]" />}
+              {hero.profileImage && <Image src={hero.profileImage} alt="Profile" width={64} height={64} unoptimized className="h-16 w-16 rounded-xl object-cover border border-divider" />}
+              {hero.coverImage && <Image src={hero.coverImage} alt="Cover" width={200} height={64} unoptimized className="h-16 max-w-[200px] rounded-xl object-cover border border-divider" />}
             </div>
           )}
         </div>
@@ -379,7 +383,7 @@ export function EpkEditor({ page }: { page: any }) {
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {gallery.map((img) => (
               <div key={img.id} className="relative group rounded-xl overflow-hidden border border-divider bg-background">
-                <img src={img.src} alt={img.caption} className="w-full h-32 object-cover" />
+                <Image src={img.src} alt={img.caption} width={320} height={128} unoptimized className="h-32 w-full object-cover" />
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                   <IconButton variant="danger" size="md" onClick={() => setDeleteTarget({ type: "gallery", id: img.id, name: img.caption })} className="bg-surface/80">
                     <Trash2 className="w-4 h-4" />

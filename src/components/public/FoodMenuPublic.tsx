@@ -5,9 +5,11 @@ import { Input } from "@/components/ui/Input";
 import { Accordion } from "@/components/ui/Accordion";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
-import { Phone, AtSign, Globe } from "lucide-react";
+import { Phone, AtSign } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { currencySymbol } from "@/lib/utils";
+import type { EditorPage } from "@/types/editor-page";
+import { findEditorBlock } from "@/types/editor-page";
 
 function ensureProtocol(url?: string) {
   if (!url) return "";
@@ -15,37 +17,107 @@ function ensureProtocol(url?: string) {
   return `https://${url}`;
 }
 
-export function FoodMenuPublic({ page }: { page: any }) {
-  const blocks = page.blocks || [];
-  const brand = blocks.find((b: any) => b.type === "TEXT" && b.content?.section === "brand_header")?.content || {};
-  const service = blocks.find((b: any) => b.type === "GRID" && b.content?.section === "service_info")?.content || {};
-  const menu = blocks.find((b: any) => b.type === "GRID" && b.content?.section === "menu_sections")?.content || {};
-  const extras = blocks.find((b: any) => b.type === "GRID" && b.content?.section === "extras")?.content || {};
+type FoodMenuPage = EditorPage & {
+  user?: {
+    currencyCode?: string | null
+  } | null
+}
 
-  const allSections = (menu.sections || []) as Array<any>;
+type FoodMenuVariation = {
+  name?: string
+  size?: string
+  price?: number | string
+}
+
+type FoodMenuItem = {
+  id: string
+  name?: string
+  baseDescription?: string
+  tags?: string[]
+  variations?: FoodMenuVariation[]
+  photoUrl?: string
+}
+
+type FoodMenuSection = {
+  id: string
+  name?: string
+  items?: FoodMenuItem[]
+}
+
+type SocialLink = {
+  platform?: string
+  url?: string
+}
+
+type HoursEntry = {
+  day: number
+  open: string
+  close: string
+}
+
+type LocationEntry = {
+  name?: string
+  address?: string
+  city?: string
+  country?: string
+}
+
+type BrandHeaderContent = {
+  businessName?: string
+  heroImage?: string
+  logoImage?: string
+  tagline?: string
+}
+
+type ServiceInfoContent = {
+  emails?: string[]
+  phones?: string[]
+  socials?: SocialLink[]
+  locations?: LocationEntry[]
+  hours?: HoursEntry[]
+}
+
+type MenuSectionsContent = {
+  sections?: FoodMenuSection[]
+  defaultOpenSectionIds?: string[]
+}
+
+type ExtrasContent = {
+  title?: string
+  items?: FoodMenuItem[]
+}
+
+export function FoodMenuPublic({ page }: { page: FoodMenuPage }) {
+  const blocks = page.blocks || [];
+  const brand = (findEditorBlock(blocks, "TEXT", "brand_header")?.content || {}) as BrandHeaderContent;
+  const service = (findEditorBlock(blocks, "GRID", "service_info")?.content || {}) as ServiceInfoContent;
+  const menu = (findEditorBlock(blocks, "GRID", "menu_sections")?.content || {}) as MenuSectionsContent;
+  const extras = (findEditorBlock(blocks, "GRID", "extras")?.content || {}) as ExtrasContent;
+
+  const allSections = menu.sections || [];
   const [q, setQ] = React.useState("");
   const userCurrency = (page.user?.currencyCode) || "USD";
   const sym = currencySymbol(userCurrency);
 
-  const filteredSections = allSections.map((s) => {
-    const items = (s.items || []).filter((it: any) => {
+  const filteredSections = allSections.map((section) => {
+    const items = (section.items || []).filter((item) => {
       if (!q.trim()) return true;
       const needle = q.toLowerCase();
       return (
-        (it.name || "").toLowerCase().includes(needle) ||
-        (it.baseDescription || "").toLowerCase().includes(needle) ||
-        (it.tags || []).join(",").toLowerCase().includes(needle)
+        (item.name || "").toLowerCase().includes(needle) ||
+        (item.baseDescription || "").toLowerCase().includes(needle) ||
+        (item.tags || []).join(",").toLowerCase().includes(needle)
       );
     });
-    return { ...s, items };
-  }).filter((s) => s.items.length > 0 || !q.trim());
+    return { ...section, items };
+  }).filter((section) => section.items.length > 0 || !q.trim());
 
   const accordionItems = filteredSections.map((s) => ({
     id: s.id,
-    title: s.name,
+    title: s.name || "Section",
     content: (
       <div className="space-y-3">
-        {(s.items || []).map((it: any) => {
+        {(s.items || []).map((it) => {
           const tags = (it.tags || []) as string[];
           return (
             <div key={it.id} className="bg-background border border-divider rounded-xl p-4 group hover:border-primary/30 transition-colors">
@@ -58,7 +130,7 @@ export function FoodMenuPublic({ page }: { page: any }) {
                   </div>
                   {it.baseDescription && <p className="text-sm text-text-secondary mt-1">{it.baseDescription}</p>}
                   <div className="flex items-center flex-wrap gap-2 mt-2">
-                    {(it.variations || []).map((v: any, i: number) => (
+                    {(it.variations || []).map((v, i: number) => (
                       <span key={i} className="inline-flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-lg bg-surface border border-divider">
                         {v.name}{v.size ? ` • ${v.size}` : ""} — {sym} {v.price}
                       </span>
@@ -177,7 +249,7 @@ export function FoodMenuPublic({ page }: { page: any }) {
         )}
         {(Array.isArray(service.socials) && service.socials.length > 0) && (
           <div className="flex items-center justify-center gap-2 pt-1 flex-wrap">
-            {(service.socials || []).map((s: any, i: number) => (
+            {(service.socials || []).map((s, i: number) => (
               <a key={`soc-${i}`} href={ensureProtocol(s.url)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-background border border-divider text-text-secondary hover:text-primary hover:border-primary transition-colors">
                 <SocialIcon platform={String(s.platform || "")} url={String(s.url || "")} />
               </a>
@@ -188,7 +260,7 @@ export function FoodMenuPublic({ page }: { page: any }) {
 
       {(service.locations || []).length > 0 && (
         <Card className="rounded-[2rem] border border-divider shadow-sm p-6 bg-surface">
-          <LocationsBlock locations={service.locations} />
+          <LocationsBlock locations={service.locations || []} />
         </Card>
       )}
       
@@ -196,7 +268,7 @@ export function FoodMenuPublic({ page }: { page: any }) {
         <Card className="rounded-[2rem] border border-divider shadow-sm p-6 bg-surface">
           <h2 className="text-xl font-bold mb-3">Hours</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {service.hours.map((h: any, i: number) => {
+            {service.hours.map((h, i: number) => {
               const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
               const label = days[h.day] || days[i] || "";
               const val = h.open && h.close ? `${h.open} – ${h.close}` : "Closed";
@@ -225,14 +297,14 @@ export function FoodMenuPublic({ page }: { page: any }) {
         <Card className="rounded-[2rem] border border-divider shadow-sm p-6 bg-surface">
           <h2 className="text-xl font-bold mb-4">{extras.title || "Add-ons"}</h2>
           <div className="space-y-3">
-            {(extras.items || []).map((it: any, i: number) => (
+            {(extras.items || []).map((it, i: number) => (
               <div key={i} className="bg-background border border-divider rounded-xl p-4 flex items-center justify-between">
                 <div>
                   <h4 className="font-bold text-text-primary">{it.name}</h4>
                   {it.baseDescription && <p className="text-sm text-text-secondary">{it.baseDescription}</p>}
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
-                  {(it.variations || []).map((v: any, j: number) => (
+                  {(it.variations || []).map((v, j: number) => (
                     <Badge key={j} variant="neutral" className="text-[10px] px-1.5 py-0">{sym} {v.price}</Badge>
                   ))}
                 </div>

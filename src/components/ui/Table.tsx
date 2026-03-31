@@ -9,7 +9,7 @@ export interface TableColumn {
   width?: string
 }
 
-export function Table({ columns, rows, pageSize = 5, className }: { columns: TableColumn[]; rows: Record<string, any>[]; pageSize?: number; className?: string }) {
+export function Table({ columns, rows, pageSize = 5, className }: { columns: TableColumn[]; rows: Record<string, unknown>[]; pageSize?: number; className?: string }) {
   const [page, setPage] = React.useState(1)
   const total = rows.length
   const pages = Math.max(1, Math.ceil(total / pageSize))

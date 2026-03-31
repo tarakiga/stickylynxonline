@@ -2,13 +2,14 @@
 import * as React from "react";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
 import type { EpkHero, StreamingLink, EpkTrack, EpkVideo, EpkGalleryImage, EpkBio, EpkContact, PressFeature, Highlight, TourEvent } from "@/types/epk";
 import { STREAMING_PLATFORMS, SOCIAL_PLATFORMS, TOUR_STATUS_META } from "@/types/epk";
 import { YOUTUBE_EMBED_BASE, VIMEO_EMBED_BASE } from "@/config/services";
+import type { EditorPage } from "@/types/editor-page";
+import { findEditorBlock } from "@/types/editor-page";
 import {
-  Music, Play, ExternalLink, Video, Download, Mail, Phone, Globe, X,
-  Newspaper, Award, Calendar, MapPin, Ticket,
+  Music, ExternalLink, Video, Download, Mail, Phone, Globe, X,
+  Newspaper, Award, MapPin, Ticket,
 } from "lucide-react";
 
 function ensureProtocol(url: string): string {
@@ -27,16 +28,26 @@ function getVimeoEmbedUrl(url: string): string | null {
   return match ? `${VIMEO_EMBED_BASE}/${match[1]}` : null;
 }
 
-export function EpkPublic({ page }: { page: any }) {
+type EpkItemsBlock<T> = {
+  items?: T[]
+}
+
+type EpkGridBlock = {
+  press?: PressFeature[]
+  highlights?: Highlight[]
+  tours?: TourEvent[]
+}
+
+export function EpkPublic({ page }: { page: EditorPage }) {
   const blocks = page.blocks || [];
-  const heroData = blocks.find((b: any) => b.type === "TEXT" && b.content?.section === "hero")?.content || {};
-  const linksData = blocks.find((b: any) => b.type === "LINK")?.content || {};
-  const audioData = blocks.find((b: any) => b.type === "AUDIO")?.content || {};
-  const videoData = blocks.find((b: any) => b.type === "VIDEO")?.content || {};
-  const imageData = blocks.find((b: any) => b.type === "IMAGE")?.content || {};
-  const bioData = blocks.find((b: any) => b.type === "TEXT" && b.content?.section === "bio")?.content || {};
-  const contactData = blocks.find((b: any) => b.type === "CONTACT")?.content || {};
-  const gridData = blocks.find((b: any) => b.type === "GRID")?.content || {};
+  const heroData = (findEditorBlock(blocks, "TEXT", "hero")?.content || {}) as Partial<EpkHero>;
+  const linksData = (findEditorBlock(blocks, "LINK")?.content || {}) as EpkItemsBlock<StreamingLink>;
+  const audioData = (findEditorBlock(blocks, "AUDIO")?.content || {}) as EpkItemsBlock<EpkTrack>;
+  const videoData = (findEditorBlock(blocks, "VIDEO")?.content || {}) as EpkItemsBlock<EpkVideo>;
+  const imageData = (findEditorBlock(blocks, "IMAGE")?.content || {}) as EpkItemsBlock<EpkGalleryImage>;
+  const bioData = (findEditorBlock(blocks, "TEXT", "bio")?.content || {}) as Partial<EpkBio>;
+  const contactData = (findEditorBlock(blocks, "CONTACT")?.content || {}) as Partial<EpkContact>;
+  const gridData = (findEditorBlock(blocks, "GRID")?.content || {}) as EpkGridBlock;
 
   const hero: EpkHero = { artistName: heroData.artistName || page.title || "Artist", tagline: heroData.tagline || "", genre: heroData.genre || "", profileImage: heroData.profileImage || "", coverImage: heroData.coverImage || "" };
   const links: StreamingLink[] = linksData.items || [];

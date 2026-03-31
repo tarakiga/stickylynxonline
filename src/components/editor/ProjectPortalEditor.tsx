@@ -14,8 +14,9 @@ import { DeliverableCard } from "@/components/editor/DeliverableCard";
 import type { MilestoneWithReviews, Task, TaskStatus, Deliverable, DeliverableType } from "@/types/editor";
 import { DELIVERABLE_TYPE_OPTIONS } from "@/types/editor";
 import { Dropzone } from "@/components/ui/Dropzone";
-import { CheckCircle2, Clock, FileText, MessageSquare, AlertCircle, Plus, Save, Loader2, Eye, UploadCloud, Link as LinkIcon, AlignLeft, Mail, ShieldCheck, ShieldOff, Clipboard } from "lucide-react";
-import { getBaseUrl } from "@/lib/utils";
+import type { EditorPage } from "@/types/editor-page";
+import { findEditorBlock } from "@/types/editor-page";
+import { FileText, MessageSquare, AlertCircle, Plus, Save, Loader2, Eye, UploadCloud, Link as LinkIcon, Mail, ShieldCheck, ShieldOff, Clipboard } from "lucide-react";
 import { Toaster, showToast } from "@/components/ui/Toast";
 import { uploadAssetFile } from "@/lib/upload-client";
 
@@ -23,16 +24,42 @@ import { uploadAssetFile } from "@/lib/upload-client";
 let _seq = 0;
 function uid() { return `item-${Date.now()}-${++_seq}` }
 
+type PortalHeaderContent = {
+  clientName?: string
+  title?: string
+}
+
+type PortalStatusContent = {
+  text?: string
+  manualText?: string | null
+}
+
+type PortalTimelineContent = {
+  milestones?: MilestoneWithReviews[]
+  currentStep?: number
+}
+
+type PortalDeliverablesContent = {
+  items?: Deliverable[]
+}
+
+const DEFAULT_MILESTONES: MilestoneWithReviews[] = [
+  { id: "1", label: "Discovery", reviews: [], comments: [], tasks: [] },
+  { id: "2", label: "Wireframes", reviews: [], comments: [], tasks: [] },
+  { id: "3", label: "Visual", reviews: [], comments: [], tasks: [] },
+  { id: "4", label: "Development", reviews: [], comments: [], tasks: [] },
+  { id: "5", label: "Launch", reviews: [], comments: [], tasks: [] },
+]
+
 /* ─── Component ──────────────────────────────────────────────── */
-export function ProjectPortalEditor({ page }: { page: any }) {
+export function ProjectPortalEditor({ page }: { page: EditorPage }) {
   const blocks = page.blocks || [];
 
   // Extract data from blocks
-  const headerContent = blocks.find((b: any) => b.type === "PROJECT_HEADER")?.content || {};
-  const statusContent = blocks.find((b: any) => b.type === "STATUS_SUMMARY")?.content || {};
-  const timelineContent = blocks.find((b: any) => b.type === "TIMELINE")?.content || {};
-  const taskBoardContent = blocks.find((b: any) => b.type === "TASK_BOARD")?.content || {};
-  const deliverablesContent = blocks.find((b: any) => b.type === "DELIVERABLES")?.content || {};
+  const headerContent = (findEditorBlock(blocks, "PROJECT_HEADER")?.content || {}) as PortalHeaderContent;
+  const statusContent = (findEditorBlock(blocks, "STATUS_SUMMARY")?.content || {}) as PortalStatusContent;
+  const timelineContent = (findEditorBlock(blocks, "TIMELINE")?.content || {}) as PortalTimelineContent;
+  const deliverablesContent = (findEditorBlock(blocks, "DELIVERABLES")?.content || {}) as PortalDeliverablesContent;
 
   const [clientName, setClientName] = React.useState<string>(headerContent.clientName || "Your Client");
   const [clientEmail, setClientEmail] = React.useState<string>(page.clientEmail || "");
@@ -52,13 +79,7 @@ export function ProjectPortalEditor({ page }: { page: any }) {
 
   /* ── Milestones state (with reviews + comments + tasks) ──── */
   const [milestones, setMilestones] = React.useState<MilestoneWithReviews[]>(
-    (timelineContent.milestones || [
-      { id: "1", label: "Discovery" },
-      { id: "2", label: "Wireframes" },
-      { id: "3", label: "Visual" },
-      { id: "4", label: "Development" },
-      { id: "5", label: "Launch" },
-    ]).map((m: MilestoneWithReviews) => ({
+    (timelineContent.milestones || DEFAULT_MILESTONES).map((m) => ({
       ...m,
       reviews: m.reviews || [],
       comments: m.comments || [],
@@ -179,7 +200,7 @@ export function ProjectPortalEditor({ page }: { page: any }) {
       } else {
         showToast(String(data.error || data.detail || "Failed to send invitation"), "error");
       }
-    } catch (e: any) {
+    } catch {
       showToast("Failed to send invitation", "error");
     }
   };
@@ -198,11 +219,6 @@ export function ProjectPortalEditor({ page }: { page: any }) {
   };
   const handleAdvanceStep = () => { setCurrentStep((s) => Math.min(s + 1, milestones.length)); markDirty(); };
   const handleRegressStep = () => { setCurrentStep((s) => Math.max(s - 1, 1)); markDirty(); };
-
-  const handleStageUpdate = (updated: MilestoneWithReviews) => {
-    setMilestones((prev) => prev.map((m) => (m.id === updated.id ? updated : m)));
-    markDirty();
-  };
 
   /* ── Helpers: update tasks within a milestone ───────────── */
   const updateStageTasks = (stageId: string, updater: (tasks: Task[]) => Task[]) => {
@@ -228,12 +244,6 @@ export function ProjectPortalEditor({ page }: { page: any }) {
   const handleTaskStatusChange = (id: string, status: TaskStatus) => {
     if (!viewedMilestone) return;
     updateStageTasks(viewedMilestone.id, (prev) => prev.map((t) => t.id === id ? { ...t, status } : t));
-  };
-  const handleTaskAddComment = (id: string, text: string) => {
-    if (!viewedMilestone) return;
-    updateStageTasks(viewedMilestone.id, (prev) => prev.map((t) =>
-      t.id === id ? { ...t, comments: [...t.comments, { id: uid(), taskId: id, author: "You", text, timestamp: new Date().toLocaleString() }] } : t
-    ));
   };
   const handleSubmitWork = async () => {
     if (!submitTaskId || !viewedMilestone) return;

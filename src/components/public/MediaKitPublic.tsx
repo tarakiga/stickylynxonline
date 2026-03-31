@@ -4,7 +4,8 @@ import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
-import { StatCard } from "@/components/ui/StatCard";
+import type { EditorPage } from "@/types/editor-page";
+import { findEditorBlock } from "@/types/editor-page";
 
 type PlatformMetric = {
   id: string;
@@ -29,13 +30,37 @@ function ensureProtocol(url?: string) {
   return `https://${url}`;
 }
 
-export function MediaKitPublic({ page }: { page: any }) {
+type MediaKitHeroContent = {
+  name?: string
+  niche?: string
+  primaryCta?: string
+  profileImage?: string
+}
+
+type MediaKitBioContent = {
+  text?: string
+}
+
+type MediaKitMetricsContent = {
+  platforms?: PlatformMetric[]
+}
+
+type MediaKitServicesContent = {
+  services?: ServiceItem[]
+}
+
+type MediaKitContactContent = {
+  email?: string
+  website?: string
+}
+
+export function MediaKitPublic({ page }: { page: EditorPage }) {
   const blocks = page.blocks || [];
-  const hero = blocks.find((b: any) => b.type === "TEXT" && b.content?.section === "creator_hero")?.content || {};
-  const bio = blocks.find((b: any) => b.type === "TEXT" && b.content?.section === "creator_bio")?.content || {};
-  const metrics = (blocks.find((b: any) => b.type === "GRID" && b.content?.section === "platform_metrics")?.content?.platforms || []) as PlatformMetric[];
-  const services = (blocks.find((b: any) => b.type === "GRID" && b.content?.section === "services")?.content?.services || []) as ServiceItem[];
-  const contact = blocks.find((b: any) => b.type === "CONTACT")?.content || {};
+  const hero = (findEditorBlock(blocks, "TEXT", "creator_hero")?.content || {}) as MediaKitHeroContent;
+  const bio = (findEditorBlock(blocks, "TEXT", "creator_bio")?.content || {}) as MediaKitBioContent;
+  const metrics = ((findEditorBlock(blocks, "GRID", "platform_metrics")?.content || {}) as MediaKitMetricsContent).platforms || [];
+  const services = ((findEditorBlock(blocks, "GRID", "services")?.content || {}) as MediaKitServicesContent).services || [];
+  const contact = (findEditorBlock(blocks, "CONTACT")?.content || {}) as MediaKitContactContent;
 
   const [showRequestModal, setShowRequestModal] = React.useState(false);
   const [reqName, setReqName] = React.useState("");

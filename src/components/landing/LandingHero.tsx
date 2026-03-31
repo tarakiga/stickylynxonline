@@ -1,6 +1,6 @@
  "use client";
 import Link from 'next/link';
-import { ArrowRight, Play, Sparkles } from 'lucide-react';
+import { ArrowRight, Sparkles } from 'lucide-react';
 import { useUser } from '@clerk/nextjs';
 
 export function LandingHero() {

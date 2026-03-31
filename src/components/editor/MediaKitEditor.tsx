@@ -8,6 +8,9 @@ import { Badge } from "@/components/ui/Badge";
 import { Select } from "@/components/ui/Select";
 import { Dropzone } from "@/components/ui/Dropzone";
 import { uploadAssetFile } from "@/lib/upload-client";
+import Image from "next/image";
+import type { EditorPage } from "@/types/editor-page";
+import { findEditorBlock } from "@/types/editor-page";
 
 type PlatformMetric = {
   id: string;
@@ -27,16 +30,51 @@ type ServiceItem = {
   deliverables?: string[];
 };
 
+type MediaKitHeroContent = {
+  section?: string
+  name?: string
+  handle?: string
+  niche?: string
+  primaryCta?: string
+  profileImage?: string
+  logo?: string
+}
+
+type MediaKitBioContent = {
+  section?: string
+  text?: string
+}
+
+type MediaKitPlatformBlock = {
+  section?: string
+  platforms?: PlatformMetric[]
+}
+
+type MediaKitServicesBlock = {
+  section?: string
+  services?: ServiceItem[]
+}
+
+type MediaKitContactContent = {
+  email?: string
+  phone?: string
+  website?: string
+  managementName?: string
+  managementEmail?: string
+  briefForm?: {
+    enabled?: boolean
+  }
+}
+
 function uid(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 }
 
-export function MediaKitEditor({ page }: { page: any }) {
+export function MediaKitEditor({ page }: { page: EditorPage }) {
   const blocks = page.blocks || [];
 
   const findBlock = (type: string, section?: string) => {
-    if (section) return blocks.find((b: any) => b.type === type && b.content?.section === section) || null;
-    return blocks.find((b: any) => b.type === type) || null;
+    return findEditorBlock(blocks, type, section) || null;
   };
 
   const heroBlock = findBlock("TEXT", "creator_hero");
@@ -44,40 +82,43 @@ export function MediaKitEditor({ page }: { page: any }) {
   const metricsBlock = findBlock("GRID", "platform_metrics");
   const servicesBlock = findBlock("GRID", "services");
   const contactBlock = findBlock("CONTACT");
+  const heroContent = ((heroBlock?.content || {}) as MediaKitHeroContent);
+  const bioContent = ((bioBlock?.content || {}) as MediaKitBioContent);
+  const contactContent = ((contactBlock?.content || {}) as MediaKitContactContent);
 
-  const [heroName, setHeroName] = React.useState<string>(heroBlock?.content?.name || page.title || "");
-  const [heroHandle, setHeroHandle] = React.useState<string>(heroBlock?.content?.handle || page.handle || "");
-  const [heroNiche, setHeroNiche] = React.useState<string>(heroBlock?.content?.niche || "");
-  const [heroCta, setHeroCta] = React.useState<string>(heroBlock?.content?.primaryCta || "Request a campaign");
-  const [heroProfileImage, setHeroProfileImage] = React.useState<string>(heroBlock?.content?.profileImage || "");
+  const [heroName, setHeroName] = React.useState<string>(heroContent.name || page.title || "");
+  const [heroHandle, setHeroHandle] = React.useState<string>(heroContent.handle || page.handle || "");
+  const [heroNiche, setHeroNiche] = React.useState<string>(heroContent.niche || "");
+  const [heroCta, setHeroCta] = React.useState<string>(heroContent.primaryCta || "Request a campaign");
+  const [heroProfileImage, setHeroProfileImage] = React.useState<string>(heroContent.profileImage || "");
 
-  const [bioText, setBioText] = React.useState<string>(bioBlock?.content?.text || "");
+  const [bioText, setBioText] = React.useState<string>(bioContent.text || "");
 
   const [platforms, setPlatforms] = React.useState<PlatformMetric[]>(
-    (metricsBlock?.content?.platforms || []).map((p: any) => ({
-      id: p.id || uid("pf"),
-      name: p.name || "",
-      handle: p.handle || "",
-      url: (p.url || "").replace(/^https?:\/\//i, ""),
-      followers: typeof p.followers === "number" ? p.followers : undefined,
-      avgViews: typeof p.avgViews === "number" ? p.avgViews : undefined,
-      engagementRate: typeof p.engagementRate === "number" ? p.engagementRate : undefined,
-      notes: p.notes || "",
+    (((metricsBlock?.content || {}) as MediaKitPlatformBlock).platforms || []).map((platform) => ({
+      id: platform.id || uid("pf"),
+      name: platform.name || "",
+      handle: platform.handle || "",
+      url: (platform.url || "").replace(/^https?:\/\//i, ""),
+      followers: typeof platform.followers === "number" ? platform.followers : undefined,
+      avgViews: typeof platform.avgViews === "number" ? platform.avgViews : undefined,
+      engagementRate: typeof platform.engagementRate === "number" ? platform.engagementRate : undefined,
+      notes: platform.notes || "",
     }))
   );
 
   const [services, setServices] = React.useState<ServiceItem[]>(
-    (servicesBlock?.content?.services || []).map((s: any) => ({
-      id: s.id || uid("svc"),
-      name: s.name || "",
-      description: s.description || "",
-      deliverables: Array.isArray(s.deliverables) ? s.deliverables : [],
+    (((servicesBlock?.content || {}) as MediaKitServicesBlock).services || []).map((service) => ({
+      id: service.id || uid("svc"),
+      name: service.name || "",
+      description: service.description || "",
+      deliverables: Array.isArray(service.deliverables) ? service.deliverables : [],
     }))
   );
 
-  const [contactEmail, setContactEmail] = React.useState<string>(contactBlock?.content?.email || "");
-  const [contactPhone, setContactPhone] = React.useState<string>(contactBlock?.content?.phone || "");
-  const [contactWebsite, setContactWebsite] = React.useState<string>(contactBlock?.content?.website || "");
+  const [contactEmail, setContactEmail] = React.useState<string>(contactContent.email || "");
+  const [contactPhone, setContactPhone] = React.useState<string>(contactContent.phone || "");
+  const [contactWebsite, setContactWebsite] = React.useState<string>(contactContent.website || "");
   const [saving, setSaving] = React.useState(false);
   const [dirty, setDirty] = React.useState(false);
   const markDirty = () => setDirty(true);
@@ -103,11 +144,11 @@ export function MediaKitEditor({ page }: { page: any }) {
   async function handleSave() {
     setSaving(true);
     try {
-      const keep = (type: string, section?: string) => blocks.find((b: any) => (section ? b.type === type && b.content?.section === section : b.type === type)) || null;
+      const keep = (type: string, section?: string) => findEditorBlock(blocks, type, section) || null;
       const assemble = [
         {
           type: "TEXT",
-          content: { section: "creator_hero", name: heroName, handle: heroHandle, niche: heroNiche, primaryCta: heroCta, profileImage: heroProfileImage, logo: heroBlock?.content?.logo || "" },
+          content: { section: "creator_hero", name: heroName, handle: heroHandle, niche: heroNiche, primaryCta: heroCta, profileImage: heroProfileImage, logo: ((heroBlock?.content || {}) as MediaKitHeroContent).logo || "" },
           order: heroBlock?.order ?? 0,
         },
         {
@@ -151,9 +192,9 @@ export function MediaKitEditor({ page }: { page: any }) {
             email: contactEmail,
             phone: contactPhone,
             website: contactWebsite,
-            managementName: contactBlock?.content?.managementName || "",
-            managementEmail: contactBlock?.content?.managementEmail || "",
-            briefForm: contactBlock?.content?.briefForm || { enabled: false },
+            managementName: contactContent.managementName || "",
+            managementEmail: contactContent.managementEmail || "",
+            briefForm: contactContent.briefForm || { enabled: false },
           },
           order: contactBlock?.order ?? 8,
         },
@@ -227,7 +268,7 @@ export function MediaKitEditor({ page }: { page: any }) {
             {heroProfileImage && (
               <div className="mt-3 flex items-center gap-3">
                 <div className="w-16 h-16 rounded-xl overflow-hidden border border-divider bg-surface">
-                  <img src={heroProfileImage} alt="Profile preview" className="w-full h-full object-cover" />
+                  <Image src={heroProfileImage} alt="Profile preview" width={64} height={64} unoptimized className="h-full w-full object-cover" />
                 </div>
                 <Button variant="ghost" onClick={() => { setHeroProfileImage(""); markDirty(); }} className="text-xs py-1.5 px-3 rounded-lg h-auto cursor-pointer">Remove</Button>
               </div>

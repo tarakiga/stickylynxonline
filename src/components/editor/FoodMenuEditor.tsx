@@ -9,6 +9,7 @@ import { Select } from "@/components/ui/Select";
 import { Dropzone } from "@/components/ui/Dropzone";
 import { MultiContactInput } from "@/components/ui/MultiContactInput";
 import { PriceRepeater, type PriceOption } from "@/components/ui/PriceRepeater";
+import Image from "next/image";
 import { uploadAssetFile } from "@/lib/upload-client";
 import { currencySymbol } from "@/lib/utils";
 import { LocationSearch } from "@/components/ui/LocationSearch";
@@ -219,11 +220,11 @@ export function FoodMenuEditor({
           <Textarea rows={2} placeholder="Short description" value={shortDesc} onChange={(e) => { setShortDesc(e.target.value); markDirty(); }} />
           <div className="sm:col-span-2">
             <Dropzone label="Hero Image" hint="PNG, JPG up to 10MB" accept="image/*" onChange={async (file) => { const uploaded = await uploadAssetFile(file, { kind: "image", pageId: page.id }); setHeroImage(uploaded.secureUrl); markDirty(); }} />
-            {heroImage && <div className="mt-3"><img src={heroImage} alt="Hero" className="w-full max-h-48 object-cover rounded-xl border border-divider" /></div>}
+            {heroImage && <div className="mt-3"><Image src={heroImage} alt="Hero" width={1200} height={384} unoptimized className="max-h-48 w-full rounded-xl border border-divider object-cover" /></div>}
           </div>
           <div className="sm:col-span-2">
             <Dropzone label="Restaurant Logo" hint={canUseCustomBranding ? "PNG, JPG up to 10MB" : customBrandingMessage} accept="image/*" disabled={!canUseCustomBranding} onChange={async (file) => { const uploaded = await uploadAssetFile(file, { kind: "image", pageId: page.id }); setLogoImage(uploaded.secureUrl); markDirty(); }} />
-            {logoImage && <div className="mt-3"><img src={logoImage} alt="Logo" className="h-16 w-16 object-cover rounded-xl border border-divider" /></div>}
+            {logoImage && <div className="mt-3"><Image src={logoImage} alt="Logo" width={64} height={64} unoptimized className="h-16 w-16 rounded-xl border border-divider object-cover" /></div>}
           </div>
         </div>
       </Card>
@@ -346,7 +347,7 @@ export function FoodMenuEditor({
                         setSections(prev => prev.map(x => x.id === s.id ? { ...x, items: x.items.map(y => y.id === it.id ? { ...y, photo: uploaded.secureUrl } : y) } : x));
                         markDirty();
                       }} />
-                      {it.photo && <img src={it.photo} alt="Item" className="mt-2 w-full max-h-40 object-cover rounded-lg border border-divider" />}
+                      {it.photo && <Image src={it.photo} alt="Item" width={800} height={320} unoptimized className="mt-2 max-h-40 w-full rounded-lg border border-divider object-cover" />}
                     </div>
                     <div className="mt-3 space-y-2">
                       <span className="text-xs font-bold text-text-secondary uppercase tracking-widest">Variations & Prices</span>

@@ -24,18 +24,16 @@ export async function GET(request: NextRequest) {
   if (!page) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
-  if ((page.category as any) !== "PROJECT_PORTAL") {
+  if (page.category !== "PROJECT_PORTAL") {
     return NextResponse.json({ error: "Not applicable" }, { status: 400 });
   }
-
-  const p: any = page as any;
   const now = new Date();
 
   let ok = false;
   let val = "";
-  if (pin && p.clientPinEnabled && p.clientPinHash) {
+  if (pin && page.clientPinEnabled && page.clientPinHash) {
     const hash = sha256Hex(pin);
-    ok = hash === p.clientPinHash;
+    ok = hash === page.clientPinHash;
     val = hash;
   }
 
@@ -45,7 +43,7 @@ export async function GET(request: NextRequest) {
 
   await prisma.page.update({
     where: { id: page.id },
-    data: { lastClientAccessAt: now } as any,
+    data: { lastClientAccessAt: now },
   });
 
   const res = NextResponse.redirect(new URL(`/${handle}`, request.url));

@@ -8,7 +8,9 @@ import { Button } from "@/components/ui/Button";
 import { AttachmentCard } from "@/components/ui/AttachmentCard";
 import { Modal } from "@/components/ui/Modal";
 import { TASK_STATUS_META } from "@/types/editor";
-import type { Task, TaskStatus, Deliverable, DeliverableType, MilestoneWithReviews } from "@/types/editor";
+import type { Task, Deliverable, DeliverableType, MilestoneWithReviews } from "@/types/editor";
+import type { EditorPage } from "@/types/editor-page";
+import { findEditorBlock } from "@/types/editor-page";
 
 function ensureProtocol(url: string): string {
   if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("/")) return url;
@@ -169,12 +171,30 @@ function PublicTaskCard({ task, pageHandle }: { task: Task & { stageLabel: strin
   );
 }
 
-export function ProjectPortalPublic({ page }: { page: any }) {
+type PortalHeaderContent = {
+  clientName?: string
+  title?: string
+}
+
+type PortalStatusContent = {
+  text?: string
+}
+
+type PortalTimelineContent = {
+  milestones?: MilestoneWithReviews[]
+  currentStep?: number
+}
+
+type PortalDeliverablesContent = {
+  items?: Deliverable[]
+}
+
+export function ProjectPortalPublic({ page }: { page: EditorPage }) {
   const blocks = page.blocks || [];
-  const headerContent = blocks.find((b: any) => b.type === "PROJECT_HEADER")?.content || {};
-  const statusContent = blocks.find((b: any) => b.type === "STATUS_SUMMARY")?.content || {};
-  const timelineContent = blocks.find((b: any) => b.type === "TIMELINE")?.content || {};
-  const deliverablesContent = blocks.find((b: any) => b.type === "DELIVERABLES")?.content || {};
+  const headerContent = (findEditorBlock(blocks, "PROJECT_HEADER")?.content || {}) as PortalHeaderContent;
+  const statusContent = (findEditorBlock(blocks, "STATUS_SUMMARY")?.content || {}) as PortalStatusContent;
+  const timelineContent = (findEditorBlock(blocks, "TIMELINE")?.content || {}) as PortalTimelineContent;
+  const deliverablesContent = (findEditorBlock(blocks, "DELIVERABLES")?.content || {}) as PortalDeliverablesContent;
 
   const milestones: MilestoneWithReviews[] = (timelineContent.milestones || []).map((m: MilestoneWithReviews) => ({
     ...m, reviews: m.reviews || [], comments: m.comments || [], tasks: m.tasks || [],
@@ -219,7 +239,7 @@ export function ProjectPortalPublic({ page }: { page: any }) {
 
           <div className="bg-background/80 backdrop-blur-sm border border-divider rounded-3xl p-6 shadow-small">
               <p className="text-lg font-bold text-text-primary leading-relaxed opacity-90 italic">
-                "{statusContent.text || "Currently preparing the project vision and discovery documents."}"
+                &quot;{statusContent.text || "Currently preparing the project vision and discovery documents."}&quot;
               </p>
           </div>
 

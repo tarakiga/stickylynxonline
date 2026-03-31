@@ -18,9 +18,10 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> 
 export const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ({ className, icon, endIcon, prefix, suffix, error, success, labelInside, floatingLabel, actionButton, type, id, ...props }, ref) => {
     const [showPassword, setShowPassword] = React.useState(false)
+    const generatedId = React.useId()
     const isPassword = type === "password"
     const inputType = isPassword ? (showPassword ? "text" : "password") : type
-    const inputId = id || React.useId()
+    const inputId = id || generatedId
     const hasIcon = !!icon
     const hasPrefix = typeof prefix === "string" && prefix.length > 0
     const leftPadClass =

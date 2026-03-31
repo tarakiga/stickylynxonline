@@ -18,10 +18,9 @@ export function Sidebar() {
   return (
     <aside className="w-64 bg-surface border-r border-divider hidden md:flex flex-col min-h-screen sticky top-0">
       <div className="p-6">
-        <div className="mb-8 rounded-3xl border border-primary/15 bg-primary/5 p-4 shadow-sm">
-          <div className="w-12 h-12 rounded-xl shadow-premium overflow-hidden border border-primary/15 bg-background">
-            <Image src="/logo.png" alt="Stickylynx" width={48} height={48} className="w-full h-full object-contain" priority />
-          </div>
+        <div className="mb-8 flex items-center gap-3">
+          <Image src="/logo.png" alt="Stickylynx" width={48} height={48} className="h-12 w-12 object-contain" priority />
+          <span className="text-lg font-black tracking-tight text-text-primary">Stickylynx</span>
         </div>
         <nav className="space-y-2 flex-1">
           {links.map((link) => {

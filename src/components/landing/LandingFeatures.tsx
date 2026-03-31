@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Music, Utensils, FileText, Layout, Clock, Monitor, Smartphone, Globe } from 'lucide-react';
+import { Music, Utensils, FileText, Clock } from 'lucide-react';
 
 export function LandingFeatures() {
   const categories = [
@@ -35,7 +35,7 @@ export function LandingFeatures() {
         <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
            <h2 className="text-sm font-black text-primary uppercase tracking-[0.2em] mb-2 leading-none">The At-a-Glance Platform</h2>
            <h3 className="text-3xl sm:text-5xl font-black text-text-primary tracking-tight">One Platform, Endless Possibilities.</h3>
-           <p className="text-lg text-text-secondary font-medium">Whether you're an artist, entrepreneur, or creative, Stickylynx provides the power to build your digital universe exactly how you want it.</p>
+           <p className="text-lg text-text-secondary font-medium">Whether you&apos;re an artist, entrepreneur, or creative, Stickylynx provides the power to build your digital universe exactly how you want it.</p>
         </div>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
