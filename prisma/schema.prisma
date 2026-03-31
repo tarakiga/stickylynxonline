@@ -102,6 +102,7 @@ enum NotificationEventType {
 
 enum PageCategory {
   FOOD_MENU
+  SERVICE_MENU
   RESUME
   EPK
   GENERIC

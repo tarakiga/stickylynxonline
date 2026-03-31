@@ -8,9 +8,11 @@ import { ProjectPortalEditor } from "@/components/editor/ProjectPortalEditor";
 import { EpkEditor } from "@/components/editor/EpkEditor";
 import { MediaKitEditor } from "@/components/editor/MediaKitEditor";
 import { FoodMenuEditor } from "@/components/editor/FoodMenuEditor";
+import { ServiceMenuEditor } from "@/components/editor/ServiceMenuEditor";
 import { PropertyListingEditor } from "@/components/editor/PropertyListingEditor";
 import { hasFeature } from "@/lib/plan-rules";
 import { getUserPlanSnapshot } from "@/lib/subscription";
+import { SERVICE_MENU_CATEGORY } from "@/lib/service-menu";
 
 export default async function EditorPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -69,6 +71,8 @@ export default async function EditorPage({ params }: { params: Promise<{ id: str
                canUseAdvancedFoodMenu={hasFeature(planSnapshot.plan, "ADVANCED_FOOD_MENU")}
                canUseCustomBranding={hasFeature(planSnapshot.plan, "CUSTOM_BRANDING")}
              />
+         ) : (page.category as string) === SERVICE_MENU_CATEGORY ? (
+             <ServiceMenuEditor page={page} defaultCurrency={defaultCurrency} />
          ) : (page.category as string) === "PROPERTY_LISTING" ? (
              <PropertyListingEditor page={page} defaultCurrency={defaultCurrency} />
          ) : (

@@ -9,6 +9,50 @@ import { Plus } from "lucide-react";
 import { Suspense } from "react";
 import { ensureUserAccount, getUserPlanSnapshot } from "@/lib/subscription";
 
+type DashboardPageRow = {
+  id: string
+  title: string | null
+  handle: string
+  category: string
+}
+
+function isUnknownPageCategoryError(error: unknown) {
+  if (!error || typeof error !== "object") {
+    return false
+  }
+
+  const code = "code" in error ? error.code : undefined
+  const message = "message" in error ? error.message : undefined
+
+  return code === "P2023" && typeof message === "string" && message.includes("PageCategory")
+}
+
+async function getDashboardPages(userId: string): Promise<DashboardPageRow[]> {
+  try {
+    return await prisma.page.findMany({
+      where: { userId },
+      orderBy: { updatedAt: "desc" },
+      select: {
+        id: true,
+        title: true,
+        handle: true,
+        category: true,
+      },
+    })
+  } catch (error) {
+    if (!isUnknownPageCategoryError(error)) {
+      throw error
+    }
+
+    return prisma.$queryRaw<DashboardPageRow[]>`
+      SELECT "id", "title", "handle", "category"::text AS "category"
+      FROM "Page"
+      WHERE "userId" = ${userId}
+      ORDER BY "updatedAt" DESC
+    `
+  }
+}
+
 export default async function DashboardPage() {
   const { userId } = await auth();
   const user = await currentUser();
@@ -27,10 +71,7 @@ export default async function DashboardPage() {
     });
   }
 
-  const pages = await prisma.page.findMany({
-    where: { userId },
-    orderBy: { updatedAt: "desc" },
-  });
+  const pages = await getDashboardPages(userId);
   const planSnapshot = await getUserPlanSnapshot(userId);
 
   return (

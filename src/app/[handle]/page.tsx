@@ -5,11 +5,13 @@ import { ProjectPortalPublic } from "@/components/public/ProjectPortalPublic";
 import { EpkPublic } from "@/components/public/EpkPublic";
 import { MediaKitPublic } from "@/components/public/MediaKitPublic";
 import { FoodMenuPublic } from "@/components/public/FoodMenuPublic";
+import { ServiceMenuPublic } from "@/components/public/ServiceMenuPublic";
 import { PropertyListingPublic } from "@/components/public/PropertyListingPublic";
 import { PortalDeny } from "@/components/public/PortalDeny";
 import { cookies } from "next/headers";
 import { auth } from "@clerk/nextjs/server";
 import { getBrandCssVariables, normalizeBrandProfile } from "@/lib/branding";
+import { SERVICE_MENU_CATEGORY } from "@/lib/service-menu";
 
 export default async function PublicPage({ params }: { params: Promise<{ handle: string }> }) {
   const { handle } = await params;
@@ -52,6 +54,8 @@ export default async function PublicPage({ params }: { params: Promise<{ handle:
            <MediaKitPublic page={page} />
        ) : (page.category as string) === "FOOD_MENU" ? (
            <FoodMenuPublic page={page} />
+       ) : (page.category as string) === SERVICE_MENU_CATEGORY ? (
+           <ServiceMenuPublic page={page} />
        ) : (page.category as string) === "PROPERTY_LISTING" ? (
            <PropertyListingPublic page={page} />
        ) : (

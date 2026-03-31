@@ -9,6 +9,7 @@ import { showToast } from "@/components/ui/Toast";
 
 import { createLynxPage } from "@/app/actions";
 import { PROPERTY_LISTING_CATEGORY } from "@/lib/property-listing";
+import { SERVICE_MENU_CATEGORY } from "@/lib/service-menu";
 
 type CreateLynxDrawerProps = {
   planLabel: string
@@ -53,6 +54,7 @@ export function CreateLynxDrawer({
   const isProjectPortal = categoryStr === "PROJECT_PORTAL";
   const isEpk = categoryStr === "EPK";
   const isFoodMenu = categoryStr === "FOOD_MENU";
+  const isServiceMenu = categoryStr === SERVICE_MENU_CATEGORY;
   const isMediaKit = categoryStr === "INFLUENCER_MEDIA_KIT";
   const isPropertyListing = categoryStr === PROPERTY_LISTING_CATEGORY;
   const totalLimitReached = totalPages >= maxPages;
@@ -269,6 +271,13 @@ export function CreateLynxDrawer({
                    <div className="bg-primary/5 border border-primary/20 rounded-2xl p-5 text-text-primary text-sm flex gap-3 shadow-sm">
                      <Layers className="text-primary mt-1 shrink-0" size={18} />
                      <p>Your Food Menu will include <strong>brand header</strong>, <strong>service info</strong>, <strong>menu sections</strong>, and <strong>extras</strong>. You can add sections and items with size/option-based pricing in the editor.</p>
+                   </div>
+                 </>
+              ) : isServiceMenu ? (
+                 <>
+                   <div className="bg-primary/5 border border-primary/20 rounded-2xl p-5 text-text-primary text-sm flex gap-3 shadow-sm">
+                     <Layers className="text-primary mt-1 shrink-0" size={18} />
+                     <p>Your Service Menu will include a <strong>hero</strong>, <strong>about & trust</strong>, <strong>service categories</strong>, <strong>featured packages</strong>, <strong>booking & availability</strong>, <strong>location & contact</strong>, <strong>testimonials</strong>, and <strong>FAQ</strong> sections.</p>
                    </div>
                  </>
               ) : isPropertyListing ? (

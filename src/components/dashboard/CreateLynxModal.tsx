@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { X } from "lucide-react";
 import { CategoryCard } from "@/components/ui/CategoryCard";
 import { PROPERTY_LISTING_CATEGORY } from "@/lib/property-listing";
+import { SERVICE_MENU_CATEGORY } from "@/lib/service-menu";
 
 type CreateLynxModalProps = {
   planLabel: string
@@ -34,6 +35,7 @@ export function CreateLynxModal({
     { title: "Project Portal", description: totalLimitReached ? `${planLabel} includes up to ${maxPages} Lynx.` : "Clear project status, tasks, updates, and feedback.", imageUrl: "/categories/project-portal.jpg", type: "PROJECT_PORTAL", enabled: !totalLimitReached },
     { title: "EPK", description: totalLimitReached ? `${planLabel} includes up to ${maxPages} Lynx.` : "Electronic Press Kit for artists and musicians.", imageUrl: "/categories/epk.jpg", type: "EPK", enabled: !totalLimitReached },
     { title: "Food Menu", description: totalLimitReached ? `${planLabel} includes up to ${maxPages} Lynx.` : foodMenuLimitReached ? `${planLabel} includes ${maxFoodMenus} Food Menu${maxFoodMenus === 1 ? "" : "s"}.` : "Mobile-first digital menu with sections, variations, and multi-location support.", imageUrl: "/categories/food-menu.jpg", type: "FOOD_MENU", enabled: !totalLimitReached && !foodMenuLimitReached },
+    { title: "Service Menu", description: totalLimitReached ? `${planLabel} includes up to ${maxPages} Lynx.` : "Service catalog with time-based pricing, booking requests, testimonials, and FAQs.", imageUrl: "/categories/service-menu.jpg", type: SERVICE_MENU_CATEGORY, enabled: !totalLimitReached },
     { title: "Influencer Media Kit", description: totalLimitReached ? `${planLabel} includes up to ${maxPages} Lynx.` : "Live media kit for creators to pitch brands and agencies.", imageUrl: "/categories/influencer.jpg", type: "INFLUENCER_MEDIA_KIT", enabled: !totalLimitReached },
     { title: "Property Listing", description: totalLimitReached ? `${planLabel} includes up to ${maxPages} Lynx.` : "Premium real estate pages with gallery, specs, pricing, and agent contact built in.", imageUrl: "/categories/property-listing.jpg", type: PROPERTY_LISTING_CATEGORY, enabled: !totalLimitReached },
   ];

@@ -1,0 +1,1 @@
+ALTER TYPE "PageCategory" ADD VALUE 'SERVICE_MENU';

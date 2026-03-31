@@ -9,6 +9,7 @@ import { getBaseUrl } from "@/lib/utils";
 import { ensureUserAccount, getPlanLimitError, getUserPlanSnapshot } from "@/lib/subscription";
 import { sendPlanNotification } from "@/lib/notifications";
 import { createDefaultPropertyListingBlocks } from "@/lib/property-listing";
+import { createDefaultServiceMenuBlocks } from "@/lib/service-menu";
 
 type CreateLynxPageError = {
   code: string
@@ -190,6 +191,29 @@ export async function createLynxPage(data: {
           data: { pageId: page.id, type: b.type as BlockType, content: b.content, order: b.order }
         })
       ));
+    }
+
+    if (category === "SERVICE_MENU") {
+      const account = await tx.user.findUnique({
+        where: { id: userId },
+        select: { currencyCode: true },
+      })
+
+      const serviceBlocks = createDefaultServiceMenuBlocks({
+        title: data.title || data.handle,
+        currency: account?.currencyCode || "USD",
+      })
+
+      await Promise.all(serviceBlocks.map((block) =>
+        tx.block.create({
+          data: {
+            pageId: page.id,
+            type: block.type as BlockType,
+            content: block.content,
+            order: block.order,
+          }
+        })
+      ))
     }
 
     if (category === "PROPERTY_LISTING") {
