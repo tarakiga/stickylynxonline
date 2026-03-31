@@ -8,13 +8,21 @@ import { Textarea } from "@/components/ui/Textarea";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Select } from "@/components/ui/Select";
+import { Tabs } from "@/components/ui/Tabs";
+import { Toaster, showToast } from "@/components/ui/Toast";
 import { Dropzone } from "@/components/ui/Dropzone";
 import { LocationSearch } from "@/components/ui/LocationSearch";
 import { uploadAssetFile } from "@/lib/upload-client";
 import { currencySymbol } from "@/lib/utils";
 import type { EditorPage } from "@/types/editor-page";
 import { findEditorBlock } from "@/types/editor-page";
-import { BOOKING_STATUS_OPTIONS, getBookingSlotKey, type BookingStatus, type ServiceBookingRow } from "@/lib/service-bookings";
+import {
+  BOOKING_STATUS_OPTIONS,
+  BOOKING_TAB_OPTIONS,
+  type BookingManagementTab,
+  type BookingStatus,
+  type ServiceBookingRow,
+} from "@/lib/service-bookings";
 import {
   BOOKING_PLATFORM_OPTIONS,
   CONTACT_TYPE_OPTIONS,
@@ -113,8 +121,8 @@ function formatBookingDate(value: string) {
 }
 
 function bookingStatusTone(status: BookingStatus) {
-  if (status === "CONFIRMED") return "success"
-  if (status === "CANCELED" || status === "DECLINED") return "warning"
+  if (status === "CONFIRMED" || status === "COMPLETED") return "success"
+  if (status === "CANCELED" || status === "DECLINED" || status === "NO_SHOW") return "warning"
   return "info"
 }
 
@@ -134,6 +142,33 @@ const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 type ServiceMenuPage = EditorPage & {
   blocks?: Array<{ type: string; content?: unknown; order?: number }>
+};
+
+type BookingFilterValue = BookingStatus | "ALL";
+type BookingSummary = { pending: number; confirmed: number; closed: number };
+type BookingPagination = {
+  page: number;
+  pageSize: number;
+  totalCount: number;
+  totalPages: number;
+  hasPreviousPage: boolean;
+  hasNextPage: boolean;
+};
+type BookingTabCounts = Record<BookingManagementTab, number>;
+
+const defaultBookingSummary: BookingSummary = { pending: 0, confirmed: 0, closed: 0 };
+const defaultBookingPagination: BookingPagination = {
+  page: 1,
+  pageSize: 20,
+  totalCount: 0,
+  totalPages: 1,
+  hasPreviousPage: false,
+  hasNextPage: false,
+};
+const defaultBookingTabCounts: BookingTabCounts = {
+  TODAY: 0,
+  UPCOMING: 0,
+  PAST: 0,
 };
 
 export function ServiceMenuEditor({
@@ -298,7 +333,16 @@ export function ServiceMenuEditor({
   const [dirty, setDirty] = React.useState(false);
   const [bookings, setBookings] = React.useState<ServiceBookingRow[]>([]);
   const [bookingsLoading, setBookingsLoading] = React.useState(true);
-  const [bookingFilter, setBookingFilter] = React.useState<BookingStatus | "ALL">("ALL");
+  const [bookingTab, setBookingTab] = React.useState<BookingManagementTab>("TODAY");
+  const [bookingFilter, setBookingFilter] = React.useState<BookingFilterValue>("ALL");
+  const [bookingSearch, setBookingSearch] = React.useState("");
+  const deferredBookingSearch = React.useDeferredValue(bookingSearch.trim());
+  const [bookingDateFrom, setBookingDateFrom] = React.useState("");
+  const [bookingDateTo, setBookingDateTo] = React.useState("");
+  const [bookingPage, setBookingPage] = React.useState(1);
+  const [bookingSummary, setBookingSummary] = React.useState<BookingSummary>(defaultBookingSummary);
+  const [bookingPagination, setBookingPagination] = React.useState<BookingPagination>(defaultBookingPagination);
+  const [bookingTabCounts, setBookingTabCounts] = React.useState<BookingTabCounts>(defaultBookingTabCounts);
   const [bookingActionId, setBookingActionId] = React.useState<string | null>(null);
 
   const markDirty = React.useCallback(() => setDirty(true), []);
@@ -307,18 +351,67 @@ export function ServiceMenuEditor({
   const loadBookings = React.useCallback(async () => {
     setBookingsLoading(true);
     try {
-      const response = await fetch(`/api/bookings/manage/${page.id}`);
+      const params = new URLSearchParams({
+        tab: bookingTab,
+        page: `${bookingPage}`,
+      });
+
+      if (bookingFilter !== "ALL") {
+        params.set("status", bookingFilter);
+      }
+
+      if (deferredBookingSearch) {
+        params.set("search", deferredBookingSearch);
+      }
+
+      if (bookingDateFrom) {
+        params.set("from", bookingDateFrom);
+      }
+
+      if (bookingDateTo) {
+        params.set("to", bookingDateTo);
+      }
+
+      const response = await fetch(`/api/bookings/manage/${page.id}?${params.toString()}`, { cache: "no-store" });
       if (!response.ok) {
         setBookings([]);
+        setBookingSummary(defaultBookingSummary);
+        setBookingPagination(defaultBookingPagination);
+        showToast("We could not load bookings right now.", "error");
         return;
       }
 
       const payload = await response.json();
       setBookings(Array.isArray(payload.bookings) ? payload.bookings : []);
+      setBookingSummary({
+        pending: typeof payload.summary?.pending === "number" ? payload.summary.pending : 0,
+        confirmed: typeof payload.summary?.confirmed === "number" ? payload.summary.confirmed : 0,
+        closed: typeof payload.summary?.closed === "number" ? payload.summary.closed : 0,
+      });
+      setBookingTabCounts({
+        TODAY: typeof payload.tabCounts?.TODAY === "number" ? payload.tabCounts.TODAY : 0,
+        UPCOMING: typeof payload.tabCounts?.UPCOMING === "number" ? payload.tabCounts.UPCOMING : 0,
+        PAST: typeof payload.tabCounts?.PAST === "number" ? payload.tabCounts.PAST : 0,
+      });
+
+      const nextPagination: BookingPagination = {
+        page: typeof payload.pagination?.page === "number" ? payload.pagination.page : 1,
+        pageSize: typeof payload.pagination?.pageSize === "number" ? payload.pagination.pageSize : 20,
+        totalCount: typeof payload.pagination?.totalCount === "number" ? payload.pagination.totalCount : 0,
+        totalPages: typeof payload.pagination?.totalPages === "number" ? payload.pagination.totalPages : 1,
+        hasPreviousPage: Boolean(payload.pagination?.hasPreviousPage),
+        hasNextPage: Boolean(payload.pagination?.hasNextPage),
+      };
+
+      setBookingPagination(nextPagination);
+
+      if (nextPagination.page !== bookingPage) {
+        setBookingPage(nextPagination.page);
+      }
     } finally {
       setBookingsLoading(false);
     }
-  }, [page.id]);
+  }, [bookingDateFrom, bookingDateTo, bookingFilter, bookingPage, bookingTab, deferredBookingSearch, page.id]);
 
   React.useEffect(() => {
     void loadBookings();
@@ -335,11 +428,12 @@ export function ServiceMenuEditor({
 
       if (!response.ok) {
         const payload = await response.json().catch(() => null);
-        alert(payload?.error || "Failed to update booking");
+        showToast(payload?.error || "Failed to update booking", "error");
         return;
       }
 
       await loadBookings();
+      showToast("Booking status updated", "success");
     } finally {
       setBookingActionId(null);
     }
@@ -356,48 +450,36 @@ export function ServiceMenuEditor({
 
       if (!response.ok) {
         const payload = await response.json().catch(() => null);
-        alert(payload?.error || "Failed to send the rebook email");
+        showToast(payload?.error || "Failed to send the rebook email", "error");
         return;
       }
 
       await loadBookings();
+      showToast("Rebook email sent", "success");
     } finally {
       setBookingActionId(null);
     }
   }
 
-  const visibleBookings = React.useMemo(
-    () => bookings.filter((booking) => bookingFilter === "ALL" ? true : booking.status === bookingFilter),
-    [bookingFilter, bookings]
-  );
+  const hasBookingFilters = bookingFilter !== "ALL" || bookingSearch.length > 0 || bookingDateFrom.length > 0 || bookingDateTo.length > 0;
+  const bookingRangeStart = bookingPagination.totalCount === 0 ? 0 : (bookingPagination.page - 1) * bookingPagination.pageSize + 1;
+  const bookingRangeEnd = bookingPagination.totalCount === 0
+    ? 0
+    : Math.min(bookingPagination.page * bookingPagination.pageSize, bookingPagination.totalCount);
+  const bookingEmptyMessage =
+    bookingTab === "TODAY"
+      ? "No bookings are scheduled for today with the current filters."
+      : bookingTab === "UPCOMING"
+        ? "No upcoming bookings match the current filters."
+        : "No past bookings match the current filters.";
 
-  const bookingSummary = React.useMemo(() => ({
-    pending: bookings.filter((booking) => booking.status === "PENDING").length,
-    confirmed: bookings.filter((booking) => booking.status === "CONFIRMED").length,
-    completed: bookings.filter((booking) => booking.status === "CANCELED" || booking.status === "DECLINED").length,
-  }), [bookings]);
-
-  const doubleBookedSlotKeys = React.useMemo(() => {
-    const counts = new Map<string, number>()
-
-    bookings
-      .filter((booking) => booking.status === "PENDING" || booking.status === "CONFIRMED")
-      .forEach((booking) => {
-        const key = getBookingSlotKey(booking)
-        counts.set(key, (counts.get(key) || 0) + 1)
-      })
-
-    return new Set(
-      Array.from(counts.entries())
-        .filter(([, count]) => count > 1)
-        .map(([key]) => key)
-    )
-  }, [bookings]);
-
-  const confirmedSlotKeys = React.useMemo(
-    () => new Set(bookings.filter((booking) => booking.status === "CONFIRMED").map((booking) => getBookingSlotKey(booking))),
-    [bookings]
-  );
+  function resetBookingFilters() {
+    setBookingFilter("ALL");
+    setBookingSearch("");
+    setBookingDateFrom("");
+    setBookingDateTo("");
+    setBookingPage(1);
+  }
 
   const actionButtons = (
     <>
@@ -642,7 +724,9 @@ export function ServiceMenuEditor({
   }
 
   return (
-    <div className="w-full max-w-5xl mx-auto space-y-8">
+    <>
+      <Toaster />
+      <div className="w-full max-w-5xl mx-auto space-y-8">
       <div className="bg-primary/5 border border-primary/20 rounded-2xl p-4 flex flex-col items-start justify-between gap-3 shadow-sm sm:flex-row sm:items-center">
         <div className="flex items-center gap-2 text-primary text-sm font-semibold">
           <Badge variant="primary">Service Menu</Badge>
@@ -855,21 +939,73 @@ export function ServiceMenuEditor({
       </Card>
 
       <Card className="rounded-3xl border border-divider bg-surface p-6 shadow-sm space-y-5">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-4">
           <div>
             <h3 className="font-bold text-xl text-text-primary">Booking Management</h3>
-            <p className="text-sm text-text-secondary mt-1">Review inbound requests, confirm valid slots, and keep the calendar protected from double bookings.</p>
+            <p className="text-sm text-text-secondary mt-1">Keep the queue focused on what needs attention now with dedicated Today, Upcoming, and Past booking views.</p>
           </div>
-          <div className="flex items-center gap-2">
-            <Select
-              label="Filter"
-              value={bookingFilter}
-              onChange={(event) => setBookingFilter(event.target.value as BookingStatus | "ALL")}
-              options={[{ label: "All statuses", value: "ALL" }, ...BOOKING_STATUS_OPTIONS]}
+          <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
+            <Tabs
+              tabs={BOOKING_TAB_OPTIONS.map((option) => ({
+                id: option.value,
+                label: `${option.label} (${bookingTabCounts[option.value]})`,
+              }))}
+              value={bookingTab}
+              onChange={(value) => {
+                setBookingTab(value as BookingManagementTab);
+                setBookingPage(1);
+              }}
+              className="w-full xl:w-auto"
             />
-            <Button variant="ghost" onClick={() => void loadBookings()} className="text-xs py-1.5 px-3 rounded-lg h-auto cursor-pointer">
-              Refresh
-            </Button>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(240px,1.3fr)_220px_170px_170px_auto_auto] xl:items-end">
+              <Input
+                labelInside="Search"
+                value={bookingSearch}
+                onChange={(event) => {
+                  setBookingSearch(event.target.value);
+                  setBookingPage(1);
+                }}
+                placeholder="Search client name, phone, or email"
+              />
+              <Select
+                label="Status"
+                value={bookingFilter}
+                onChange={(event) => {
+                  setBookingFilter(event.target.value as BookingFilterValue);
+                  setBookingPage(1);
+                }}
+                options={[{ label: "All statuses", value: "ALL" }, ...BOOKING_STATUS_OPTIONS]}
+              />
+              <Input
+                labelInside="From"
+                type="date"
+                value={bookingDateFrom}
+                onChange={(event) => {
+                  setBookingDateFrom(event.target.value);
+                  setBookingPage(1);
+                }}
+              />
+              <Input
+                labelInside="To"
+                type="date"
+                value={bookingDateTo}
+                onChange={(event) => {
+                  setBookingDateTo(event.target.value);
+                  setBookingPage(1);
+                }}
+              />
+              <Button
+                variant="ghost"
+                onClick={resetBookingFilters}
+                disabled={!hasBookingFilters || bookingsLoading}
+                className="text-xs py-3 px-4 rounded-xl h-auto cursor-pointer"
+              >
+                Clear
+              </Button>
+              <Button variant="ghost" onClick={() => void loadBookings()} className="text-xs py-3 px-4 rounded-xl h-auto cursor-pointer">
+                Refresh
+              </Button>
+            </div>
           </div>
         </div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -902,7 +1038,7 @@ export function ServiceMenuEditor({
               </div>
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.18em] text-text-secondary">Closed</p>
-                <p className="text-2xl font-black text-text-primary">{bookingSummary.completed}</p>
+                <p className="text-2xl font-black text-text-primary">{bookingSummary.closed}</p>
               </div>
             </div>
           </div>
@@ -917,15 +1053,13 @@ export function ServiceMenuEditor({
           </div>
           {bookingsLoading ? (
             <div className="px-5 py-12 text-sm text-text-secondary">Loading bookings…</div>
-          ) : visibleBookings.length === 0 ? (
-            <div className="px-5 py-12 text-sm text-text-secondary">No bookings match the current filter yet.</div>
+          ) : bookings.length === 0 ? (
+            <div className="px-5 py-12 text-sm text-text-secondary">{bookingEmptyMessage}</div>
           ) : (
             <div className="divide-y divide-divider">
-              {visibleBookings.map((bookingRow) => {
-                const slotKey = getBookingSlotKey(bookingRow)
-                const isDoubleBooked = doubleBookedSlotKeys.has(slotKey)
-                const canRebook = bookingRow.status !== "CONFIRMED" && confirmedSlotKeys.has(slotKey)
-
+              {bookings.map((bookingRow) => {
+                const isDoubleBooked = Boolean(bookingRow.isDoubleBooked)
+                const canRebook = Boolean(bookingRow.hasConfirmedConflict)
                 return (
                   <div key={bookingRow.id} className="grid grid-cols-1 gap-4 px-5 py-4 lg:grid-cols-[1.2fr_1fr_1fr_1fr_1.1fr] lg:items-center">
                     <div className="space-y-1">
@@ -988,6 +1122,34 @@ export function ServiceMenuEditor({
               })}
             </div>
           )}
+        </div>
+        <div className="flex flex-col gap-3 rounded-2xl border border-divider bg-background px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-text-secondary">
+            {bookingPagination.totalCount === 0
+              ? "No bookings loaded"
+              : `Showing ${bookingRangeStart}-${bookingRangeEnd} of ${bookingPagination.totalCount}`}
+          </p>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold uppercase tracking-[0.18em] text-text-secondary">
+              Page {bookingPagination.page} of {bookingPagination.totalPages}
+            </span>
+            <Button
+              variant="ghost"
+              onClick={() => setBookingPage((current) => Math.max(1, current - 1))}
+              disabled={!bookingPagination.hasPreviousPage || bookingsLoading}
+              className="text-xs py-2.5 px-3 rounded-xl h-auto cursor-pointer"
+            >
+              Previous
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => setBookingPage((current) => current + 1)}
+              disabled={!bookingPagination.hasNextPage || bookingsLoading}
+              className="text-xs py-2.5 px-3 rounded-xl h-auto cursor-pointer"
+            >
+              Next
+            </Button>
+          </div>
         </div>
       </Card>
 
@@ -1074,14 +1236,15 @@ export function ServiceMenuEditor({
         </div>
       </Card>
 
-      <div className="sticky bottom-4 z-20">
-        <div className="ml-auto flex w-full max-w-md items-center justify-end gap-3 rounded-[1.6rem] border border-primary/20 bg-surface/95 p-3 shadow-premium backdrop-blur">
-          <div className="mr-auto px-2 text-xs font-semibold text-text-secondary">
-            {dirty ? "Unsaved changes" : "All changes saved"}
+        <div className="sticky bottom-4 z-20">
+          <div className="ml-auto flex w-full max-w-md items-center justify-end gap-3 rounded-[1.6rem] border border-primary/20 bg-surface/95 p-3 shadow-premium backdrop-blur">
+            <div className="mr-auto px-2 text-xs font-semibold text-text-secondary">
+              {dirty ? "Unsaved changes" : "All changes saved"}
+            </div>
+            {actionButtons}
           </div>
-          {actionButtons}
         </div>
       </div>
-    </div>
+    </>
   );
 }

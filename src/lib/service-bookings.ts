@@ -6,11 +6,20 @@ export const ACTIVE_BOOKING_STATUSES = ["PENDING", "CONFIRMED"] as const
 export const BOOKING_STATUS_OPTIONS = [
   { label: "Pending", value: "PENDING" },
   { label: "Confirmed", value: "CONFIRMED" },
+  { label: "Completed", value: "COMPLETED" },
+  { label: "No show", value: "NO_SHOW" },
   { label: "Canceled", value: "CANCELED" },
   { label: "Declined", value: "DECLINED" },
 ] as const
 
 export type BookingStatus = (typeof BOOKING_STATUS_OPTIONS)[number]["value"]
+export type BookingManagementTab = "TODAY" | "UPCOMING" | "PAST"
+
+export const BOOKING_TAB_OPTIONS: Array<{ label: string; value: BookingManagementTab }> = [
+  { label: "Today", value: "TODAY" },
+  { label: "Upcoming", value: "UPCOMING" },
+  { label: "Past", value: "PAST" },
+]
 
 export type ServiceBookingRow = {
   id: string
@@ -32,6 +41,8 @@ export type ServiceBookingRow = {
   canceledAt: string | Date | null
   createdAt: string | Date
   updatedAt: string | Date
+  isDoubleBooked?: boolean
+  hasConfirmedConflict?: boolean
 }
 
 function asRecord(value: unknown) {
@@ -81,6 +92,17 @@ export function overlaps(startA: number, endA: number, startB: number, endB: num
 
 export function getBookingSlotKey(booking: Pick<ServiceBookingRow, "bookingDate" | "bookingTime">) {
   return `${booking.bookingDate}__${booking.bookingTime}`
+}
+
+export function isValidDateKey(value: string) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value)
+}
+
+export function getTodayDateKey(now = new Date()) {
+  const year = now.getFullYear()
+  const month = `${now.getMonth() + 1}`.padStart(2, "0")
+  const day = `${now.getDate()}`.padStart(2, "0")
+  return `${year}-${month}-${day}`
 }
 
 export function getServiceMenuBookingContent(blocks: Array<{ type: string; content?: unknown }>) {

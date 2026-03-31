@@ -175,6 +175,8 @@ model ServiceBooking {
 enum ServiceBookingStatus {
   PENDING
   CONFIRMED
+  COMPLETED
+  NO_SHOW
   CANCELED
   DECLINED
 }
