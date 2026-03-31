@@ -1,9 +1,9 @@
 import * as React from "react";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import prisma from "@/lib/prisma";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import prisma from "@/lib/prisma";
 import { ProjectPortalEditor } from "@/components/editor/ProjectPortalEditor";
 import { EpkEditor } from "@/components/editor/EpkEditor";
 import { MediaKitEditor } from "@/components/editor/MediaKitEditor";
@@ -13,16 +13,14 @@ import { PropertyListingEditor } from "@/components/editor/PropertyListingEditor
 import { hasFeature } from "@/lib/plan-rules";
 import { getUserPlanSnapshot } from "@/lib/subscription";
 import { SERVICE_MENU_CATEGORY } from "@/lib/service-menu";
+import { getPageWithBlocksById } from "@/lib/page-loaders";
 
 export default async function EditorPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const { userId } = await auth();
   if (!userId) redirect("/login");
 
-  const page = await prisma.page.findUnique({
-    where: { id },
-    include: { blocks: { orderBy: { order: "asc" } } }
-  });
+  const page = await getPageWithBlocksById(id);
 
   if (!page || page.userId !== userId) {
     redirect("/dashboard");

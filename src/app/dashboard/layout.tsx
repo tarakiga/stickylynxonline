@@ -3,17 +3,12 @@ import { auth } from "@clerk/nextjs/server";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { HeaderAvatar } from "@/components/dashboard/HeaderAvatar";
 import { DarkModeToggle } from "@/components/dashboard/DarkModeToggle";
-import prisma from "@/lib/prisma";
 import { getBrandCssVariables, normalizeBrandProfile } from "@/lib/branding";
+import { getUserBrandingById } from "@/lib/user-branding";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { userId } = await auth();
-  const user = userId
-    ? await prisma.user.findUnique({
-        where: { id: userId },
-        select: { name: true, email: true, brandProfile: true },
-      })
-    : null;
+  const user = userId ? await getUserBrandingById(userId) : null;
   const brandProfile = normalizeBrandProfile(user?.brandProfile, user?.name || user?.email || "")
   const brandStyle = getBrandCssVariables(brandProfile)
 

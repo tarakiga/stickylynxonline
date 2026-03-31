@@ -1,5 +1,4 @@
 import type { CSSProperties } from "react";
-import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { ProjectPortalPublic } from "@/components/public/ProjectPortalPublic";
 import { EpkPublic } from "@/components/public/EpkPublic";
@@ -12,14 +11,12 @@ import { cookies } from "next/headers";
 import { auth } from "@clerk/nextjs/server";
 import { getBrandCssVariables, normalizeBrandProfile } from "@/lib/branding";
 import { SERVICE_MENU_CATEGORY } from "@/lib/service-menu";
+import { getPageWithBlocksAndUserByHandle } from "@/lib/page-loaders";
 
 export default async function PublicPage({ params }: { params: Promise<{ handle: string }> }) {
   const { handle } = await params;
 
-  const page = await prisma.page.findUnique({
-    where: { handle },
-    include: { user: true, blocks: { orderBy: { order: "asc" } } }
-  });
+  const page = await getPageWithBlocksAndUserByHandle(handle);
 
   if (!page) {
     notFound();

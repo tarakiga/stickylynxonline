@@ -92,6 +92,29 @@ export type BookingLink = {
   emphasis: "primary" | "secondary"
 }
 
+export type WeeklyAvailability = {
+  day: number
+  enabled: boolean
+  start: string
+  end: string
+}
+
+export type DateAvailabilityOverride = {
+  id: string
+  date: string
+  enabled: boolean
+  start: string
+  end: string
+  label: string
+}
+
+export type BookingSchedule = {
+  slotIntervalMinutes: number
+  maxAdvanceDays: number
+  weeklyAvailability: WeeklyAvailability[]
+  dateOverrides: DateAvailabilityOverride[]
+}
+
 export type BookingContent = {
   section: "booking"
   introText: string
@@ -102,6 +125,7 @@ export type BookingContent = {
   busyDays: number[]
   bookingLinks: BookingLink[]
   policies: string
+  schedule: BookingSchedule
 }
 
 export type ServiceLocation = {
@@ -151,6 +175,23 @@ export type FaqContent = {
 
 function uid(prefix: string, index: number) {
   return `${prefix}-${index + 1}`
+}
+
+export function createDefaultBookingSchedule(): BookingSchedule {
+  return {
+    slotIntervalMinutes: 30,
+    maxAdvanceDays: 45,
+    weeklyAvailability: [
+      { day: 0, enabled: false, start: "09:00", end: "17:00" },
+      { day: 1, enabled: true, start: "09:00", end: "17:00" },
+      { day: 2, enabled: true, start: "09:00", end: "17:00" },
+      { day: 3, enabled: true, start: "09:00", end: "17:00" },
+      { day: 4, enabled: true, start: "09:00", end: "17:00" },
+      { day: 5, enabled: true, start: "09:00", end: "17:00" },
+      { day: 6, enabled: true, start: "10:00", end: "15:00" },
+    ],
+    dateOverrides: [],
+  }
 }
 
 export function createDefaultServiceMenuBlocks({
@@ -225,9 +266,10 @@ export function createDefaultServiceMenuBlocks({
         internalButtonLabel: "Book now",
         confirmationMessage: "Thanks for your request. We will confirm your appointment shortly.",
         nextAvailableText: "Next available today",
-        busyDays: [],
+        busyDays: [0],
         bookingLinks: [],
         policies: "",
+        schedule: createDefaultBookingSchedule(),
       } satisfies BookingContent,
       order: 4,
     },

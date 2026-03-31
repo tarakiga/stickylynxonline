@@ -72,6 +72,7 @@ model Page {
   lastClientAccessAt DateTime?
   
   blocks      Block[]
+  bookings    ServiceBooking[]
   notificationEvents NotificationEvent[]
   
   createdAt   DateTime     @default(now())
@@ -143,4 +144,37 @@ enum BlockType {
   COMMENT_THREAD
   DELIVERABLES
   BILLING_OVERVIEW
+}
+
+model ServiceBooking {
+  id                     String               @id @default(cuid())
+  pageId                 String
+  page                   Page                 @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  status                 ServiceBookingStatus @default(PENDING)
+  name                   String
+  email                  String
+  phone                  String?
+  serviceId              String
+  serviceName            String
+  serviceDurationMinutes Int?
+  bookingDate            String
+  bookingTime            String
+  bookingStartMinutes    Int
+  bookingEndMinutes      Int
+  message                String?
+  ownerNotes             String?
+  confirmedAt            DateTime?
+  canceledAt             DateTime?
+  createdAt              DateTime             @default(now())
+  updatedAt              DateTime             @updatedAt
+
+  @@index([pageId, bookingDate, status])
+  @@index([pageId, createdAt])
+}
+
+enum ServiceBookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELED
+  DECLINED
 }

@@ -7,7 +7,7 @@ import { ensureUserAccount, getUserPlanSnapshot } from "@/lib/subscription";
 import { hasFeature } from "@/lib/plan-rules";
 import { normalizeBrandProfile } from "@/lib/branding";
 import { BrandingWorkspace } from "@/components/dashboard/BrandingWorkspace";
-import prisma from "@/lib/prisma";
+import { getUserBrandingById } from "@/lib/user-branding";
 
 export default async function BrandingPage() {
   const { userId } = await auth();
@@ -22,10 +22,7 @@ export default async function BrandingPage() {
     email: primaryEmail,
     name: `${user.firstName || ""} ${user.lastName || ""}`.trim(),
   });
-  const dbUser = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { name: true, email: true, brandProfile: true },
-  });
+  const dbUser = await getUserBrandingById(userId);
   const planSnapshot = await getUserPlanSnapshot(userId);
   const hasCustomBranding = hasFeature(planSnapshot.plan, "CUSTOM_BRANDING");
   const initialProfile = normalizeBrandProfile(dbUser?.brandProfile, dbUser?.name || dbUser?.email || primaryEmail);

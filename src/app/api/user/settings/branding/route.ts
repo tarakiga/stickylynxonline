@@ -5,6 +5,7 @@ import { Prisma } from "@prisma/client"
 import { getFeatureAccessError, getUserPlanSnapshot } from "@/lib/subscription"
 import { normalizeBrandProfile } from "@/lib/branding"
 import { normalizeDataUrlsToCloudinary } from "@/lib/cloudinary"
+import { getUserBrandingById, hasUserBrandProfileColumn } from "@/lib/user-branding"
 
 export const dynamic = "force-dynamic"
 
@@ -22,10 +23,7 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json().catch(() => ({}))
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { name: true, email: true },
-  })
+  const user = await getUserBrandingById(userId)
 
   const profile = await normalizeDataUrlsToCloudinary(
     normalizeBrandProfile(body.brandProfile, user?.name || user?.email || ""),
@@ -34,6 +32,10 @@ export async function POST(request: NextRequest) {
       scope: "branding",
     }
   )
+
+  if (!(await hasUserBrandProfileColumn())) {
+    return NextResponse.json({ error: "Brand profile storage is not available until the latest database migration is applied" }, { status: 409 })
+  }
 
   await prisma.user.update({
     where: { id: userId },

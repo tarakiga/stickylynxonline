@@ -14,11 +14,14 @@ import { uploadAssetFile } from "@/lib/upload-client";
 import { currencySymbol } from "@/lib/utils";
 import type { EditorPage } from "@/types/editor-page";
 import { findEditorBlock } from "@/types/editor-page";
+import { BOOKING_STATUS_OPTIONS, getBookingSlotKey, type BookingStatus, type ServiceBookingRow } from "@/lib/service-bookings";
 import {
   BOOKING_PLATFORM_OPTIONS,
   CONTACT_TYPE_OPTIONS,
+  createDefaultBookingSchedule,
   type AboutTrustContent,
   type BookingContent,
+  type DateAvailabilityOverride,
   type BookingLink,
   type BookingMode,
   type ContactType,
@@ -35,8 +38,9 @@ import {
   type ServiceCategoriesContent,
   type TestimonialsContent,
   type TestimonialItem,
+  type WeeklyAvailability,
 } from "@/lib/service-menu";
-import { Eye, Loader2, Plus, Save, Trash2 } from "lucide-react";
+import { AlertTriangle, CalendarCheck2, CheckCircle2, Eye, Loader2, Plus, RotateCcw, Save, Trash2, XCircle } from "lucide-react";
 
 function uid(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -60,6 +64,58 @@ function asNumber(value: unknown) {
 
 function asStringArray(value: unknown) {
   return asArray(value).filter((item): item is string => typeof item === "string");
+}
+
+function normalizeWeeklyAvailability(value: unknown, busyDays: number[]) {
+  const defaults = createDefaultBookingSchedule().weeklyAvailability
+  const parsed = asArray(value)
+    .map((entry) => {
+      const item = asRecord(entry) || {}
+      const day = typeof item.day === "number" ? item.day : null
+      if (day === null || day < 0 || day > 6) return null
+      return {
+        day,
+        enabled: typeof item.enabled === "boolean" ? item.enabled : !busyDays.includes(day),
+        start: asString(item.start, defaults.find((defaultItem) => defaultItem.day === day)?.start || "09:00"),
+        end: asString(item.end, defaults.find((defaultItem) => defaultItem.day === day)?.end || "17:00"),
+      } satisfies WeeklyAvailability
+    })
+    .filter((entry): entry is WeeklyAvailability => !!entry)
+
+  return defaults.map((defaultItem) => parsed.find((entry) => entry.day === defaultItem.day) || {
+    ...defaultItem,
+    enabled: !busyDays.includes(defaultItem.day) && defaultItem.enabled,
+  })
+}
+
+function normalizeDateOverrides(value: unknown) {
+  return asArray(value)
+    .map((entry) => {
+      const item = asRecord(entry) || {}
+      const date = asString(item.date)
+      if (!date) return null
+      return {
+        id: asString(item.id, uid("override")),
+        date,
+        enabled: typeof item.enabled === "boolean" ? item.enabled : false,
+        start: asString(item.start, "09:00"),
+        end: asString(item.end, "17:00"),
+        label: asString(item.label),
+      } satisfies DateAvailabilityOverride
+    })
+    .filter((entry): entry is DateAvailabilityOverride => !!entry)
+}
+
+function formatBookingDate(value: string) {
+  const parsed = new Date(`${value}T00:00:00`)
+  if (Number.isNaN(parsed.getTime())) return value
+  return new Intl.DateTimeFormat(undefined, { weekday: "short", month: "short", day: "numeric" }).format(parsed)
+}
+
+function bookingStatusTone(status: BookingStatus) {
+  if (status === "CONFIRMED") return "success"
+  if (status === "CANCELED" || status === "DECLINED") return "warning"
+  return "info"
 }
 
 const priceTypeOptions = [
@@ -166,7 +222,16 @@ export function ServiceMenuEditor({
   const [internalButtonLabel, setInternalButtonLabel] = React.useState(asString(booking.internalButtonLabel, "Book now"));
   const [confirmationMessage, setConfirmationMessage] = React.useState(asString(booking.confirmationMessage, "Thanks for your request. We will confirm your appointment shortly."));
   const [nextAvailableText, setNextAvailableText] = React.useState(asString(booking.nextAvailableText, "Next available today"));
-  const [busyDays, setBusyDays] = React.useState<number[]>(asArray(booking.busyDays).filter((day): day is number => typeof day === "number"));
+  const bookingSchedule = asRecord(booking.schedule) || {};
+  const busyDays = asArray(booking.busyDays).filter((day): day is number => typeof day === "number");
+  const [slotIntervalMinutes, setSlotIntervalMinutes] = React.useState(asNumber(bookingSchedule.slotIntervalMinutes) ?? createDefaultBookingSchedule().slotIntervalMinutes);
+  const [maxAdvanceDays, setMaxAdvanceDays] = React.useState(asNumber(bookingSchedule.maxAdvanceDays) ?? createDefaultBookingSchedule().maxAdvanceDays);
+  const [weeklyAvailability, setWeeklyAvailability] = React.useState<WeeklyAvailability[]>(
+    normalizeWeeklyAvailability(bookingSchedule.weeklyAvailability, busyDays)
+  );
+  const [dateOverrides, setDateOverrides] = React.useState<DateAvailabilityOverride[]>(
+    normalizeDateOverrides(bookingSchedule.dateOverrides)
+  );
   const [policies, setPolicies] = React.useState(asString(booking.policies));
   const [bookingLinks, setBookingLinks] = React.useState<BookingLink[]>(
     asArray(booking.bookingLinks).map((linkValue) => {
@@ -231,9 +296,108 @@ export function ServiceMenuEditor({
 
   const [saving, setSaving] = React.useState(false);
   const [dirty, setDirty] = React.useState(false);
+  const [bookings, setBookings] = React.useState<ServiceBookingRow[]>([]);
+  const [bookingsLoading, setBookingsLoading] = React.useState(true);
+  const [bookingFilter, setBookingFilter] = React.useState<BookingStatus | "ALL">("ALL");
+  const [bookingActionId, setBookingActionId] = React.useState<string | null>(null);
 
   const markDirty = React.useCallback(() => setDirty(true), []);
   const handleViewPublic = () => window.open(`/${page.handle}`, "_blank");
+
+  const loadBookings = React.useCallback(async () => {
+    setBookingsLoading(true);
+    try {
+      const response = await fetch(`/api/bookings/manage/${page.id}`);
+      if (!response.ok) {
+        setBookings([]);
+        return;
+      }
+
+      const payload = await response.json();
+      setBookings(Array.isArray(payload.bookings) ? payload.bookings : []);
+    } finally {
+      setBookingsLoading(false);
+    }
+  }, [page.id]);
+
+  React.useEffect(() => {
+    void loadBookings();
+  }, [loadBookings]);
+
+  async function updateBookingStatus(bookingId: string, status: BookingStatus) {
+    setBookingActionId(bookingId);
+    try {
+      const response = await fetch(`/api/bookings/manage/${page.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookingId, status }),
+      });
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        alert(payload?.error || "Failed to update booking");
+        return;
+      }
+
+      await loadBookings();
+    } finally {
+      setBookingActionId(null);
+    }
+  }
+
+  async function rebookBooking(bookingId: string) {
+    setBookingActionId(bookingId);
+    try {
+      const response = await fetch(`/api/bookings/manage/${page.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookingId, action: "REBOOK" }),
+      });
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        alert(payload?.error || "Failed to send the rebook email");
+        return;
+      }
+
+      await loadBookings();
+    } finally {
+      setBookingActionId(null);
+    }
+  }
+
+  const visibleBookings = React.useMemo(
+    () => bookings.filter((booking) => bookingFilter === "ALL" ? true : booking.status === bookingFilter),
+    [bookingFilter, bookings]
+  );
+
+  const bookingSummary = React.useMemo(() => ({
+    pending: bookings.filter((booking) => booking.status === "PENDING").length,
+    confirmed: bookings.filter((booking) => booking.status === "CONFIRMED").length,
+    completed: bookings.filter((booking) => booking.status === "CANCELED" || booking.status === "DECLINED").length,
+  }), [bookings]);
+
+  const doubleBookedSlotKeys = React.useMemo(() => {
+    const counts = new Map<string, number>()
+
+    bookings
+      .filter((booking) => booking.status === "PENDING" || booking.status === "CONFIRMED")
+      .forEach((booking) => {
+        const key = getBookingSlotKey(booking)
+        counts.set(key, (counts.get(key) || 0) + 1)
+      })
+
+    return new Set(
+      Array.from(counts.entries())
+        .filter(([, count]) => count > 1)
+        .map(([key]) => key)
+    )
+  }, [bookings]);
+
+  const confirmedSlotKeys = React.useMemo(
+    () => new Set(bookings.filter((booking) => booking.status === "CONFIRMED").map((booking) => getBookingSlotKey(booking))),
+    [bookings]
+  );
 
   const actionButtons = (
     <>
@@ -308,8 +472,28 @@ export function ServiceMenuEditor({
     markDirty();
   }
 
-  function toggleBusyDay(dayIndex: number) {
-    setBusyDays((prev) => prev.includes(dayIndex) ? prev.filter((day) => day !== dayIndex) : [...prev, dayIndex].sort((a, b) => a - b));
+  function updateWeeklyAvailability(day: number, patch: Partial<WeeklyAvailability>) {
+    setWeeklyAvailability((prev) =>
+      prev.map((entry) => (entry.day === day ? { ...entry, ...patch } : entry))
+    );
+    markDirty();
+  }
+
+  function addDateOverride() {
+    setDateOverrides((prev) => [
+      ...prev,
+      { id: uid("override"), date: "", enabled: false, start: "09:00", end: "17:00", label: "" },
+    ]);
+    markDirty();
+  }
+
+  function updateDateOverride(id: string, patch: Partial<DateAvailabilityOverride>) {
+    setDateOverrides((prev) => prev.map((entry) => (entry.id === id ? { ...entry, ...patch } : entry)));
+    markDirty();
+  }
+
+  function removeDateOverride(id: string) {
+    setDateOverrides((prev) => prev.filter((entry) => entry.id !== id));
     markDirty();
   }
 
@@ -396,9 +580,15 @@ export function ServiceMenuEditor({
             internalButtonLabel,
             confirmationMessage,
             nextAvailableText,
-            busyDays,
+            busyDays: weeklyAvailability.filter((entry) => !entry.enabled).map((entry) => entry.day),
             bookingLinks: bookingLinks.map((link) => ({ ...link, url: link.url })),
             policies,
+            schedule: {
+              slotIntervalMinutes,
+              maxAdvanceDays,
+              weeklyAvailability,
+              dateOverrides: dateOverrides.filter((entry) => entry.date),
+            },
           } satisfies BookingContent,
           order: bookingBlock?.order ?? 4,
         },
@@ -586,13 +776,60 @@ export function ServiceMenuEditor({
         <Textarea rows={2} value={introText} onChange={(event) => { setIntroText(event.target.value); markDirty(); }} placeholder="Explain how visitors should book." />
         <Textarea rows={2} value={confirmationMessage} onChange={(event) => { setConfirmationMessage(event.target.value); markDirty(); }} placeholder="Shown after an internal booking request is sent." />
         <Textarea rows={3} value={policies} onChange={(event) => { setPolicies(event.target.value); markDirty(); }} placeholder="Add deposits, cancellation windows, lateness rules, or walk-in notes." />
-        <div className="space-y-2">
-          <span className="text-sm font-semibold text-text-secondary">Busy Days</span>
-          <div className="flex flex-wrap gap-2">
-            {dayLabels.map((label, index) => (
-              <button key={label} type="button" onClick={() => toggleBusyDay(index)} className={`px-3 py-2 rounded-xl text-xs font-bold border cursor-pointer ${busyDays.includes(index) ? "bg-primary text-white border-primary" : "bg-background text-text-secondary border-divider"}`}>
-                {label}
-              </button>
+        <div className="rounded-2xl border border-divider bg-background p-4 space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Input labelInside="Slot Interval (mins)" type="number" min="5" step="5" value={slotIntervalMinutes} onChange={(event) => { setSlotIntervalMinutes(Math.max(5, Number(event.target.value || 30))); markDirty(); }} />
+            <Input labelInside="Booking Window (days)" type="number" min="1" value={maxAdvanceDays} onChange={(event) => { setMaxAdvanceDays(Math.max(1, Number(event.target.value || 45))); markDirty(); }} />
+          </div>
+          <div className="space-y-3">
+            <span className="text-sm font-semibold text-text-secondary">Weekly Schedule</span>
+            <div className="space-y-3">
+              {weeklyAvailability.map((entry) => (
+                <div key={entry.day} className="grid grid-cols-1 sm:grid-cols-[120px_140px_1fr_1fr] gap-3 items-end rounded-2xl border border-divider bg-surface p-4">
+                  <div>
+                    <p className="text-sm font-bold text-text-primary">{dayLabels[entry.day]}</p>
+                    <p className="text-xs text-text-secondary mt-1">{entry.enabled ? "Open for bookings" : "Unavailable"}</p>
+                  </div>
+                  <Select
+                    label="Status"
+                    options={[{ label: "Available", value: "open" }, { label: "Busy", value: "closed" }]}
+                    value={entry.enabled ? "open" : "closed"}
+                    onChange={(event) => updateWeeklyAvailability(entry.day, { enabled: event.target.value === "open" })}
+                  />
+                  <Input labelInside="Start" type="time" value={entry.start} onChange={(event) => updateWeeklyAvailability(entry.day, { start: event.target.value })} disabled={!entry.enabled} />
+                  <Input labelInside="End" type="time" value={entry.end} onChange={(event) => updateWeeklyAvailability(entry.day, { end: event.target.value })} disabled={!entry.enabled} />
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-sm font-semibold text-text-secondary">Date Overrides</span>
+              <Button variant="ghost" onClick={addDateOverride} className="text-xs py-1.5 px-3 rounded-lg h-auto cursor-pointer">Add Override</Button>
+            </div>
+            {dateOverrides.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-divider px-4 py-5 text-sm text-text-secondary">
+                Add blocked days or special opening hours for specific dates.
+              </div>
+            ) : null}
+            {dateOverrides.map((entry) => (
+              <div key={entry.id} className="grid grid-cols-1 lg:grid-cols-[1.1fr_0.8fr_0.9fr_0.9fr_auto] gap-3 items-end rounded-2xl border border-divider bg-surface p-4">
+                <Input labelInside="Label" value={entry.label} onChange={(event) => updateDateOverride(entry.id, { label: event.target.value })} placeholder="Holiday, Pop-up, etc." />
+                <Input labelInside="Date" type="date" value={entry.date} onChange={(event) => updateDateOverride(entry.id, { date: event.target.value })} />
+                <Select
+                  label="Status"
+                  options={[{ label: "Available", value: "open" }, { label: "Busy", value: "closed" }]}
+                  value={entry.enabled ? "open" : "closed"}
+                  onChange={(event) => updateDateOverride(entry.id, { enabled: event.target.value === "open" })}
+                />
+                <div className="grid grid-cols-2 gap-3 lg:col-auto">
+                  <Input labelInside="Start" type="time" value={entry.start} onChange={(event) => updateDateOverride(entry.id, { start: event.target.value })} disabled={!entry.enabled} />
+                  <Input labelInside="End" type="time" value={entry.end} onChange={(event) => updateDateOverride(entry.id, { end: event.target.value })} disabled={!entry.enabled} />
+                </div>
+                <Button variant="ghost" onClick={() => removeDateOverride(entry.id)} className="text-xs py-1.5 px-3 rounded-lg h-auto cursor-pointer text-error">
+                  <Trash2 size={14} className="mr-1.5" /> Remove
+                </Button>
+              </div>
             ))}
           </div>
         </div>
@@ -614,6 +851,143 @@ export function ServiceMenuEditor({
               </div>
             </div>
           ))}
+        </div>
+      </Card>
+
+      <Card className="rounded-3xl border border-divider bg-surface p-6 shadow-sm space-y-5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h3 className="font-bold text-xl text-text-primary">Booking Management</h3>
+            <p className="text-sm text-text-secondary mt-1">Review inbound requests, confirm valid slots, and keep the calendar protected from double bookings.</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Select
+              label="Filter"
+              value={bookingFilter}
+              onChange={(event) => setBookingFilter(event.target.value as BookingStatus | "ALL")}
+              options={[{ label: "All statuses", value: "ALL" }, ...BOOKING_STATUS_OPTIONS]}
+            />
+            <Button variant="ghost" onClick={() => void loadBookings()} className="text-xs py-1.5 px-3 rounded-lg h-auto cursor-pointer">
+              Refresh
+            </Button>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div className="rounded-2xl border border-divider bg-background p-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-warning/10 text-warning">
+                <CalendarCheck2 size={18} />
+              </div>
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-text-secondary">Pending</p>
+                <p className="text-2xl font-black text-text-primary">{bookingSummary.pending}</p>
+              </div>
+            </div>
+          </div>
+          <div className="rounded-2xl border border-divider bg-background p-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-success/10 text-success">
+                <CheckCircle2 size={18} />
+              </div>
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-text-secondary">Confirmed</p>
+                <p className="text-2xl font-black text-text-primary">{bookingSummary.confirmed}</p>
+              </div>
+            </div>
+          </div>
+          <div className="rounded-2xl border border-divider bg-background p-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-text-secondary/10 text-text-secondary">
+                <XCircle size={18} />
+              </div>
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-text-secondary">Closed</p>
+                <p className="text-2xl font-black text-text-primary">{bookingSummary.completed}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="overflow-hidden rounded-3xl border border-divider bg-background">
+          <div className="hidden grid-cols-[1.2fr_1fr_1fr_1fr_1.1fr] gap-4 border-b border-divider px-5 py-4 text-[11px] font-bold uppercase tracking-[0.18em] text-text-secondary lg:grid">
+            <span>Requester</span>
+            <span>Service</span>
+            <span>Schedule</span>
+            <span>Status</span>
+            <span>Actions</span>
+          </div>
+          {bookingsLoading ? (
+            <div className="px-5 py-12 text-sm text-text-secondary">Loading bookings…</div>
+          ) : visibleBookings.length === 0 ? (
+            <div className="px-5 py-12 text-sm text-text-secondary">No bookings match the current filter yet.</div>
+          ) : (
+            <div className="divide-y divide-divider">
+              {visibleBookings.map((bookingRow) => {
+                const slotKey = getBookingSlotKey(bookingRow)
+                const isDoubleBooked = doubleBookedSlotKeys.has(slotKey)
+                const canRebook = bookingRow.status !== "CONFIRMED" && confirmedSlotKeys.has(slotKey)
+
+                return (
+                  <div key={bookingRow.id} className="grid grid-cols-1 gap-4 px-5 py-4 lg:grid-cols-[1.2fr_1fr_1fr_1fr_1.1fr] lg:items-center">
+                    <div className="space-y-1">
+                      <p className="font-bold text-text-primary">{bookingRow.name}</p>
+                      <p className="text-sm text-text-secondary">{bookingRow.email}</p>
+                      {bookingRow.phone ? <p className="text-sm text-text-secondary">{bookingRow.phone}</p> : null}
+                    </div>
+                    <div className="space-y-1">
+                      <p className="font-semibold text-text-primary">{bookingRow.serviceName}</p>
+                      <p className="text-sm text-text-secondary">{bookingRow.serviceDurationMinutes ? `${bookingRow.serviceDurationMinutes} mins` : "Flexible duration"}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="font-semibold text-text-primary">{formatBookingDate(bookingRow.bookingDate)}</p>
+                      <p className="text-sm text-text-secondary">{bookingRow.bookingTime}</p>
+                      <p className="text-xs text-text-secondary/80">Ref {bookingRow.id.slice(-8).toUpperCase()}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex flex-wrap gap-2">
+                        <Badge variant={bookingStatusTone(bookingRow.status) as "success" | "warning" | "info"}>
+                          {bookingRow.status}
+                        </Badge>
+                        {isDoubleBooked ? (
+                          <Badge variant="warning">
+                            <AlertTriangle size={12} />
+                            Double booking
+                          </Badge>
+                        ) : null}
+                      </div>
+                      {bookingRow.message ? <p className="text-sm text-text-secondary line-clamp-2">{bookingRow.message}</p> : null}
+                    </div>
+                    <div className="rounded-2xl border border-divider bg-surface p-3 space-y-3">
+                      <div className="grid grid-cols-1 gap-3">
+                        <Select
+                          label="Status"
+                          value={bookingRow.status}
+                          onChange={(event) => {
+                            const nextStatus = event.target.value as BookingStatus
+                            if (nextStatus !== bookingRow.status) {
+                              void updateBookingStatus(bookingRow.id, nextStatus)
+                            }
+                          }}
+                          options={BOOKING_STATUS_OPTIONS.map((option) => ({ label: option.label, value: option.value }))}
+                          disabled={bookingActionId === bookingRow.id}
+                        />
+                      </div>
+                      {canRebook ? (
+                        <Button
+                          variant="ghost"
+                          onClick={() => void rebookBooking(bookingRow.id)}
+                          disabled={bookingActionId === bookingRow.id}
+                          className="justify-center text-xs py-2.5 px-3 rounded-xl h-auto cursor-pointer border border-warning/20 bg-warning/5 text-warning hover:text-warning"
+                        >
+                          <RotateCcw size={14} className="mr-1.5" />
+                          {bookingActionId === bookingRow.id ? "Sending…" : "Request rebook"}
+                        </Button>
+                      ) : null}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </div>
       </Card>
 

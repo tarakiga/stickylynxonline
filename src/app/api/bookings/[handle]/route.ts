@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { sendEmail } from "@/lib/email";
-import { findEditorBlock } from "@/types/editor-page";
+import { getServiceMenuServiceById, parseTimeToMinutes, overlaps } from "@/lib/service-bookings";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +15,77 @@ function asRecord(value: unknown) {
 
 function asString(value: unknown, fallback = "") {
   return typeof value === "string" ? value : fallback;
+}
+
+function isValidDateKey(value: string) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value);
+}
+
+async function getPageForBookings(handle: string) {
+  return prisma.page.findUnique({
+    where: { handle },
+    include: {
+      user: {
+        select: {
+          email: true,
+          name: true,
+        },
+      },
+      blocks: {
+        orderBy: { order: "asc" },
+      },
+    },
+  });
+}
+
+async function getRecipientEmail(blocks: Array<{ type: string; content?: unknown }>, fallbackEmail?: string | null) {
+  const locationBlock = blocks.find((block) => block.type === "CONTACT" && asRecord(block.content)?.section === "location_contact");
+  const locationContent = asRecord(locationBlock?.content) || {};
+  const contacts = asArray(locationContent.contacts);
+
+  const contactEmail =
+    contacts
+      .map((contactValue) => asRecord(contactValue))
+      .find((contact) => contact && asString(contact.type) === "email" && asString(contact.value))?.value ||
+    fallbackEmail;
+
+  return typeof contactEmail === "string" ? contactEmail : "";
+}
+
+export async function GET(
+  _request: NextRequest,
+  { params }: { params: Promise<{ handle: string }> }
+) {
+  const { handle } = await params;
+  const page = await prisma.page.findUnique({
+    where: { handle },
+    select: {
+      id: true,
+      handle: true,
+      category: true,
+      bookings: {
+        where: { status: "CONFIRMED" },
+        orderBy: [{ bookingDate: "asc" }, { bookingStartMinutes: "asc" }],
+        select: {
+          id: true,
+          status: true,
+          serviceId: true,
+          bookingDate: true,
+          bookingTime: true,
+          bookingStartMinutes: true,
+          bookingEndMinutes: true,
+        },
+      },
+    },
+  });
+
+  if (!page) {
+    return NextResponse.json({ error: "Page not found" }, { status: 404 });
+  }
+
+  return NextResponse.json({
+    bookings: page.bookings,
+  });
 }
 
 export async function POST(
@@ -32,56 +103,78 @@ export async function POST(
   const time = typeof body?.time === "string" ? body.time.trim() : "";
   const message = typeof body?.message === "string" ? body.message.trim() : "";
 
-  if (!name || !email) {
-    return NextResponse.json({ error: "Name and email are required" }, { status: 400 });
+  if (!name || !email || !serviceId || !date || !time) {
+    return NextResponse.json({ error: "Name, email, service, date, and time are required" }, { status: 400 });
   }
 
-  const page = await prisma.page.findUnique({
-    where: { handle },
-    include: {
-      user: {
-        select: {
-          email: true,
-          name: true,
-        },
-      },
-      blocks: {
-        orderBy: { order: "asc" },
-      },
-    },
-  });
+  if (!isValidDateKey(date)) {
+    return NextResponse.json({ error: "Invalid booking date" }, { status: 400 });
+  }
+
+  const startMinutes = parseTimeToMinutes(time);
+  if (startMinutes === null) {
+    return NextResponse.json({ error: "Invalid booking time" }, { status: 400 });
+  }
+
+  const page = await getPageForBookings(handle);
 
   if (!page) {
     return NextResponse.json({ error: "Page not found" }, { status: 404 });
   }
 
   const blocks = page.blocks as Array<{ type: string; content?: unknown }>;
-  const locationBlock = findEditorBlock(blocks, "CONTACT", "location_contact");
-  const servicesBlock = findEditorBlock(blocks, "GRID", "service_categories");
+  const contactEmail = await getRecipientEmail(blocks, page.user?.email);
 
-  const locationContent = asRecord(locationBlock?.content) || {};
-  const contacts = asArray(locationContent.contacts);
-  const contactEmail =
-    contacts
-      .map((contactValue) => asRecord(contactValue))
-      .find((contact) => contact && asString(contact.type) === "email" && asString(contact.value))?.value ||
-    page.user?.email;
-
-  if (!contactEmail || typeof contactEmail !== "string") {
+  if (!contactEmail) {
     return NextResponse.json({ error: "No booking recipient is configured for this page" }, { status: 400 });
   }
 
-  let serviceName = "";
-  const servicesContent = asRecord(servicesBlock?.content) || {};
-  for (const categoryValue of asArray(servicesContent.categories)) {
-    const category = asRecord(categoryValue) || {};
-    for (const serviceValue of asArray(category.services)) {
-      const service = asRecord(serviceValue) || {};
-      if (asString(service.id) === serviceId) {
-        serviceName = asString(service.name);
-      }
-    }
+  const selectedService = getServiceMenuServiceById(blocks, serviceId);
+  if (!selectedService) {
+    return NextResponse.json({ error: "Selected service no longer exists" }, { status: 400 });
   }
+
+  const durationMinutes = selectedService.durationMinutes || 30;
+  const endMinutes = startMinutes + durationMinutes;
+
+  const existingBookings = await prisma.serviceBooking.findMany({
+    where: {
+      pageId: page.id,
+      bookingDate: date,
+      status: "CONFIRMED",
+    },
+    select: {
+      id: true,
+      bookingStartMinutes: true,
+      bookingEndMinutes: true,
+    },
+  });
+
+  const conflictingBooking = existingBookings.find((booking) =>
+    overlaps(startMinutes, endMinutes, booking.bookingStartMinutes, booking.bookingEndMinutes)
+  );
+
+  if (conflictingBooking) {
+    return NextResponse.json({ error: "That time has already been booked. Please choose another slot." }, { status: 409 });
+  }
+
+  const createdBooking = await prisma.serviceBooking.create({
+    data: {
+      pageId: page.id,
+      name,
+      email,
+      phone: phone || null,
+      serviceId: selectedService.id,
+      serviceName: selectedService.name || "Service request",
+      serviceDurationMinutes: durationMinutes,
+      bookingDate: date,
+      bookingTime: time,
+      bookingStartMinutes: startMinutes,
+      bookingEndMinutes: endMinutes,
+      message: message || null,
+      status: "PENDING",
+    },
+  });
 
   const pageName = page.title || page.handle;
   const ownerName = page.user?.name || "there";
@@ -95,8 +188,9 @@ export async function POST(
         <p style="margin: 0 0 8px;"><strong>Name:</strong> ${name}</p>
         <p style="margin: 0 0 8px;"><strong>Email:</strong> ${email}</p>
         <p style="margin: 0 0 8px;"><strong>Phone:</strong> ${phone || "Not provided"}</p>
-        <p style="margin: 0 0 8px;"><strong>Service:</strong> ${serviceName || "General enquiry"}</p>
+        <p style="margin: 0 0 8px;"><strong>Service:</strong> ${selectedService.name || "General enquiry"}</p>
         <p style="margin: 0 0 8px;"><strong>Preferred slot:</strong> ${requestedSlot || "Not provided"}</p>
+        <p style="margin: 0 0 8px;"><strong>Status:</strong> Pending confirmation</p>
         <p style="margin: 0;"><strong>Message:</strong> ${message || "No extra notes"}</p>
       </div>
     </div>
@@ -107,7 +201,8 @@ export async function POST(
       <h2 style="margin: 0 0 12px;">Your booking request has been sent</h2>
       <p style="margin: 0 0 16px;">Hi ${name}, your request for ${pageName} is now with ${ownerName}. They will confirm the appointment soon.</p>
       <div style="padding: 16px; border: 1px solid #e5e7eb; border-radius: 16px; background: #f9fafb;">
-        <p style="margin: 0 0 8px;"><strong>Service:</strong> ${serviceName || "General enquiry"}</p>
+        <p style="margin: 0 0 8px;"><strong>Booking reference:</strong> ${createdBooking.id}</p>
+        <p style="margin: 0 0 8px;"><strong>Service:</strong> ${selectedService.name || "General enquiry"}</p>
         <p style="margin: 0 0 8px;"><strong>Preferred slot:</strong> ${requestedSlot || "Not provided"}</p>
         <p style="margin: 0;"><strong>Message:</strong> ${message || "No extra notes"}</p>
       </div>
@@ -134,5 +229,9 @@ export async function POST(
   return NextResponse.json({
     ok: true,
     confirmationSent: requesterResult.ok,
+    booking: {
+      id: createdBooking.id,
+      status: createdBooking.status,
+    },
   });
 }
