@@ -18,6 +18,16 @@ export type NotificationSendResult = {
   response?: string
 }
 
+function stringifyNotificationError(error: unknown) {
+  if (error instanceof Error) return error.message
+  if (typeof error === "string") return error
+  try {
+    return JSON.stringify(error)
+  } catch {
+    return "Unknown notification error"
+  }
+}
+
 function getStartOfUtcDay() {
   const now = new Date()
   return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
@@ -91,13 +101,22 @@ export async function sendPlanNotification(input: {
       }
     }
 
-    await prisma.notificationEvent.create({
-      data: {
-        userId: input.userId,
-        pageId: input.pageId || undefined,
+    try {
+      await prisma.notificationEvent.create({
+        data: {
+          userId: input.userId,
+          pageId: input.pageId || undefined,
+          type: input.type,
+        },
+      })
+    } catch (error) {
+      console.error("Notification event logging failed", {
         type: input.type,
-      },
-    })
+        userId: input.userId,
+        pageId: input.pageId || null,
+        error: stringifyNotificationError(error),
+      })
+    }
 
     return {
       ok: true,
@@ -107,13 +126,17 @@ export async function sendPlanNotification(input: {
       response: result.response,
     }
   } catch (error) {
-    const quota = await getNotificationQuota(input.userId)
+    const quota = await getNotificationQuota(input.userId).catch(() => ({
+      allowed: false,
+      used: 0,
+      limit: 0,
+    }))
     return {
       ok: false,
       quotaExceeded: false,
       used: quota.used,
       limit: quota.limit,
-      error,
+      error: stringifyNotificationError(error),
     }
   }
 }
