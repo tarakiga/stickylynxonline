@@ -10,6 +10,7 @@ import { canCommentOnTeamHubTask, canManageTeamHubStage, getTeamHubStageById, ge
 import { getTeamProjectHubSections } from "@/lib/team-project-hub";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 type CommentRequestBody = {
   taskId?: string

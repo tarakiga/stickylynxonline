@@ -10,6 +10,7 @@ import { canManageTeamHubStage, getTeamHubStageById, getTeamHubTaskById, resolve
 import { getTeamProjectHubSections } from "@/lib/team-project-hub";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 export async function PUT(
   request: NextRequest,

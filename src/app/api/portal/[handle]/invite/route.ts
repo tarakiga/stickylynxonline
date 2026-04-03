@@ -8,6 +8,7 @@ import { getNotificationQuota, sendPlanNotification } from "@/lib/notifications"
 import { NotificationEventType, PageCategory } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 export async function POST(
   request: NextRequest,
