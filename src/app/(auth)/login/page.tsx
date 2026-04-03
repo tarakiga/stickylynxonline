@@ -2,7 +2,20 @@ import * as React from "react"
 import Link from "next/link"
 import { SignIn } from "@clerk/nextjs"
 
-export default function LoginPage() {
+type LoginPageProps = {
+  searchParams: Promise<{
+    redirect_url?: string
+    email?: string
+  }>
+}
+
+export default async function LoginPage({ searchParams }: LoginPageProps) {
+  const params = await searchParams
+  const redirectUrl = typeof params.redirect_url === "string" ? params.redirect_url : undefined
+  const email = typeof params.email === "string" ? params.email : ""
+  const normalizedRedirectUrl = redirectUrl || "/dashboard"
+  const registerUrl = `/register?redirect_url=${encodeURIComponent(normalizedRedirectUrl)}${email ? `&email=${encodeURIComponent(email)}` : ""}`
+
   return (
     <div className="space-y-6">
       <div className="mb-6 text-center sm:text-left">
@@ -10,8 +23,20 @@ export default function LoginPage() {
         <p className="text-text-secondary mt-2">Sign in to manage your Stickylynx pages.</p>
       </div>
 
+      {email ? (
+        <div className="rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm font-semibold text-text-primary">
+          Sign in with {email} to continue to your invited workspace.
+        </div>
+      ) : null}
+
       <SignIn 
         routing="hash"
+        forceRedirectUrl={normalizedRedirectUrl}
+        fallbackRedirectUrl={normalizedRedirectUrl}
+        signUpForceRedirectUrl={normalizedRedirectUrl}
+        signUpFallbackRedirectUrl={normalizedRedirectUrl}
+        signUpUrl={registerUrl}
+        initialValues={email ? { emailAddress: email } : undefined}
         appearance={{
           elements: {
             rootBox: "w-full",
@@ -47,7 +72,7 @@ export default function LoginPage() {
       />
 
       <p className="text-center text-sm font-semibold text-text-secondary mt-8">
-        Don&apos;t have an account? <Link href="/register" className="text-primary hover:text-primary-hover font-bold hover:underline transition-all">Create one</Link>
+        Don&apos;t have an account? <Link href={registerUrl} className="text-primary hover:text-primary-hover font-bold hover:underline transition-all">Create one</Link>
       </p>
     </div>
   )

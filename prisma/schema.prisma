@@ -20,6 +20,7 @@ model User {
   pages         Page[]
   subscription  Subscription?
   notificationEvents NotificationEvent[]
+  teamProjectMembers TeamProjectMember[]
 }
 
 enum UserRole {
@@ -74,6 +75,7 @@ model Page {
   blocks      Block[]
   bookings    ServiceBooking[]
   notificationEvents NotificationEvent[]
+  teamProjectMembers TeamProjectMember[]
   
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
@@ -98,6 +100,13 @@ enum NotificationEventType {
   PROJECT_PORTAL_COMMENT
   PROJECT_PORTAL_APPROVAL
   PROJECT_PORTAL_SUBMISSION
+  TEAM_PROJECT_HUB_ASSIGNMENT
+  TEAM_PROJECT_HUB_SUBMISSION
+  TEAM_PROJECT_HUB_COMMENT
+  TEAM_PROJECT_HUB_APPROVAL
+  TEAM_PROJECT_HUB_CHANGES_REQUESTED
+  TEAM_PROJECT_HUB_STAGE_MANAGER
+  TEAM_PROJECT_HUB_ALLOWLIST
   MEDIA_KIT_REQUEST
 }
 
@@ -108,8 +117,16 @@ enum PageCategory {
   EPK
   GENERIC
   PROJECT_PORTAL
+  TEAM_PROJECT_HUB
   INFLUENCER_MEDIA_KIT
+  PORTFOLIO_CASE_STUDY
   PROPERTY_LISTING
+}
+
+enum TeamProjectMemberStatus {
+  ACTIVE
+  SUSPENDED
+  REMOVED
 }
 
 model Block {
@@ -124,6 +141,27 @@ model Block {
   updatedAt DateTime  @updatedAt
   
   @@index([pageId])
+}
+
+model TeamProjectMember {
+  id           String                  @id @default(cuid())
+  pageId        String
+  page          Page                   @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  userId        String?
+  user          User?                  @relation(fields: [userId], references: [id], onDelete: SetNull)
+  name          String
+  email         String
+  internalLabel String?
+  status        TeamProjectMemberStatus @default(ACTIVE)
+  role          TeamProjectMemberRole   @default(CONTRIBUTOR)
+  inviteSentAt  DateTime?
+  inviteAcceptedAt DateTime?
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+
+  @@unique([pageId, email])
+  @@index([pageId, status])
+  @@index([pageId, userId])
 }
 
 enum BlockType {
@@ -144,6 +182,11 @@ enum BlockType {
   COMMENT_THREAD
   DELIVERABLES
   BILLING_OVERVIEW
+}
+
+enum TeamProjectMemberRole {
+  ADMIN
+  CONTRIBUTOR
 }
 
 model ServiceBooking {

@@ -1,5 +1,5 @@
 import * as React from "react";
-import { auth } from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -8,26 +8,80 @@ import { ProjectPortalEditor } from "@/components/editor/ProjectPortalEditor";
 import { EpkEditor } from "@/components/editor/EpkEditor";
 import { MediaKitEditor } from "@/components/editor/MediaKitEditor";
 import { FoodMenuEditor } from "@/components/editor/FoodMenuEditor";
+import { PortfolioCaseStudyEditor } from "@/components/editor/PortfolioCaseStudyEditor";
 import { ServiceMenuEditor } from "@/components/editor/ServiceMenuEditor";
+import { TeamProjectHubEditor } from "@/components/editor/TeamProjectHubEditor";
 import { PropertyListingEditor } from "@/components/editor/PropertyListingEditor";
 import { hasFeature } from "@/lib/plan-rules";
+import { PORTFOLIO_CASE_STUDY_CATEGORY } from "@/lib/portfolio-case-study";
 import { getUserPlanSnapshot } from "@/lib/subscription";
 import { SERVICE_MENU_CATEGORY } from "@/lib/service-menu";
+import { getTeamProjectHubSections, normalizeTeamProjectMembers, TEAM_PROJECT_HUB_CATEGORY } from "@/lib/team-project-hub";
 import { getPageWithBlocksById } from "@/lib/page-loaders";
 
 export default async function EditorPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const { userId } = await auth();
-  if (!userId) redirect("/login");
+  if (!userId) redirect(`/login?redirect_url=${encodeURIComponent(`/dashboard/editor/${id}`)}`);
 
   const page = await getPageWithBlocksById(id);
 
-  if (!page || page.userId !== userId) {
+  if (!page) {
     redirect("/dashboard");
   }
+
+  const authProfile = await currentUser();
+  const primaryEmail = authProfile?.emailAddresses[0]?.emailAddress?.toLowerCase() || null;
+
+  const isOwner = page.userId === userId
+  const planSnapshot = await getUserPlanSnapshot(userId);
   const user = await prisma.user.findUnique({ where: { id: userId } });
   const defaultCurrency = user?.currencyCode || "USD";
-  const planSnapshot = await getUserPlanSnapshot(userId);
+
+  const teamMembers =
+    (page.category as string) === TEAM_PROJECT_HUB_CATEGORY
+      ? normalizeTeamProjectMembers(await prisma.teamProjectMember.findMany({
+          where: { pageId: page.id },
+          orderBy: [{ createdAt: "asc" }],
+        }))
+      : [];
+
+  let editorMode: "owner" | "stage_manager" = "owner"
+  let managedStageIds: string[] = []
+  let ownerName = user?.name || user?.email || "Project Owner"
+
+  if (!isOwner) {
+    if ((page.category as string) !== TEAM_PROJECT_HUB_CATEGORY) {
+      redirect("/dashboard");
+    }
+
+    const pageOwner = await prisma.user.findUnique({ where: { id: page.userId } });
+    ownerName = pageOwner?.name || pageOwner?.email || "Project Owner"
+
+    const member =
+      teamMembers.find((entry) => entry.userId && entry.userId === userId) ||
+      teamMembers.find((entry) => primaryEmail && entry.email === primaryEmail) ||
+      null
+
+    if (!member || member.status !== "ACTIVE") {
+      redirect("/dashboard")
+    }
+
+    const sections = getTeamProjectHubSections(page.blocks || [])
+    managedStageIds = sections.timeline.stages
+      .filter((stage) => stage.stageOwnerType === "member" && stage.stageOwnerMemberId === member.id)
+      .map((stage) => stage.id)
+
+    if (!managedStageIds.length) {
+      redirect("/dashboard")
+    }
+
+    editorMode = "stage_manager"
+  }
+
+  if (editorMode === "stage_manager") {
+    redirect(`/stage-manager/editor/${id}`)
+  }
 
   return (
     <div className="flex flex-col animate-in fade-in duration-500 pb-12 w-full h-full min-h-screen relative">
@@ -37,7 +91,7 @@ export default async function EditorPage({ params }: { params: Promise<{ id: str
               <ArrowLeft size={20} />
            </Link>
            <div>
-             <p className="text-text-secondary text-sm font-bold tracking-widest uppercase mb-0.5">{page.category.replace("_", " ")} WORKSPACE</p>
+             <p className="text-text-secondary text-sm font-bold tracking-widest uppercase mb-0.5">{page.category.replace(/_/g, " ")} WORKSPACE</p>
              <h1 className="text-2xl font-bold tracking-tight text-text-primary">Editing &apos;{page.title || page.handle}&apos;</h1>
            </div>
         </div>
@@ -71,6 +125,10 @@ export default async function EditorPage({ params }: { params: Promise<{ id: str
              />
          ) : (page.category as string) === SERVICE_MENU_CATEGORY ? (
              <ServiceMenuEditor page={page} defaultCurrency={defaultCurrency} />
+         ) : (page.category as string) === PORTFOLIO_CASE_STUDY_CATEGORY ? (
+             <PortfolioCaseStudyEditor page={page} />
+         ) : (page.category as string) === TEAM_PROJECT_HUB_CATEGORY ? (
+             <TeamProjectHubEditor page={page} initialMembers={teamMembers} ownerName={ownerName} mode={editorMode} managedStageIds={managedStageIds} />
          ) : (page.category as string) === "PROPERTY_LISTING" ? (
              <PropertyListingEditor page={page} defaultCurrency={defaultCurrency} />
          ) : (

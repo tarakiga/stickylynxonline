@@ -1,15 +1,16 @@
 "use server";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
-import { PageCategory, BlockType, Prisma, NotificationEventType } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import crypto from "crypto";
 import { EMAIL_COLORS } from "@/config/theme";
 import { getBaseUrl } from "@/lib/utils";
 import { ensureUserAccount, getPlanLimitError, getUserPlanSnapshot } from "@/lib/subscription";
 import { sendPlanNotification } from "@/lib/notifications";
+import { createDefaultPortfolioCaseStudyBlocks } from "@/lib/portfolio-case-study";
 import { createDefaultPropertyListingBlocks } from "@/lib/property-listing";
 import { createDefaultServiceMenuBlocks } from "@/lib/service-menu";
+import { createDefaultTeamProjectHubBlocks } from "@/lib/team-project-hub";
 
 type CreateLynxPageError = {
   code: string
@@ -21,12 +22,35 @@ type CreateLynxPageResult =
   | { error: CreateLynxPageError }
   | { pageId: string; emailSent: boolean }
 
+type SeedBlock = {
+  type: string
+  content: unknown
+  order: number
+}
+
+async function seedPageBlocks(
+  tx: Pick<typeof prisma, "block">,
+  pageId: string,
+  blocks: SeedBlock[]
+) {
+  if (!blocks.length) return
+
+  await tx.block.createMany({
+    data: blocks.map((block) => ({
+      pageId,
+      type: block.type as never,
+      content: block.content as never,
+      order: block.order,
+    })),
+  })
+}
+
 export async function createLynxPage(data: {
   title: string;
   handle: string;
   category: string;
   clientEmail?: string;
-  config?: Prisma.InputJsonValue;
+  config?: unknown;
 }): Promise<CreateLynxPageResult> {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
@@ -79,7 +103,7 @@ export async function createLynxPage(data: {
     };
   }
 
-  const category = data.category as PageCategory;
+  const category = data.category as Parameters<typeof getPlanLimitError>[1];
   const planSnapshot = await getUserPlanSnapshot(userId);
   const planLimitError = getPlanLimitError(planSnapshot, category);
 
@@ -90,7 +114,7 @@ export async function createLynxPage(data: {
   // Use a transaction to ensure page and blocks are created together
   let inviteToken: string | null = null;
   let invitePin: string | null = null;
-  const newPage = await prisma.$transaction(async (tx) => {
+  const newPage = await prisma.$transaction(async (tx: Pick<typeof prisma, "page" | "block" | "user">) => {
     const page = await tx.page.create({
       data: {
         userId,
@@ -98,7 +122,7 @@ export async function createLynxPage(data: {
         handle: data.handle,
         category,
         clientEmail: data.clientEmail,
-        theme: data.config ? (data.config as Prisma.InputJsonValue) : undefined
+        theme: data.config ? (data.config as never) : undefined
       }
     });
 
@@ -122,16 +146,7 @@ export async function createLynxPage(data: {
         { type: "COMMENT_THREAD", content: { messages: [] }, order: 5 }
       ];
 
-      await Promise.all(defaultBlocks.map((b) => 
-        tx.block.create({
-          data: {
-            pageId: page.id,
-            type: b.type as BlockType,
-            content: b.content,
-            order: b.order
-          }
-        })
-      ));
+      await seedPageBlocks(tx, page.id, defaultBlocks);
     }
 
     // Seed default blocks for EPK
@@ -150,11 +165,7 @@ export async function createLynxPage(data: {
         { type: "CONTACT", content: { email: "", phone: "", managementName: "", managementEmail: "", socials: {} }, order: 6 },
       ];
 
-      await Promise.all(epkBlocks.map((b) =>
-        tx.block.create({
-          data: { pageId: page.id, type: b.type as BlockType, content: b.content, order: b.order }
-        })
-      ));
+      await seedPageBlocks(tx, page.id, epkBlocks);
     }
 
     // Seed default blocks for Influencer Media Kit
@@ -171,11 +182,7 @@ export async function createLynxPage(data: {
         { type: "CONTACT", content: { email: "", phone: "", managementName: "", managementEmail: "", website: "", briefForm: { enabled: false } }, order: 8 },
       ];
 
-      await Promise.all(mediaKitBlocks.map((b) =>
-        tx.block.create({
-          data: { pageId: page.id, type: b.type as BlockType, content: b.content, order: b.order }
-        })
-      ));
+      await seedPageBlocks(tx, page.id, mediaKitBlocks);
     }
 
     // Seed default blocks for Food Menu
@@ -186,11 +193,7 @@ export async function createLynxPage(data: {
         { type: "GRID", content: { section: "menu_sections", defaultOpenSectionIds: [], collapsible: true, hasSidebar: false, hasSearch: true, maxDefaultOpen: 3, sections: [] }, order: 2 },
         { type: "GRID", content: { section: "extras", title: "Add-ons", description: "", items: [] }, order: 3 },
       ];
-      await Promise.all(foodBlocks.map((b) =>
-        tx.block.create({
-          data: { pageId: page.id, type: b.type as BlockType, content: b.content, order: b.order }
-        })
-      ));
+      await seedPageBlocks(tx, page.id, foodBlocks);
     }
 
     if (category === "SERVICE_MENU") {
@@ -204,16 +207,7 @@ export async function createLynxPage(data: {
         currency: account?.currencyCode || "USD",
       })
 
-      await Promise.all(serviceBlocks.map((block) =>
-        tx.block.create({
-          data: {
-            pageId: page.id,
-            type: block.type as BlockType,
-            content: block.content,
-            order: block.order,
-          }
-        })
-      ))
+      await seedPageBlocks(tx, page.id, serviceBlocks)
     }
 
     if (category === "PROPERTY_LISTING") {
@@ -235,16 +229,27 @@ export async function createLynxPage(data: {
         agentEmail: typeof cfg?.agentEmail === "string" ? cfg.agentEmail : undefined,
       })
 
-      await Promise.all(propertyBlocks.map((block) =>
-        tx.block.create({
-          data: {
-            pageId: page.id,
-            type: block.type as BlockType,
-            content: block.content,
-            order: block.order,
-          }
-        })
-      ))
+      await seedPageBlocks(tx, page.id, propertyBlocks)
+    }
+
+    if ((category as string) === "PORTFOLIO_CASE_STUDY") {
+      const portfolioBlocks = createDefaultPortfolioCaseStudyBlocks({
+        title: data.title,
+        handle: data.handle,
+      })
+
+      await seedPageBlocks(tx, page.id, portfolioBlocks)
+    }
+
+    if ((category as string) === "TEAM_PROJECT_HUB") {
+      const teamHubBlocks = createDefaultTeamProjectHubBlocks({
+        title: data.title,
+        ownerName: authUser?.firstName || authUser?.lastName
+          ? `${authUser?.firstName || ""} ${authUser?.lastName || ""}`.trim()
+          : authUser?.username || primaryEmail,
+      })
+
+      await seedPageBlocks(tx, page.id, teamHubBlocks)
     }
 
     // Project Portal: generate client access + PIN (email sent after transaction)
@@ -271,7 +276,7 @@ export async function createLynxPage(data: {
     }
 
     return page;
-  });
+  }, { timeout: 15000 });
 
   revalidatePath("/dashboard");
   revalidatePath(`/dashboard/editor/${newPage.id}`);
@@ -283,7 +288,7 @@ export async function createLynxPage(data: {
     const result = await sendPlanNotification({
       userId: newPage.userId,
       pageId: newPage.id,
-      type: NotificationEventType.PROJECT_PORTAL_INVITE,
+      type: "PROJECT_PORTAL_INVITE" as Parameters<typeof sendPlanNotification>[0]["type"],
       to: newPage.clientEmail,
       subject: `Project Portal Access: ${newPage.title || newPage.handle}`,
       html: `

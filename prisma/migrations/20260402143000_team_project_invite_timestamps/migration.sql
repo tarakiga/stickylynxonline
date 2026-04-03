@@ -1,0 +1,3 @@
+ALTER TABLE "TeamProjectMember"
+ADD COLUMN IF NOT EXISTS "inviteSentAt" TIMESTAMP(3),
+ADD COLUMN IF NOT EXISTS "inviteAcceptedAt" TIMESTAMP(3);

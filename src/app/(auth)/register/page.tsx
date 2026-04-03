@@ -2,7 +2,20 @@ import * as React from "react"
 import Link from "next/link"
 import { SignUp } from "@clerk/nextjs"
 
-export default function RegisterPage() {
+type RegisterPageProps = {
+  searchParams: Promise<{
+    redirect_url?: string
+    email?: string
+  }>
+}
+
+export default async function RegisterPage({ searchParams }: RegisterPageProps) {
+  const params = await searchParams
+  const redirectUrl = typeof params.redirect_url === "string" ? params.redirect_url : undefined
+  const email = typeof params.email === "string" ? params.email : ""
+  const normalizedRedirectUrl = redirectUrl || "/dashboard"
+  const loginUrl = `/login?redirect_url=${encodeURIComponent(normalizedRedirectUrl)}${email ? `&email=${encodeURIComponent(email)}` : ""}`
+
   return (
     <div className="space-y-6">
       <div className="mb-6 text-center sm:text-left">
@@ -10,8 +23,20 @@ export default function RegisterPage() {
         <p className="text-text-secondary mt-2">Join thousands of creators building their audience today.</p>
       </div>
 
+      {email ? (
+        <div className="rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm font-semibold text-text-primary">
+          Create your account with {email} to accept the stage manager invite and continue to the editor.
+        </div>
+      ) : null}
+
       <SignUp 
         routing="hash"
+        forceRedirectUrl={normalizedRedirectUrl}
+        fallbackRedirectUrl={normalizedRedirectUrl}
+        signInForceRedirectUrl={normalizedRedirectUrl}
+        signInFallbackRedirectUrl={normalizedRedirectUrl}
+        signInUrl={loginUrl}
+        initialValues={email ? { emailAddress: email } : undefined}
         appearance={{
           elements: {
             rootBox: "w-full",
@@ -47,7 +72,7 @@ export default function RegisterPage() {
       />
 
       <p className="text-center font-semibold text-sm text-text-secondary mt-8">
-        Already have an account? <Link href="/login" className="text-primary hover:text-primary-hover font-bold hover:underline transition-all">Log in</Link>
+        Already have an account? <Link href={loginUrl} className="text-primary hover:text-primary-hover font-bold hover:underline transition-all">Log in</Link>
       </p>
     </div>
   )

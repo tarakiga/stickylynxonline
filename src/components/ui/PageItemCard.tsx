@@ -29,7 +29,11 @@ export function PageItemCard({ id, title, handle, category, imageUrl }: PageItem
   const catVariant: "success" | "warning" | "error" | "info" | "primary" | "neutral" =
     category === "PROJECT_PORTAL"
       ? "primary"
+      : category === "TEAM_PROJECT_HUB"
+      ? "primary"
       : category === "EPK"
+      ? "info"
+      : category === "PORTFOLIO_CASE_STUDY"
       ? "info"
       : category === "PROPERTY_LISTING"
       ? "warning"
@@ -127,7 +131,7 @@ export function PageItemCard({ id, title, handle, category, imageUrl }: PageItem
               </button>
             </div>
             <button 
-              onClick={() => setShowMobileMore(v => !v)} 
+              onClick={() => setShowMobileMore((value) => !value)} 
               className={cn(
                 "p-2.5 rounded-xl text-text-secondary transition-all cursor-pointer border active:scale-95", 
                 showMobileMore ? "bg-primary/10 text-primary border-primary/20" : "bg-divider/20 border-transparent"

@@ -8,8 +8,10 @@ import { StepProgress } from "@/components/ui/Progress";
 import { showToast } from "@/components/ui/Toast";
 
 import { createLynxPage } from "@/app/actions";
+import { PORTFOLIO_CASE_STUDY_CATEGORY } from "@/lib/portfolio-case-study";
 import { PROPERTY_LISTING_CATEGORY } from "@/lib/property-listing";
 import { SERVICE_MENU_CATEGORY } from "@/lib/service-menu";
+import { TEAM_PROJECT_HUB_CATEGORY } from "@/lib/team-project-hub";
 
 type CreateLynxDrawerProps = {
   planLabel: string
@@ -55,6 +57,8 @@ export function CreateLynxDrawer({
   const isEpk = categoryStr === "EPK";
   const isFoodMenu = categoryStr === "FOOD_MENU";
   const isServiceMenu = categoryStr === SERVICE_MENU_CATEGORY;
+  const isPortfolioCaseStudy = categoryStr === PORTFOLIO_CASE_STUDY_CATEGORY;
+  const isTeamProjectHub = categoryStr === TEAM_PROJECT_HUB_CATEGORY;
   const isMediaKit = categoryStr === "INFLUENCER_MEDIA_KIT";
   const isPropertyListing = categoryStr === PROPERTY_LISTING_CATEGORY;
   const totalLimitReached = totalPages >= maxPages;
@@ -181,7 +185,7 @@ export function CreateLynxDrawer({
                
                <Input 
                  labelInside="Lynx Title" 
-                 placeholder={isProjectPortal ? "e.g. Acme Corp Redesign" : isPropertyListing ? "e.g. 4-Bed Waterfront Duplex" : "e.g. My Awesome Page"}
+                 placeholder={isProjectPortal ? "e.g. Acme Corp Redesign" : isTeamProjectHub ? "e.g. Internal Launch Workspace" : isPropertyListing ? "e.g. 4-Bed Waterfront Duplex" : isPortfolioCaseStudy ? "e.g. Studio Lynx Portfolio" : "e.g. My Awesome Page"}
                  value={title}
                  onChange={(e) => setTitle(e.target.value)}
                  autoFocus
@@ -278,6 +282,20 @@ export function CreateLynxDrawer({
                    <div className="bg-primary/5 border border-primary/20 rounded-2xl p-5 text-text-primary text-sm flex gap-3 shadow-sm">
                      <Layers className="text-primary mt-1 shrink-0" size={18} />
                      <p>Your Service Menu will include a <strong>hero</strong>, <strong>about & trust</strong>, <strong>service categories</strong>, <strong>featured packages</strong>, <strong>booking & availability</strong>, <strong>location & contact</strong>, <strong>testimonials</strong>, and <strong>FAQ</strong> sections.</p>
+                   </div>
+                 </>
+              ) : isPortfolioCaseStudy ? (
+                 <>
+                   <div className="bg-primary/5 border border-primary/20 rounded-2xl p-5 text-text-primary text-sm flex gap-3 shadow-sm">
+                     <Layers className="text-primary mt-1 shrink-0" size={18} />
+                     <p>Your Portfolio page will launch with a <strong>hero</strong>, <strong>services</strong>, <strong>case studies</strong>, <strong>client logos</strong>, <strong>testimonials</strong>, <strong>about</strong>, and <strong>inquiry form</strong> structure already in place.</p>
+                   </div>
+                 </>
+              ) : isTeamProjectHub ? (
+                 <>
+                   <div className="bg-primary/5 border border-primary/20 rounded-2xl p-5 text-text-primary text-sm flex gap-3 shadow-sm">
+                     <Layers className="text-primary mt-1 shrink-0" size={18} />
+                     <p>Your Team Project Hub will launch with an internal <strong>project header</strong>, <strong>stages & ownership</strong>, <strong>task assignments</strong>, <strong>submission flow</strong>, and <strong>approval-ready review</strong> structure that you can extend in the editor.</p>
                    </div>
                  </>
               ) : isPropertyListing ? (
