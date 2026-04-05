@@ -1,6 +1,6 @@
 import 'dotenv/config'
 import { PrismaClient, PageCategory, BlockType } from '@prisma/client'
-import pg from 'pg'
+import * as pg from 'pg'
 import { PrismaPg } from '@prisma/adapter-pg'
 
 const connectionString = process.env.DATABASE_URL

@@ -46,3 +46,6 @@ next-env.d.ts
 dev.db
 eslint-errors.json
 tsc-error.txt
+
+# clerk configuration (can include secrets)
+/.clerk/
